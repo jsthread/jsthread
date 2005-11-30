@@ -1,0 +1,6 @@
+ver. 0.0.1
+　・toStringメソッドをオーバーライド。
+　・compareToメソッドで、引数がdata.iterator.Iteratorのインスタンスでなければ、
+　　data.error.TypeErrorを投げるように修正。
+　・equalsメソッドで、引数がdata.iterator.Iteratorのインスタンスでなければ、
+　　falseを返すように変更。

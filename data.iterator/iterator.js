@@ -14,6 +14,11 @@ function Iterator ( ) {
 
 var proto = Iterator.prototype;
 
+var obj_name = "[object " + NAMESPACE + ".Iterator]";
+proto.toString = function ( ) {
+    return obj_name;
+};
+
 // Returns a copy of this iterator.
 // The default implementation makes and returns a shallow-copy of this iterator.
 proto.copy = function ( ) {
@@ -79,6 +84,7 @@ proto.previous = function ( ) {
 // throws IllegalStateError otherwise.
 // The default implementation is based on `equals', `next' and `isTail' methods.
 proto.compareTo = function ( r ) {
+    if ( !(r instanceof Iterator) ) throw new TypeError("` + r + ' is not Iterator object.");
     var l = this;
     if ( l.equals(r) ) return 0;
     while ( !l.isTail() ) {
@@ -97,6 +103,7 @@ proto.compareTo = function ( r ) {
 // false otherwise.
 // The default implementation is based on `compareTo' method.
 proto.equals = function ( another ) {
+    if ( !(another instanceof Iterator) ) return false;
     this.compareTo(another) == 0;
 };
 
