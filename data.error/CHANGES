@@ -5,3 +5,16 @@ ver. 0.1.0
 　・それから、コンストラクタの内部で組み込みのErrorコンストラクタを
 　　呼び出して、プロパティの値をそこからパクってくるようにした。
 　　これでMozillaブラウザだとスタックトレースが取得できる。
+
+
+ver. 0.2.0
+　・プリプロセッサをesmodppに変更。
+　・関数名を変更。makeErrorClass → newErrorClass
+　・data.error.Errorとは別にdata.error.Exceptionクラスを用意して、
+　　catch-clauseでエラーと例外をオブジェクト指向的に処理分けできる
+　　ようにした。
+　　もちろん、newExceptionClassも新設。
+　・new(Error|Exception)Classで、第２引数に関数を渡した場合、
+　　初期化の際にそれを呼び出すようにした。この関数で明示的にfalseを
+　　返した場合には、デフォルトの初期化処理は行わない。
+

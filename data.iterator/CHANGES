@@ -4,3 +4,10 @@ ver. 0.0.1
 　　data.error.TypeErrorを投げるように修正。
 　・equalsメソッドで、引数がdata.iterator.Iteratorのインスタンスでなければ、
 　　falseを返すように変更。
+
+
+ver. 0.1.0
+　・プリプロセッサをesmodppに変更。
+　・value, next, isTailメソッドのデフォルトの実装がdata.error.NotImplementedErrorを
+　　throwするように仕様を変更。
+　・data.error ver. 0.2.0の仕様変更に対応。

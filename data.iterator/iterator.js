@@ -1,23 +1,29 @@
-//@jsmodpp
+//@esmodpp
+//@version 0.1.0
+
 //@require data.error
-//@require data.error.NotSuppotedError
+//@require data.error.NotImplementedError
+//@require data.error.NotSupportedError
 //@with-namespace data.error
+
 
 //@namespace data.iterator
 
 
 //@export Iterator
 function Iterator ( ) {
-    // This is kind of abstract class.
+    // This is a kind of abstract class.
     // Sub-classes should implement appropreate methods.
 }
 
 var proto = Iterator.prototype;
 
-var obj_name = "[object " + NAMESPACE + ".Iterator]";
-proto.toString = function ( ) {
-    return obj_name;
-};
++function(){  // closure
+    var obj_name = "[object " + NAMESPACE + ".Iterator]";
+    proto.toString = function ( ) {
+        return obj_name;
+    };
+}();
 
 // Returns a copy of this iterator.
 // The default implementation makes and returns a shallow-copy of this iterator.
@@ -34,24 +40,24 @@ proto.copy = function ( ) {
 // The default implementation merely throws NotSupportedError.
 // Sub-classes should implement their own version of this method.
 proto.isHead = function ( ) {
-    throw new NotSupportedError("`isHead' method is not supported.");
+    throw new NotSupportedError(undefined, "isHead");
 };
 
 // Returns true if this iterator points to the head of a list,
 // false othersise.
-// The default implementation merely throws NotSupportedError.
-// Sub-classes should implement their own version of this method.
+// The default implementation merely throws NotImplementedError.
+// Sub-classes must implement their own version of this method.
 proto.isTail = function ( ) {
-    throw new NotSupportedError("`isTail' method is not supported.");
+    throw new NotImplementedError("`isTail' method is not implemented. Any " + Iterator.prototype.toString() + " must implement a proper version of it.", "isTail");
 };
 
 // Returns the value of the element which is just after the position 
 // this iterator points to.
-// The default implementation merely throws NotSupportedError.
-// Sub-classes should implement their own version of this method, 
+// The default implementation merely throws NotImplementedError.
+// Sub-classes must implement their own version of this method, 
 // which may throws NoSuchElementError.
 proto.value = function ( ) {
-    throw new NotSupportedError("`value' method is not supported.");
+    throw new NotImplementedError("`value' method is not implemented. Any " + Iterator.prototype.toString() + " must implement a proper version of it.", "value");
 };
 
 // Assign the argument to the element which is just after the position 
@@ -59,23 +65,23 @@ proto.value = function ( ) {
 // which can be defferent from the argument.
 // The default implementation merely throws NotSupportedError.
 proto.assign = function ( v ) {
-    throw new NotSupportedError("`assign' method is not supported.");
+    throw new NotSupportedError(undefined, "assign");
 };
 
 // Returns the iterator that points to the next position to the one 
 // which this iterator points to.
-// The default implementation merely throws NotSupportedError.
+// The default implementation merely throws NotImplementedError.
 // Sub-classes must implement their own version of this method, 
 // which may throws NoSuchElementError.
 proto.next = function ( ) {
-    throw new NotSupportedError("`next' method is not supported.");
+    throw new NotImplementedError("`next' method is not implemented. Any " + Iterator.prototype.toString() + " must implement a proper version of it.", "next");
 };
 
 // Returns the iterator that points to the previous position to the one 
 // which this iterator points to.
 // The default implementation merely throws NotSupportedError.
 proto.previous = function ( ) {
-    throw new NotSupportedError("`previous' method is not supported.");
+    throw new NotSupportedError(undefined, "previous");
 };
 
 // Returns 0 if both this iterator and the argument points to the same position,
@@ -84,7 +90,7 @@ proto.previous = function ( ) {
 // throws IllegalStateError otherwise.
 // The default implementation is based on `equals', `next' and `isTail' methods.
 proto.compareTo = function ( r ) {
-    if ( !(r instanceof Iterator) ) throw new TypeError("` + r + ' is not Iterator object.");
+    if ( !(r instanceof Iterator) ) throw new TypeError("`" + r + "' is not Iterator object.");
     var l = this;
     if ( l.equals(r) ) return 0;
     while ( !l.isTail() ) {
@@ -107,8 +113,10 @@ proto.equals = function ( another ) {
     this.compareTo(another) == 0;
 };
 
-// Returns integer reqpresenting the distance of this iterator and an iterator specified by the argument,
+// Returns the distance of this iterator and the argument,
 // or undefined if the iterators seem to point to defferent sets.
+// A negative return value means the arguments precedes this iterator
+// and the absolute value of it represents the distance of them.
 // The default implementation is based on `next', `equals' and `isTail' method.
 proto.distance = function ( another ) {
     for ( var i=0, l=this, r=another;  ;  i++, l=l.next() ) {
@@ -137,8 +145,9 @@ function distance ( it1, it2 ) {
 
 
 //@export NoSuchElementError
-var NoSuchElementError = makeErrorClass(NAMESPACE + "NoSuchElementError");
+var NoSuchElementError = newErrorClass(NAMESPACE + ".NoSuchElementError");
+NoSuchElementError.prototype.message = "no such element";
 
 //@export IllegalStateError
-var IllegalStateError = makeErrorClass(NAMESPACE + "IllegalStateError");
+var IllegalStateError = newErrorClass(NAMESPACE + ".IllegalStateError");
 
