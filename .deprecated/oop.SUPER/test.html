@@ -1,0 +1,30 @@
+<script type="text/javascript" src="comp.js"></script>
+<script type="text/javascript">
+    with ( oop ) {
+        function Foo ( ) {
+        }
+        var proto = Foo.prototype;
+        proto.toString = function ( ) {
+            return "[object Foo]";
+        };
+        proto.hoge = function ( ) {
+            document.write("This is Foo's hoge.");
+        };
+    
+        function Bar ( ) {
+        }
+        var proto = Bar.prototype = new Foo;
+        proto.toString = function ( ) {
+            return "[object Bar]";
+        };
+        proto.hoge = function ( ) {
+            this.SUPER(Bar).hoge();
+            this.Super(Bar)("hoge")();
+            document.write("This is Bar's hoge.");
+        };
+        
+        var o = new Bar;
+        document.write(o + "<br>");
+        o.hoge();
+    }
+</script>
