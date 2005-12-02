@@ -15,8 +15,9 @@ data.error.Error = function ( message ) {
     }
 };
 var proto = data.error.Error.prototype = new Error();
-proto.name    = NAMESPACE + ".Error";
-proto.message = "something's wrong";
+proto.constructor = data.error.Error;
+proto.name        = NAMESPACE + ".Error";
+proto.message     = "something's wrong";
 proto.toString = function ( ) {
     var s = String(this.message);
     return  s  ?  this.name + ": " + s
@@ -37,7 +38,8 @@ function newErrorClass ( name, init ) {
         }
     };
     var proto = c.prototype = new data.error.Error();
-    proto.name = name;
+    proto.constructor = c;
+    proto.name        = name;
     return c;
 }
 
@@ -52,8 +54,9 @@ function Exception ( message ) {
     }
 }
 var proto = Exception.prototype = new Error();
-proto.name    = NAMESPACE + ".Exception";
-proto.message = "an exception has occurred.";
+proto.constructor = Exception;
+proto.name        = NAMESPACE + ".Exception";
+proto.message     = "an exception has occurred.";
 proto.toString = function ( ) {
     var s = String(this.message);
     return  s  ?  this.name + ": " + s
@@ -74,7 +77,8 @@ function newExceptionClass ( name, init ) {
         }
     };
     var proto = c.prototype = new Exception();
-    proto.name = name;
+    proto.constructor = c;
+    proto.name        = name;
     return c;
 }
 
