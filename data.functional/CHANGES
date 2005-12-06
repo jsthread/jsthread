@@ -21,3 +21,8 @@ ver. 0.1.0
 　・Array.prototype.concatの実装を書きかえることにした。
 　・他に修正いっぱい。
 
+
+ver. 0.2.0
+　・oop.SUPERがdeprecatedになったのでその対応。
+　・data.enumerableのAPIが変更された（forEachに改名）ので、対応。
+　・every・someメソッドを追加。

@@ -1,4 +1,5 @@
 //@esmodpp
+//@version 0.1.0
 
 //@require data.error.NotImplementedError
 //@with-namespace data.error
@@ -31,7 +32,7 @@ proto.toArray = function ( ) {
     return a;
 };
 
-proto.foreach = function ( f ) {
+proto.forEach = function ( f ) {
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         try {
             f( it.value() );
@@ -66,7 +67,7 @@ function DiscontinueException ( args ) {
 }
 var proto = DiscontinueException.prototype;
 proto.name    = NAMESPACE + ".DiscontinueException";
-proto.message = "unusual use of `discontinue' (this should be caught by `foreach' or another iteration-methods).";
+proto.message = "unusual use of `discontinue' (this should be caught by `forEach' or another iteration-methods).";
 
 
 //@export ignore
@@ -80,7 +81,7 @@ function IgnoreException ( args ) {
 }
 var proto = IgnoreException.prototype;
 proto.name    = NAMESPACE + ".IgnoreException";
-proto.message = "unusual use of `ignore' (this should be caught by `foreach' or another iteration-methods).";
+proto.message = "unusual use of `ignore' (this should be caught by `forEach' or another iteration-methods).";
 
 
 //@export return_list
@@ -94,6 +95,6 @@ function ReturnListException ( args ) {
 }
 var proto = ReturnListException.prototype;
 proto.name    = NAMESPACE + ".ReturnListException";
-proto.message = "unusual use of `return_list' (this should be caught by `foreach' or another iteration-methods).";
+proto.message = "unusual use of `return_list' (this should be caught by `forEach' or another iteration-methods).";
 
 

@@ -1,8 +1,9 @@
 //@esmodpp
-//@require data.error
-//@require oop.SUPER
+//@version 0.1.1
 
+//@require data.error
 //@namespace data.error
+
 
 //@export NotSupportedError
 var NotSupportedError = newErrorClass(
@@ -17,14 +18,14 @@ var proto = NotSupportedError.prototype;
 proto.message = "an optional method is not supported.";
 
 proto.toString = function ( ) {
-    if ( this.hasOwnProperty("message") ) {
-        return this.Super(NotSupportedError)("toString")();
-    }
-    else if ( this.method ) {
-        return (new NotImplementedError("an optional method `" + this.method + "' is not supported")).toString();
+    if ( this.hasOwnProperty("message") || !this.methd ) {
+        return Error.prototype.toString.call(this);
     }
     else {
-        return this.Super(NotSupportedError)("toString")();
+        var e = new NotSupportedError();
+        for ( var i in this ) e[i] = this[i];
+        e.message = "an optional method `" + this.method + "' is not supported";
+        return e.toString();
     }
 };
 

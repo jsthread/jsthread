@@ -1,13 +1,11 @@
 //@esmodpp
-//@version 0.1.0
+//@version 0.2.0
 
 //@require data.enumerable
 //@with-namespace data.enumerable
 
 //@require data.error.NotImplementedError
 //@with-namespace data.error
-
-//@require oop.SUPER
 
 
 //@namespace data.functional
@@ -161,6 +159,19 @@ proto.foldl1 = function ( f ) {
 };
 
 
+proto.every = function ( f ) {
+    return this.foldl(function ( it ) {
+        return f(it) || discontinue(false);
+    }, true);
+};
+
+proto.some = function ( f ) {
+    return this.foldl(function ( it ) {
+        return f(it) && discontinue(true);
+    }, false);
+};
+
+
 
 //@export List
 function List ( ) {
@@ -188,7 +199,7 @@ proto.unshift = function ( ) {
 
 proto.equals = function ( another ) {
     if ( !(another instanceof List) ) return false;
-    return this.Super(List)("equals")(another);
+    return Collection.prototype.equals.call(this, another);
 };
 
 proto.head = function ( ) {
@@ -229,7 +240,7 @@ proto.concat = function ( /* variable arguments */ ) {
     for ( var i=-1;  i < arguments.length;  i++ ) {
         var e = arguments[i];
         if ( e instanceof List ) {
-            e.foreach(function(it){
+            e.forEach(function(it){
                 list.push(it)
             });
         }
