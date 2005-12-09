@@ -1,12 +1,10 @@
 //@esmodpp
-//@version 0.0.0
+//@version 0.0.1
 
 //@require data.iterator
 //@with-namespace data.iterator
 
 //@require data.functional
-//@with-namespace data.functional
-
 //@require data.functional.array
 
 //@require data.error.NotSupportedError
@@ -15,12 +13,28 @@
 
 var proto = String.prototype;
 
-for ( var i in List.prototype ) {
-    if ( !proto.hasOwnProperty(i) ) proto[i] = List.prototype[i];
+for ( var i in data.functional.List.prototype ) {
+    if ( !proto.hasOwnProperty(i) ) proto[i] = data.functional.List.prototype[i];
 }
 
 proto.add = function ( ) {
-    throw new NotSupportedError("String objects do not support `add' method.", "add");
+    throw new NotSupportedError("String objects do not support `add' method. They are immutable.", "add");
+};
+
+proto.pop = function ( ) {
+    throw new NotSupportedError("String objects do not support `pop' method. They are immutable.", "pop");
+};
+
+proto.push = function ( ) {
+    throw new NotSupportedError("String objects do not support `push' method. They are immutable.", "push");
+};
+
+proto.shift = function ( ) {
+    throw new NotSupportedError("String objects do not support `shift' method. They are immutable.", "shift");
+};
+
+proto.unshift = function ( ) {
+    throw new NotSupportedError("String objects do not support `unshift' method. They are immutable.", "unshift");
 };
 
 proto.isEmpty = function ( ) {
@@ -28,7 +42,7 @@ proto.isEmpty = function ( ) {
 };
 
 proto.empty = function ( ) {
-    throw new NotSupportedError("String objects do not support `empty' method.", "empty");
+    throw new NotSupportedError("String objects do not support `empty' method. They are immutable.", "empty");
 };
 
 proto.size = function ( ) {
