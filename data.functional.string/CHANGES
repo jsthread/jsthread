@@ -1,3 +1,6 @@
 ver. 0.0.1
-　pop、push、shift、unshiftがNotSupportedErrorをthrowするようにした。
+	・pop、push、shift、unshiftがNotSupportedErrorをthrowするようにした。
 
+
+ver. 0.0.2
+	・distanceメソッドを実装した。

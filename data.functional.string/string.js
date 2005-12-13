@@ -147,6 +147,12 @@ proto.equals = function ( another ) {
     return this._pos == another._pos;
 };
 
+proto.distance = function ( another ) {
+    if ( this.constructor != another.constructor ) return undefined;
+    if ( this._str != another._str ) return undefined;
+    return another._pos - this._pos;
+};
+
 
 function ReverseIterator ( s, n ) {
     Iterator.apply(this, arguments);

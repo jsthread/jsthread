@@ -1,5 +1,5 @@
 //@esmodpp
-//@version 0.0.0
+//@version 0.0.1
 
 //@require data.iterator
 //@with-namespace data.iterator
@@ -126,6 +126,12 @@ proto.equals = function ( another ) {
     return this._pos == another._pos;
 };
 
+proto.distance = function ( another ) {
+    if ( this.constructor != another.constructor ) return undefined;
+    if ( this._arr != another._arr ) return undefined;
+    return another._pos - this._pos;
+};
+
 
 function ReverseIterator ( a, n ) {
     Iterator.apply(this, arguments);
@@ -151,5 +157,4 @@ proto.assign = function ( v ) {
     if ( this._pos < 0 ) this._pos = 0;
     return this._arr[this._arr.length-1-Math.floor(this._pos)] = v;
 };
-
 
