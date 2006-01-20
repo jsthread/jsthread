@@ -1,4 +1,4 @@
-with ( data.list ) {
+with ( data ) {
 	var a = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	var x = 0;
 	for ( var i=0;  i < a.length;  i++ ) {
@@ -6,7 +6,7 @@ with ( data.list ) {
 	}
 	show("x = " + x);
 	
-	var l = List.fromArray(a);
+	var l = LinkedList.fromArray(a);
 	var y = l.filter(function(x){
 	            return x % 3 == 0
 	        }).map(function(x){

@@ -1,0 +1,4 @@
+ver. 0.3.0
+	・data.functionalから独立
+	・reverse_iteratorをreverseIteratorに改名
+	・removeAtメソッドを追加

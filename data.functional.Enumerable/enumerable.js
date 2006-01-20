@@ -1,11 +1,11 @@
 //@esmodpp
-//@version 0.1.0
+//@version 0.2.0
 
 //@require data.error.NotImplementedError
 //@with-namespace data.error
 
 
-//@namespace data.enumerable
+//@namespace data.functional
 
 
 //@export Enumerable
@@ -54,6 +54,71 @@ proto.forEach = function ( f ) {
     }
 };
 
+proto.fold = function ( f, s ) {
+    for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
+        try {
+            s = f(s, it.value());
+        }
+        catch ( e ) {
+            if ( e instanceof DiscontinueException ) {
+                return e.args[e.args.length-1];
+            }
+            else if ( e instanceof IgnoreException ) {
+                // Do nothing.
+            }
+            else if ( e instanceof ReturnListException ) {
+                s = e.args[e.args.length-1];
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.fold1 = function ( f ) {
+    var it = this.iterator();
+    if ( it.isTail() ) throw new EmptyEnumerationError();
+    var s = it.value();
+    it = it.next();
+    for ( ;  !it.isTail();  it=it.next() ) {
+        try {
+            s = f(s, it.value());
+        }
+        catch ( e ) {
+            if ( e instanceof DiscontinueException ) {
+                return e.args[e.args.length-1];
+            }
+            else if ( e instanceof IgnoreException ) {
+                // Do nothing.
+            }
+            else if ( e instanceof ReturnListException ) {
+                s = e.args[e.args.length-1];
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+
+proto.every = function ( f ) {
+    return this.fold(function ( x, y ) {
+        y = f(y);
+        return y || discontinue(y);
+    }, true);
+};
+
+proto.some = function ( f ) {
+    return this.fold(function ( x, y ) {
+        y = f(y);
+        return y && discontinue(y);
+    }, false);
+};
+
 
 
 //@export discontinue
@@ -98,3 +163,7 @@ proto.name    = NAMESPACE + ".ReturnListException";
 proto.message = "unusual use of `return_list' (this should be caught by `forEach' or another iteration-methods).";
 
 
+
+//@export EmptyEnumerationError
+var EmptyEnumerationError = newErrorClass("EmptyEnumerationError");
+EmptyEnumerationError.prototype.message = "empty enumeration";

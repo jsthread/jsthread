@@ -26,3 +26,9 @@ ver. 0.2.0
 　・oop.SUPERがdeprecatedになったのでその対応。
 　・data.enumerableのAPIが変更された（forEachに改名）ので、対応。
 　・every・someメソッドを追加。
+
+
+ver. 0.3.0
+　・data.functional.Collectionとdata.functional.Listを独立したモジュールにした
+　・これに伴い、このモジュールはdata.functional.array, data.functional.stringを
+　　一括してrequireするショートカットとなった

@@ -4,3 +4,8 @@ ver. 0.0.1
 
 ver. 0.0.2
 	・distanceメソッドを実装した。
+
+
+ver. 0.1.0
+	・reverse_iteratorがreverseIteratorに改名されたことへの対応
+	・addAll, remove, removeAll, removeAtの実装を追加

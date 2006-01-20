@@ -1,10 +1,9 @@
 //@esmodpp
-//@version 0.0.1
+//@version 0.1.0
 
 //@require data.iterator
 //@with-namespace data.iterator
 
-//@require data.functional
 //@require data.functional.array
 
 //@require data.error.NotSupportedError
@@ -18,23 +17,39 @@ for ( var i in data.functional.List.prototype ) {
 }
 
 proto.add = function ( ) {
-    throw new NotSupportedError("String objects do not support `add' method. They are immutable.", "add");
+    throw new NotSupportedError("String does not support `add' method, because it is immutable.", "add");
+};
+
+proto.addAll = function ( ) {
+    throw new NotSupportedError("String does not support `addAll' method, because it is immutable.", "addAll");
+};
+
+proto.remove = function ( ) {
+    throw new NotSupportedError("String does not support `remove' method, because it is immutable.", "remove");
+};
+
+proto.removeAll = function ( ) {
+    throw new NotSupportedError("String does not support `removeAll' method, because it is immutable.", "removeAll");
+};
+
+proto.removeAt = function ( ) {
+    throw new NotSupportedError("String does not support `removeAt' method, because it is immutable.", "removeAt");
 };
 
 proto.pop = function ( ) {
-    throw new NotSupportedError("String objects do not support `pop' method. They are immutable.", "pop");
+    throw new NotSupportedError("String does not support `pop' method, because it is immutable.", "pop");
 };
 
 proto.push = function ( ) {
-    throw new NotSupportedError("String objects do not support `push' method. They are immutable.", "push");
+    throw new NotSupportedError("String does not support `push' method, because it is immutable.", "push");
 };
 
 proto.shift = function ( ) {
-    throw new NotSupportedError("String objects do not support `shift' method. They are immutable.", "shift");
+    throw new NotSupportedError("String does not support `shift' method, because it is immutable.", "shift");
 };
 
 proto.unshift = function ( ) {
-    throw new NotSupportedError("String objects do not support `unshift' method. They are immutable.", "unshift");
+    throw new NotSupportedError("String does not support `unshift' method, because it is immutable.", "unshift");
 };
 
 proto.isEmpty = function ( ) {
@@ -42,7 +57,7 @@ proto.isEmpty = function ( ) {
 };
 
 proto.empty = function ( ) {
-    throw new NotSupportedError("String objects do not support `empty' method. They are immutable.", "empty");
+    throw new NotSupportedError("String does not support `empty' method, because it is immutable.", "empty");
 };
 
 proto.size = function ( ) {
@@ -73,7 +88,7 @@ proto.iterator = function ( n ) {
     return new Iterator(this, n);
 };
 
-proto.reverse_iterator = function ( n ) {
+proto.reverseIterator = function ( n ) {
     return new ReverseIterator(this, n);
 };
 

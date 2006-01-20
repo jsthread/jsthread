@@ -1,10 +1,10 @@
-with ( data.list ) {
+with ( data ) {
 	var n = 5;
 	var a = [];
 	for ( var i=0;  i < n;  i++ ) a[i] = Math.random();
 	
-	var l1 = new List(a[0], a[1], a[2], a[3], a[4]);
-	var l2 = List.fromArray(a);
+	var l1 = new LinkedList(a[0], a[1], a[2], a[3], a[4]);
+	var l2 = LinkedList.fromArray(a);
 	
 	for ( var it1=l1.iterator(), it2=l2.iterator();
 	      !it1.isTail() && !it2.isTail();

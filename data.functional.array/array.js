@@ -1,11 +1,18 @@
 //@esmodpp
-//@version 0.0.1
+//@version 0.1.0
 
 //@require data.iterator
 //@with-namespace data.iterator
 
-//@require data.functional
+//@require data.functional.List
 //@with-namespace data.functional
+
+//@require util.equivalent
+//@with-namespace util
+
+//@require data.error.IndexOutOfBoundsError
+//@with-namespace data.error
+
 
 
 var proto = Array.prototype;
@@ -15,6 +22,30 @@ for ( var i in List.prototype ) {
 }
 
 proto.add = proto.push;
+
+proto.remove = function ( /* variable arguments */ ) {
+    var changed = 0;
+    for ( var i=0;  i < arguments.length;  i++ ) {
+        var arg = arguments[i];
+        for ( var j=0;  j < this.length;  j++ ) {
+            if ( equivalent(arg, this[j]) ) {
+                this.splice(j, 1);
+                changed++;
+                break;
+            }
+        }
+    }
+    return changed;
+};
+
+proto.removeAt = function ( x ) {
+    i = Math.floor(x);
+    if ( isNaN(i)         ) throw new TypeError("`" + x + "' is not a number");
+    if ( i < 0            ) i += this.length;
+    if ( i < 0            ) throw new IndexOutOfBoundsError("`" + x + "' is too small.");
+    if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + x + "' is too large.");
+    return this.splice(i, 1)[0];
+};
 
 proto.isEmpty = function ( ) {
     return this.length == 0;
@@ -57,7 +88,7 @@ proto.iterator = function ( n ) {
     return new Iterator(this, n);
 };
 
-proto.reverse_iterator = function ( n ) {
+proto.reverseIterator = function ( n ) {
     return new ReverseIterator(this, n);
 };
 

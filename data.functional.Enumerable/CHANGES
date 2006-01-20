@@ -1,0 +1,8 @@
+ver. 0.1.0
+　・JavaScript 1.6に合わせて、メソッド名をforEachに変更。
+
+ver. 0.2.0
+	・モジュール名をdata.functional.Enumerableに改名。
+	・data.functional.Collectionから、foldとfold1の実装を移した。
+	・data.functional.Collectionから、everyとsomeの実装の修正版を移した。
+

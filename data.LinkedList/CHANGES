@@ -1,0 +1,12 @@
+ver. 0.1.0
+	・esmodpp（escat）を使ったモジュール化に対応。
+	・事実上、最初のバージョン。
+
+
+ここまでdata.list。
+ここからdata.LinkedList
+
+
+ver. 0.2.0
+	・モジュール名を改名
+	・remove, removeAtを実装
