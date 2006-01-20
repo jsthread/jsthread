@@ -1,20 +1,25 @@
 //@esmodpp
-//@version 0.1.0
+//@version 0.2.0
 
-//@require data.functional
+//@namespace data
+
+
+//@require data.functional.List
+//@with-namespace data.functional
 
 //@require data.iterator
 //@with-namespace data.iterator
+
+//@require util.equivalent
+//@with-namespace util
 
 //@require data.error.IndexOutOfBoundsError
 //@with-namespace data.error
 
 
-//@namespace data.list
 
-
-//@export List
-function List ( /* variable arguments */ ) {
+//@export LinkedList
+function LinkedList ( /* variable arguments */ ) {
     this._value   = undefined;
     this._prev    = this;
     this._next    = this;
@@ -22,23 +27,23 @@ function List ( /* variable arguments */ ) {
     for ( var i=0;  i < arguments.length;  i++ ) this.push(arguments[i]);
 }
 
-List.fromArray = function ( arr ) {
+LinkedList.fromArray = function ( arr ) {
     if ( !arr ) throw new TypeError("Array object is required");
-    var l = new List();
+    var l = new LinkedList();
     for ( var i=0;  i < arr.length;  i++ ) l.push(arr[i]);
     return l;
 };
 
 
 function makeContainer ( v ) {
-    var c = new List();
+    var c = new LinkedList();
     c._value = v;
     return c;
 }
 
 
-var proto = List.prototype = new data.functional.List();
-proto.constructor = List;
+var proto = LinkedList.prototype = new List();
+proto.constructor = LinkedList;
 
 proto.isEmpty = function ( ) {
     return this._next === this;
@@ -63,7 +68,7 @@ proto.copy = function ( ) {
 };
 
 proto.equals = function ( list ) {
-    if ( !( list instanceof List ) ) return false;
+    if ( !( list instanceof LinkedList ) ) return false;
     var c1 = this._next;
     var c2 = list._next;
     for ( ;  c1 !== this  &&  c2 !== list;  c1=c1._next, c2=c2._next ) {
@@ -148,6 +153,30 @@ proto.unshift = function ( /* variable arguments */ ) {
     }
 };
 
+proto.remove = function ( /* variable arguments */ ) {
+    var changed = 0;
+    for ( var i=0;  i < arguments.length;  i++ ) {
+        var arg = arguments[i];
+        for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
+            if ( equivalent(arg, it.value()) ) {
+                it.remove();
+                changed++;
+                break;
+            }
+        }
+    }
+    return changed;
+};
+
+proto.removeAt = function ( x ) {
+    i = Math.floor(x);
+    if ( isNaN(i)                    ) throw new TypeError("`" + x + "' is not a number");
+    if ( i < 0  &&  i < -this.size() ) throw new IndexOutOfBoundsError("`" + x + "' is too small.");
+    i = this.iterator(i);
+    if ( i.isTail()                  ) throw new IndexOutOfBoundsError("`" + x + "' is too large.");
+    return i.remove();
+};
+
 proto.toArray = function ( ) {
     var a = [];
     for ( var c=this._next;  c !== this;  c=c._next ) a.push(c._value);
@@ -167,7 +196,7 @@ proto.iterator = function ( n ) {
     return it;
 };
 
-proto.reverse_iterator = function ( n ) {
+proto.reverseIterator = function ( n ) {
     n = Math.floor(n);
     if ( !n ) n = 0;
     var it;
@@ -183,7 +212,7 @@ proto.reverse_iterator = function ( n ) {
 
 
 function Iterator ( l, c ) {
-    this._top = l;  // List which this iterator belongs to.
+    this._top = l;  // LinkedList object which this iterator belongs to.
     this._pos = c;  // Current position; abstractly iterator points to just before this container
 }
 
@@ -195,7 +224,7 @@ proto.copy = function ( ) {
 };
 
 proto.compareTo = function ( another ) {
-    if ( !(another instanceof Iterator) ) throw new TypeError("`" + another + "' is not a iterator of " + NAMESPACE + ".List");
+    if ( !(another instanceof Iterator) ) throw new TypeError("`" + another + "' is not a iterator of " + NAMESPACE + ".LinkedList");
     if ( this._top !== another._top     ) throw new IllegalStateError("Two iterators belong to different lists.");
     var l = this._pos;
     var r = another._pos;
@@ -271,7 +300,7 @@ proto.remove = function ( ) {
 
 
 function ReverseIterator ( l, c ) {
-    this._top = l;  // List which this iterator belongs to.
+    this._top = l;  // LinkedList object which this iterator belongs to.
     this._pos = c;  // Current position; abstractly iterator points to just before this container
 }
 
@@ -284,7 +313,7 @@ proto.copy = function ( ) {
 };
 
 proto.compareTo = function ( another ) {
-    if ( !(another instanceof ReverseIterator) ) throw new TypeError("`" + another + "' is not a reverse-iterator of " + NAMESPACE + ".List");
+    if ( !(another instanceof ReverseIterator) ) throw new TypeError("`" + another + "' is not a reverse-iterator of " + NAMESPACE + ".LinkedList");
     if ( this._top !== another._top            ) throw new IllegalStateError("Two iterators belong to different lists.");
     var l = this._pos;
     var r = another._pos;
