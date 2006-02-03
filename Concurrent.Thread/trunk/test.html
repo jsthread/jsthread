@@ -1,0 +1,65 @@
+<body>
+</body>
+<script type="text/javascript" src="compile.js"></script>
+<script type="text/javascript">
+
+    with ( concurrent.thread ) {
+
+        function println ( s ) {
+            document.body.innerHTML += s + "<br>";
+        }
+    
+        /*
+            function f ( s, n ) {
+                for ( var i=0;  i < n;  i++ ) {
+                    println(s + ": " + i);
+                }
+            }
+            
+            function f ( s, n ) {
+                    var i=0;
+                    goto label1;
+                label1:
+                    if ( !(i < n) ) goto label3;
+                    println(s + ": " + n);
+                    goto label3;
+                label2:
+                    i++;
+                    goto label1;
+                label3:
+            }
+         */
+    
+        function f ( $this_val, $arguments, $continuation ) {
+            return function ( s, n ) {
+                var i=0;
+                return {continuation:new concurrent.thread.Continuation(label1, this, arguments)};
+                function label1 ( $this_val, $arg_list, $ret_val ) {
+                    return function(){
+                        if ( !(i < n) ) return {continuation:new concurrent.thread.Continuation(label3, this, arguments)};
+                        println(s + ": " + i);
+                        return {continuation:new concurrent.thread.Continuation(label2, this, arguments)};
+                    }.apply($this_val, $arg_list);
+                }
+                function label2 ( $this_val, $arg_list, $ret_val ) {
+                    return function(){
+                        i++;
+                        return {continuation:new concurrent.thread.Continuation(label1, this, arguments)};
+                    }.apply($this_val, $arg_list);
+                }
+                function label3 ( $this_val, $arg_list, $ret_val ) {
+                    return function(){
+                        return {continuation:$continuation};
+                    }.apply($this_val, $arg_list);
+                }
+            }.apply($this_val, $arguments);
+        }
+    
+        var tf = new ThreadedFunction(f);
+    
+        TIME_SLICE = 0;
+        var t1 = tf.start("foo", 10);
+        var t2 = tf.start("bar",  5);
+    }
+
+</script>
