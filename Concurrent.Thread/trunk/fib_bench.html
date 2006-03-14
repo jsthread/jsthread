@@ -3,62 +3,54 @@
 
     var l = 10;
 
-    var tf = new concurrent.thread.ThreadedFunction(
-        function ( $this_val, $arguments, $continuation ) {
-            return function( n ){
-                $arguments = arguments;
-                var t0, i, j, x, y, z;
-                    t0 = new Date();
-                    j=0;
-                    return {continuation:new concurrent.thread.Continuation(label1, this, arguments)};
-                function label1 ( $this_val, $arguments, $ret_val ) {
-                    return function(){
+    var tf = (function(){
+        var $self = new concurrent.thread.ThreadedFunction(
+            function fib_obj ( $this_val, $arguments, $continuation ) {
+                return function( n ){
+                    $arguments = arguments;
+                    $arguments.callee = $self;
+                    var t0, i, j, x, y, z;
+                        t0 = new Date();
+                        j=0;
+                        return {continuation:new concurrent.thread.Continuation(label1, this)};
+                    function label1 ( $ret_val ) {
                         arguments = $arguments;
-                        if ( !(j < l) ) return {continuation:new concurrent.thread.Continuation(label3, this, arguments)};
+                        if ( !(j < l) ) return {continuation:new concurrent.thread.Continuation(label3, this)};
                         i=2, x=1, y=1, z;
-                        return {continuation:new concurrent.thread.Continuation(label4, this, arguments)};
-                    }.call($this_val);
-                }
-                function label4 ( $this_val, $arguments, $ret_val ) {
-                    return function(){
+                        return {continuation:new concurrent.thread.Continuation(label4, this)};
+                    }
+                    function label4 ( $ret_val ) {
                         arguments = $arguments;
-                        if ( !(i <= n) ) return {continuation:new concurrent.thread.Continuation(label6, this, arguments)};
+                        if ( !(i <= n) ) return {continuation:new concurrent.thread.Continuation(label6, this)};
                         z = x + y;
                         x = y;
                         y = z;
-                        return {continuation:new concurrent.thread.Continuation(label5, this, arguments)};
-                    }.call($this_val);
-                }
-                function label5 ( $this_val, $arguments, $ret_val ) {
-                    return function(){
+                        return {continuation:new concurrent.thread.Continuation(label5, this)};
+                    }
+                    function label5 ( $ret_val ) {
                         arguments = $arguments;
                         i++;
-                        return {continuation:new concurrent.thread.Continuation(label4, this, arguments)};
-                    }.call($this_val);
-                }
-                function label6 ( $this_val, $arguments, $ret_val ) {
-                    return function(){
+                        return {continuation:new concurrent.thread.Continuation(label4, this)};
+                    }
+                    function label6 ( $ret_val ) {
                         arguments = $arguments;
-                        return {continuation:new concurrent.thread.Continuation(label2, this, arguments)};
-                    }.call($this_val);
-                }
-                function label2 ( $this_val, $arguments, $ret_val ) {
-                    return function(){
+                        return {continuation:new concurrent.thread.Continuation(label2, this)};
+                    }
+                    function label2 ( $ret_val ) {
                         arguments = $arguments;
                         j++;
-                        return {continuation:new concurrent.thread.Continuation(label1, this, arguments)};
-                    }.call($this_val);
-                }
-                function label3 ( $this_val, $arguments, $ret_val ) {
-                    return function(){
+                        return {continuation:new concurrent.thread.Continuation(label1, this)};
+                    }
+                    function label3 ( $ret_val ) {
                         arguments = $arguments;
                         alert(y + "\n" + ((new Date()).valueOf()-t0.valueOf()));
                         return {continuation:$continuation, ret_vat:y};
-                    }.call($this_val);
-                }
-            }.apply($this_val, $arguments);
-        }
-    );
+                    }
+                }.apply($this_val, $arguments);
+            }
+        );
+        return $self;
+    })();
 
     concurrent.thread.TIME_SLICE = Infinity;
     tf.start(1000);

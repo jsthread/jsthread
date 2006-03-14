@@ -11,16 +11,15 @@
 
 
 //@export Continuation
-function Continuation ( p, t, a ) {
+function Continuation ( p, t ) {
     this._procedure  = p;
     this._this_value = t;
-    this._arguments  = a;
 }
 
 var proto = Continuation.prototype;
 
 proto.call = function ( r ) {
-    return this._procedure(this._this_value, this._arguments, r);
+    return this._procedure.call(this._this_value, r);
 };
 
 +function(){
@@ -48,7 +47,7 @@ proto.start = function ( /* valargs */ ) {
 };
 
 +function(){
-    var name = "[object " + NAMESPACE + ".ThreadedFunction]"
+    var name = "[object " + NAMESPACE + ".ThreadedFunction]";
     proto.toString = function ( ) {
         return name;
     };
