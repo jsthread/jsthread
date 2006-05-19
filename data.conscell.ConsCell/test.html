@@ -1,0 +1,25 @@
+<script src="compile.js"></script>
+<script>
+    function println ( ) {
+        for ( var i=0;  i < arguments.length;  i++ ) document.write(arguments[i]);
+        document.writeln("<br>");
+    }
+
+
+    with ( data.conscell ) {
+        var c = cons("car", "cdr");
+        println(c);
+
+        println(c.car === car(c));
+        println(c.cdr === cdr(c));
+
+        println(nil);
+        println(nil !== "nil");
+        println(c != nil);
+        println(nil === nil);
+
+        var d = cons("head", c);
+        println(d);
+        println(cdr(d) === c);
+    }
+</script>
