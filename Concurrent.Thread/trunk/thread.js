@@ -5,15 +5,20 @@
 //@require data.LinkedList
 //@with-namespace data
 
+//@require data.conscell.ConsCell
+//@with-namespace data.conscell
+
 //@require data.error
 //@with-namespace data.error
 
 
 
 //@export Continuation
-function Continuation ( p, t ) {
+function Continuation ( p, t, c ) {
     this._procedure  = p;
     this._this_value = t;
+    this._catch      = c;
+    this._finally    = nil;   // stack consists of cons-list
 }
 
 var proto = Continuation.prototype;
@@ -153,8 +158,8 @@ proto.notify = function ( e ) {
     cancel.call(this);
     unjoin.call(this);
     this._ret_val = e;
-    if ( this._continuation.exception ) {
-        this._continuation = this._continuation.exception;
+    if ( this._continuation._catch ) {
+        this._continuation = this._continuation._catch;
         standBy.call(this, 0);
     }
     else {
