@@ -1,9 +1,9 @@
 //@esmodpp
-//@namespace test.simple
+//@namespace Test.Simple
 //@version   0.0.0
 
-//@require data.error
-//@with-namespace data.error
+//@require Data.Error
+//@with-namespace Data.Error
 
 
 //@shared PRINT_FUNC

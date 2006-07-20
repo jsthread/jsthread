@@ -1,13 +1,13 @@
 //@esmodpp
 //@version 0.1.0
 
-//@require data.error
-//@require data.error.NotImplementedError
-//@require data.error.NotSupportedError
-//@with-namespace data.error
+//@require Data.Error
+//@require Data.Error.NotImplementedError
+//@require Data.Error.NotSupportedError
+//@with-namespace Data.Error
 
 
-//@namespace data.iterator
+//@namespace Data.Iterator
 
 
 //@export Iterator

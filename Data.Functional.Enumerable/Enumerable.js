@@ -1,11 +1,11 @@
 //@esmodpp
 //@version 0.2.0
 
-//@require data.error.NotImplementedError
-//@with-namespace data.error
+//@require Data.Error.NotImplementedError
+//@with-namespace Data.Error
 
 
-//@namespace data.functional
+//@namespace Data.Functional
 
 
 //@export Enumerable

@@ -1,7 +1,7 @@
 //@esmodpp
 //@version 0.0.0
 
-//@namespace util
+//@namespace Util
 
 
 //@export equivalent

@@ -1,20 +1,20 @@
 //@esmodpp
 //@version 0.2.0
 
-//@namespace data
+//@namespace Data
 
 
-//@require data.functional.List
-//@with-namespace data.functional
+//@require Data.Functional.List
+//@with-namespace Data.Functional
 
-//@require data.iterator
-//@with-namespace data.iterator
+//@require Data.Iterator
+//@with-namespace Data.Iterator
 
-//@require util.equivalent
-//@with-namespace util
+//@require Util.Equivalent
+//@with-namespace Util
 
-//@require data.error.IndexOutOfBoundsError
-//@with-namespace data.error
+//@require Data.Error.IndexOutOfBoundsError
+//@with-namespace Data.Error
 
 
 

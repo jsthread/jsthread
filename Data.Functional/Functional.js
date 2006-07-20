@@ -1,9 +1,9 @@
 //@esmodpp
 //@version 0.3.0
 
-//@require data.functional.Enumerable
-//@require data.functional.Collection
-//@require data.functional.List
-//@require data.functional.array
-//@require data.functional.string
+//@require Data.Functional.Enumerable
+//@require Data.Functional.Collection
+//@require Data.Functional.List
+//@require Data.Functional.Array
+//@require Data.Functional.String
 

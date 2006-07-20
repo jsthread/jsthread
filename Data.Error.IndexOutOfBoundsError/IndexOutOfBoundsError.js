@@ -1,8 +1,8 @@
 //@esmodpp
 //@version 0.0.1
 
-//@require data.error
-//@namespace data.error
+//@require Data.Error
+//@namespace Data.Error
 
 
 //@export IndexOutOfBoundsError

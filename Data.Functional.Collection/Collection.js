@@ -1,13 +1,13 @@
 //@esmodpp
 //@version 0.3.0
 
-//@namespace data.functional
+//@namespace Data.Functional
 
-//@require data.functional.Enumerable
+//@require Data.Functional.Enumerable
 
-//@require data.error.NotImplementedError
-//@require data.error.NotSupportedError
-//@with-namespace data.error
+//@require Data.Error.NotImplementedError
+//@require Data.Error.NotSupportedError
+//@with-namespace Data.Error
 
 
 

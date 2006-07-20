@@ -1,6 +1,6 @@
 //@esmodpp
-//@require test.simple
-//@with-namespace test.simple
+//@require Test.Simple
+//@with-namespace Test.Simple
 
 test(2, function(){
     ok(1  , "hoge");

@@ -1,13 +1,13 @@
 //@esmodpp
 //@version 0.1.0
 
-//@require data.iterator
-//@with-namespace data.iterator
+//@require Data.Iterator
+//@with-namespace Data.Iterator
 
-//@require data.functional.array
+//@require Data.Functional.Array
 
-//@require data.error.NotSupportedError
-//@with-namespace data.error
+//@require Data.Error.NotSupportedError
+//@with-namespace Data.Error
 
 
 var proto = String.prototype;

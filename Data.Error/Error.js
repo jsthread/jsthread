@@ -1,12 +1,12 @@
 //@esmodpp
-//@use-namespace data.error
+//@use-namespace Data.Error
 // We declare `Error' in this namespace, while we need to access 
 // ECMAScript's native `Error' object.
 // That's why we don't use @namespace here.
 
 
 //@shared Error
-data.error.Error = function ( message ) {
+Data.Error.Error = function ( message ) {
     if ( message !== undefined ) this.message = message;
     var e = Error.apply(this, arguments);
     for ( var i in e ) {
@@ -14,8 +14,8 @@ data.error.Error = function ( message ) {
         this[i] = e[i];
     }
 };
-var proto = data.error.Error.prototype = new Error();
-proto.constructor = data.error.Error;
+var proto = Data.Error.Error.prototype = new Error();
+proto.constructor = Data.Error.Error;
 proto.name        = NAMESPACE + ".Error";
 proto.message     = "something's wrong";
 proto.toString = function ( ) {
@@ -37,7 +37,7 @@ function newErrorClass ( name, init ) {
             }
         }
     };
-    var proto = c.prototype = new data.error.Error();
+    var proto = c.prototype = new Data.Error.Error();
     proto.constructor = c;
     proto.name        = name;
     return c;
