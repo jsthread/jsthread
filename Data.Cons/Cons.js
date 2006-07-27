@@ -1,32 +1,33 @@
 //@esmodpp
-//@version 0.0.0
-//@namespace data.conscell
+//@version 0.1.0
+//@namespace Data.Cons
 
 
-//@export ConsCell
-function ConsCell ( car, cdr ) {
+//@export Cell
+function Cell ( car, cdr ) {
     this.car = car;
     this.cdr = cdr;
 }
+Cell.prototype.constructor = Cell;
 
-ConsCell.prototype.toString = function ( ) {
+Cell.prototype.toString = function ( ) {
     return "(" + this.car + " . " + this.cdr + ")";
 };
 
-ConsCell.prototype.isNil = function ( ) {
+Cell.prototype.isNil = function ( ) {
     return false;
 };
 
 
 //@export nil
-var nil = new ConsCell();
+var nil = new Cell();
 nil.toString = function ( ) { return "nil"; };
 nil.isNil    = function ( ) { return true;  };
 
 
 //@export cons
 function cons ( car, cdr ) {
-    return new ConsCell(car, cdr);
+    return new Cell(car, cdr);
 }
 
 
