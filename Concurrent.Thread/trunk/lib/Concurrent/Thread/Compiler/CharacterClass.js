@@ -6,12 +6,12 @@
 //@export isAlpha
 function isAlpha ( c )
 {
-    // Use 'Z' < 'a'
-    if (c <= 'Z') {
-        return 'A' <= c;
-    } else {
-        return 'a' <= c && c <= 'z';
-    }
+    c = c.charCodeAt(0);
+    // #generated# Last update: Tue, 01 Aug 2006 16:31:50 +0900
+    return c <= 0x5A ?
+    0x41 <= c :
+    0x61 <= c && c <= 0x7A;
+    // #/generated#
 }
 
 
@@ -19,7 +19,23 @@ function isAlpha ( c )
 function isDigit ( c )
 {
     c = c.charCodeAt(0);
-    return 0x30 <= c && c <= 0x39;  // '0' <= c <= '9'
+    // #generated# Last update: Tue, 01 Aug 2006 21:02:15 +0900
+    return 0x30 <= c && c <= 0x39;
+    // #/generated#
+}
+
+
+//@export isHexDigit
+function isHexDigit  ( c )
+{
+    c = c.charCodeAt(0);
+    // #generated# Last update: Tue, 01 Aug 2006 15:49:52 +0900
+    return c <= 0x46 ?
+    c <= 0x39 ?
+    0x30 <= c :
+    0x41 <= c :
+    0x61 <= c && c <= 0x66;
+    // #/generated#
 }
 
 
@@ -115,9 +131,14 @@ function isFormatChar ( c )
 }
 
 
-//@export isUnicodeLetter
-function isUnicodeLetter ( c ) {
+//@export isIdentifierStart
+function isIdentifierStart ( c ) {
     var c = c.charCodeAt(0);
+    switch ( c ) {
+    case 0x24:  // '$'
+    case 0x5F:  // '_'
+        return true;
+    }
     // the following code is derived from the Unicode category Lu, Ll, Lt, Lm, Lo, and Nl based on:
     // http://www.unicode.org/Public/UNIDATA/extracted/DerivedGeneralCategory.txt
     // #generated# Last update: Tue, 01 Aug 2006 01:47:30 +0900
@@ -846,9 +867,14 @@ function isUnicodeLetter ( c ) {
 }
 
 
-//@export isUnicodeIdentifierPart
-function isUnicodeIdentifierPart ( c ) {
+//@export isIdentifierPart
+function isIdentifierPart ( c ) {
     var c = c.charCodeAt(0);
+    switch ( c ) {
+    case 0x24:  // '$'
+    case 0x5F:  // '_'
+        return true;
+    }
     // the following code is derived from the Unicode category Lu, Ll, Lt, Lm, Lo, Nl, Mn, Mc, Nd, and Pc based on:
     // http://www.unicode.org/Public/UNIDATA/extracted/DerivedGeneralCategory.txt
     // #generated# Last update: Tue, 01 Aug 2006 02:00:01 +0900

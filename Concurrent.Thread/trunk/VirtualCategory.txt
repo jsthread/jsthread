@@ -1,0 +1,22 @@
+# This UCD-formatted file is prepared  to generate the codes for 
+# "isAlpha", "isDigit", "isHexDigit" by "UCD_category_to_js.pl".
+
+
+# Al -- alphabets
+
+0041..005A  ; Al  # A..Z
+0061..007A  ; Al  # a..z
+
+
+
+# Dd -- decimal digits
+
+0030..0039  ; Dd  # 0..9
+
+
+
+# Hd -- hexadecimal digits
+
+0030..0039  ; Hd  # 0..9
+0041..0046  ; Hd  # A..F
+0061..0066  ; Hd  # a..f

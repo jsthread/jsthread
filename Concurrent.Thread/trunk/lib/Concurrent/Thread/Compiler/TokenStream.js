@@ -121,7 +121,7 @@ proto.tokenToString = function ( token )
         return name;
     }
     return "";
-}
+};
 
 
 function isKeyword ( s )
@@ -204,8 +204,6 @@ proto.getLineno = function ( ) { return this.lineno; };
 
 proto.getString = function ( ) { return this.string; };
 
-proto.getNumber = function ( ) { return this.number; };
-
 proto.eof = function ( ) { return this.hitEOF; };
 
 
@@ -218,501 +216,395 @@ retry:
         // Eat whitespace, possibly sensitive to newlines.
         for (;;) {
             c = this.getChar();
-            if (c == EOF_CHAR) {
+            if ( c === EOF_CHAR ) {
                 return Token.EOF;
-            } else if (c == '\n') {
+            } else if ( c === '\n' ) {
                 this.dirtyLine = false;
                 return Token.EOL;
-            } else if (!isSpace(c)) {
-                if (c != '-') {
-                    dirtyLine = true;
+            } else if ( !isSpace(c) ) {
+                if ( c !== '-' ) {
+                    this.dirtyLine = true;
                 }
                 break;
             }
         }
 
-        if (c == '@') return Token.XMLATTR;
-
         // identifier/keyword/instanceof?
         // watch out for starting with a <backslash>
-        boolean identifierStart;
-        boolean isUnicodeEscapeStart = false;
-        if (c == '\\') {
-            c = getChar();
-            if (c == 'u') {
-                identifierStart = true;
+        var identifierStart      = false;
+        var isUnicodeEscapeStart = false;
+        if ( c === '\\' ) {
+            c = this.getChar();
+            if ( c === 'u' ) {
+                identifierStart      = true;
                 isUnicodeEscapeStart = true;
-                stringBufferTop = 0;
+                this.stringBuffer    = ["\\u"];
             } else {
                 identifierStart = false;
-                ungetChar(c);
+                this.ungetChar(c);
                 c = '\\';
             }
-        } else {
-            identifierStart = Character.isJavaIdentifierStart((char)c);
-            if (identifierStart) {
-                stringBufferTop = 0;
-                addToString(c);
-            }
+        } else if ( isIdentifierStart(c) ) {
+            identifierStart   = true;
+            this.stringBuffer = [c];
         }
 
-        if (identifierStart) {
-            boolean containsEscape = isUnicodeEscapeStart;
+        if ( identifierStart ) {
+            var containsEscape = isUnicodeEscapeStart;
             for (;;) {
-                if (isUnicodeEscapeStart) {
+                if ( isUnicodeEscapeStart ) {
                     // strictly speaking we should probably push-back
                     // all the bad characters if the <backslash>uXXXX
                     // sequence is malformed. But since there isn't a
                     // correct context(is there?) for a bad Unicode
                     // escape sequence in an identifier, we can report
                     // an error here.
-                    int escapeVal = 0;
-                    for (int i = 0; i != 4; ++i) {
-                        c = getChar();
-                        escapeVal = Kit.xDigitToInt(c, escapeVal);
-                        // Next check takes care about c < 0 and bad escape
-                        if (escapeVal < 0) { break; }
+                    for ( var i=0;  i != 4;  ++i ) {
+                        c = this.getChar();
+                        if ( isHexDigit(c) ) {
+                            this.addToString(c);
+                        } else {
+                            this.parser.addError("msg.invalid.escape");
+                            return Token.ERROR;
+                        }
                     }
-                    if (escapeVal < 0) {
-                        parser.addError("msg.invalid.escape");
-                        return Token.ERROR;
-                    }
-                    addToString(escapeVal);
                     isUnicodeEscapeStart = false;
                 } else {
-                    c = getChar();
+                    c = this.getChar();
                     if (c == '\\') {
-                        c = getChar();
+                        c = this.getChar();
                         if (c == 'u') {
+                            this.addToString("\\u");
                             isUnicodeEscapeStart = true;
-                            containsEscape = true;
+                            containsEscape       = true;
                         } else {
-                            parser.addError("msg.illegal.character");
+                            this.parser.addError("msg.illegal.character");
                             return Token.ERROR;
                         }
                     } else {
-                        if (c == EOF_CHAR
-                            || !Character.isJavaIdentifierPart((char)c))
-                        {
-                            break;
-                        }
-                        addToString(c);
+                        if ( !isIdentifierPart(c) ) break;
+                        this.addToString(c);
                     }
                 }
             }
-            ungetChar(c);
+            this.ungetChar(c);
 
-            String str = getStringFromBuffer();
-            if (!containsEscape) {
-                // OPT we shouldn't have to make a string (object!) to
+            var str = getStringFromBuffer();
+            if ( !containsEscape ) {
+                // OPT we shouldn't have to make a string to
                 // check if it's a keyword.
 
                 // Return the corresponding token if it's a keyword
-                int result = stringToKeyword(str);
-                if (result != Token.EOF) {
-                    if (result != Token.RESERVED) {
-                        return result;
-                    } else if (!parser.compilerEnv.
-                                    isReservedKeywordAsIdentifier())
-                    {
-                        return result;
-                    } else {
-                        // If implementation permits to use future reserved
-                        // keywords in violation with the EcmaScript,
-                        // treat it as name but issue warning
-                        parser.addWarning("msg.reserved.keyword", str);
-                    }
-                }
+                var result = stringToKeyword(str);
+                if ( result != Token.EOF ) return result;
             }
-            this.string = (String)allStrings.intern(str);
+            this.string = str;
             return Token.NAME;
         }
 
         // is it a number?
-        if (isDigit(c) || (c == '.' && isDigit(peekChar()))) {
+        if ( isDigit(c)  ||  (c==='.' && isDigit(peekChar())) ) {
+            this.stringBuffer = [];
+            var base = 10;
 
-            stringBufferTop = 0;
-            int base = 10;
-
-            if (c == '0') {
-                c = getChar();
-                if (c == 'x' || c == 'X') {
+            if ( c === '0' ) {
+                this.addToString('0');
+                c = this.getChar();
+                if ( c === 'x' || c === 'X' ) {
+                    this.addToString(c);
                     base = 16;
-                    c = getChar();
-                } else if (isDigit(c)) {
+                    c = this.getChar();
+                } else if ( isDigit(c) ) {
                     base = 8;
-                } else {
-                    addToString('0');
                 }
             }
 
-            if (base == 16) {
-                while (0 <= Kit.xDigitToInt(c, 0)) {
-                    addToString(c);
-                    c = getChar();
+            if ( base === 16 ) {
+                while ( isHexDigit(c) ) {
+                    this.addToString(c);
+                    c = this.getChar();
                 }
             } else {
-                while ('0' <= c && c <= '9') {
+                while ( isDigit(c) ) {
                     /*
                      * We permit 08 and 09 as decimal numbers, which
                      * makes our behavior a superset of the ECMA
                      * numeric grammar.  We might not always be so
                      * permissive, so we warn about it.
                      */
-                    if (base == 8 && c >= '8') {
-                        parser.addWarning("msg.bad.octal.literal",
-                                          c == '8' ? "8" : "9");
+                    if ( base === 8  &&  (c==='8' || c==='9') ) {
+                        this.parser.addWarning("msg.bad.octal.literal", c == '8' ? "8" : "9");
                         base = 10;
                     }
-                    addToString(c);
-                    c = getChar();
+                    this.addToString(c);
+                    c = this.getChar();
                 }
             }
 
-            boolean isInteger = true;
-
-            if (base == 10 && (c == '.' || c == 'e' || c == 'E')) {
-                isInteger = false;
-                if (c == '.') {
+            if ( base === 10 ) {
+                if ( c === '.' ) {
                     do {
-                        addToString(c);
-                        c = getChar();
-                    } while (isDigit(c));
+                        this.addToString(c);
+                        c = this.getChar();
+                    } while ( isDigit(c) );
                 }
-                if (c == 'e' || c == 'E') {
-                    addToString(c);
-                    c = getChar();
-                    if (c == '+' || c == '-') {
-                        addToString(c);
-                        c = getChar();
+                if ( c === 'e' || c === 'E' ) {
+                    this.addToString(c);
+                    c = this.getChar();
+                    if ( c === '+' || c === '-' ) {
+                        this.addToString(c);
+                        c = this.getChar();
                     }
-                    if (!isDigit(c)) {
-                        parser.addError("msg.missing.exponent");
+                    if ( !isDigit(c) ) {
+                        this.parser.addError("msg.missing.exponent");
                         return Token.ERROR;
                     }
                     do {
-                        addToString(c);
-                        c = getChar();
-                    } while (isDigit(c));
+                        this.addToString(c);
+                        c = this.getChar();
+                    } while ( isDigit(c) );
                 }
             }
-            ungetChar(c);
-            String numString = getStringFromBuffer();
+            this.ungetChar(c);
 
-            double dval;
-            if (base == 10 && !isInteger) {
-                try {
-                    // Use Java conversion to number from string...
-                    dval = Double.valueOf(numString).doubleValue();
-                }
-                catch (NumberFormatException ex) {
-                    parser.addError("msg.caught.nfe");
-                    return Token.ERROR;
-                }
-            } else {
-                dval = ScriptRuntime.stringToNumber(numString, 0, base);
-            }
-
-            this.number = dval;
+            this.string = this.getStringFromBuffer();
             return Token.NUMBER;
         }
 
         // is it a string?
-        if (c == '"' || c == '\'') {
-            // We attempt to accumulate a string the fast way, by
-            // building it directly out of the reader.  But if there
-            // are any escaped characters in the string, we revert to
-            // building it out of a StringBuffer.
-
-            int quoteChar = c;
-            stringBufferTop = 0;
-
-            c = getChar();
-        strLoop: while (c != quoteChar) {
-                if (c == '\n' || c == EOF_CHAR) {
-                    ungetChar(c);
-                    parser.addError("msg.unterminated.string.lit");
+        if ( c === '"' || c === "'" ) {
+            var quoteChar = c;
+            this.stringBuffer = [c];
+            c = this.getChar();
+            while ( c !== quoteChar ) {
+                if ( c === '\n' || c === EOF_CHAR ) {
+                    this.ungetChar(c);
+                    this.parser.addError("msg.unterminated.string.lit");
                     return Token.ERROR;
                 }
-
-                if (c == '\\') {
-                    // We've hit an escaped character
-                    int escapeVal;
-
-                    c = getChar();
-                    switch (c) {
-                    case 'b': c = '\b'; break;
-                    case 'f': c = '\f'; break;
-                    case 'n': c = '\n'; break;
-                    case 'r': c = '\r'; break;
-                    case 't': c = '\t'; break;
-
-                    // \v a late addition to the ECMA spec,
-                    // it is not in Java, so use 0xb
-                    case 'v': c = 0xb; break;
-
-                    case 'u':
-                        // Get 4 hex digits; if the u escape is not
-                        // followed by 4 hex digits, use 'u' + the
-                        // literal character sequence that follows.
-                        int escapeStart = stringBufferTop;
-                        addToString('u');
-                        escapeVal = 0;
-                        for (int i = 0; i != 4; ++i) {
-                            c = getChar();
-                            escapeVal = Kit.xDigitToInt(c, escapeVal);
-                            if (escapeVal < 0) {
-                                continue strLoop;
-                            }
-                            addToString(c);
-                        }
-                        // prepare for replace of stored 'u' sequence
-                        // by escape value
-                        stringBufferTop = escapeStart;
-                        c = escapeVal;
-                        break;
-                    case 'x':
-                        // Get 2 hex digits, defaulting to 'x'+literal
-                        // sequence, as above.
-                        c = getChar();
-                        escapeVal = Kit.xDigitToInt(c, 0);
-                        if (escapeVal < 0) {
-                            addToString('x');
-                            continue strLoop;
-                        } else {
-                            int c1 = c;
-                            c = getChar();
-                            escapeVal = Kit.xDigitToInt(c, escapeVal);
-                            if (escapeVal < 0) {
-                                addToString('x');
-                                addToString(c1);
-                                continue strLoop;
-                            } else {
-                                // got 2 hex digits
-                                c = escapeVal;
-                            }
-                        }
-                        break;
-
-                    case '\n':
+                if ( c === '\\' ) {
+                    this.addToString('\\');
+                    c = this.getChar();
+                    if ( c === '\n' ) {
                         // Remove line terminator after escape to follow
                         // SpiderMonkey and C/C++
-                        c = getChar();
-                        continue strLoop;
-
-                    default:
-                        if ('0' <= c && c < '8') {
-                            int val = c - '0';
-                            c = getChar();
-                            if ('0' <= c && c < '8') {
-                                val = 8 * val + c - '0';
-                                c = getChar();
-                                if ('0' <= c && c < '8' && val <= 037) {
-                                    // c is 3rd char of octal sequence only
-                                    // if the resulting val <= 0377
-                                    val = 8 * val + c - '0';
-                                    c = getChar();
-                                }
-                            }
-                            ungetChar(c);
-                            c = val;
-                        }
+                        // But, issue warning since ECMA262-3 does not allow that.
+                        this.parser.addWarning("msg.unsafe.string.lit");
+                    } else {
+                        this.addToString(c);
                     }
+                } else {
+                    this.addToString(c);
                 }
-                addToString(c);
-                c = getChar();
+                c = this.getChar();
             }
-
-            String str = getStringFromBuffer();
-            this.string = (String)allStrings.intern(str);
+            this.addToString(quoteChar);
+            this.string = getStringFromBuffer();
             return Token.STRING;
         }
 
-        switch (c) {
-        case ';': return Token.SEMI;
-        case '[': return Token.LB;
-        case ']': return Token.RB;
-        case '{': return Token.LC;
-        case '}': return Token.RC;
-        case '(': return Token.LP;
-        case ')': return Token.RP;
-        case ',': return Token.COMMA;
-        case '?': return Token.HOOK;
-        case ':':
-            if (matchChar(':')) {
+        switch ( c.charCodeAt(0) ) {
+        case 0x3B:  // ';'
+            return Token.SEMI;
+
+        case 0x5B:  // '['
+            return Token.LB;
+
+        case 0x5D:  // ']'
+            return Token.RB;
+
+        case 0x7B:  // '{'
+            return Token.LC;
+
+        case 0x7D:  // '}'
+            return Token.RC;
+
+        case 0x28:  // '('
+            return Token.LP;
+
+        case 0x29:  // ')'
+            return Token.RP;
+
+        case 0x2C:  // ','
+            return Token.COMMA;
+
+        case 0x3F:  // '?'
+            return Token.HOOK;
+
+        case 0x40:  // '@'
+            return Token.XMLATTR;
+
+        case 0x3A:  // ':'
+            if ( this.matchChar(':') ) {
                 return Token.COLONCOLON;
             } else {
                 return Token.COLON;
             }
-        case '.':
-            if (matchChar('.')) {
+
+        case 0x2E:  // '.'
+            if ( this.matchChar('.') ) {
                 return Token.DOTDOT;
-            } else if (matchChar('(')) {
+            } else if ( this.matchChar('(') ) {
                 return Token.DOTQUERY;
             } else {
                 return Token.DOT;
             }
 
-        case '|':
-            if (matchChar('|')) {
+        case 0x7C:  // '|'
+            if ( this.matchChar('|') ) {
                 return Token.OR;
-            } else if (matchChar('=')) {
+            } else if ( this.matchChar('=') ) {
                 return Token.ASSIGN_BITOR;
             } else {
                 return Token.BITOR;
             }
 
-        case '^':
-            if (matchChar('=')) {
+        case 0x5E:  // '^'
+            if ( this.matchChar('=') ) {
                 return Token.ASSIGN_BITXOR;
             } else {
                 return Token.BITXOR;
             }
 
-        case '&':
-            if (matchChar('&')) {
+        case 0x26:  // '&'
+            if ( this.matchChar('&') ) {
                 return Token.AND;
-            } else if (matchChar('=')) {
+            } else if ( this.matchChar('=') ) {
                 return Token.ASSIGN_BITAND;
             } else {
                 return Token.BITAND;
             }
 
-        case '=':
-            if (matchChar('=')) {
-                if (matchChar('='))
+        case 0x3D:  // '='
+            if ( this.matchChar('=') ) {
+                if ( this.matchChar('=') ) {
                     return Token.SHEQ;
-                else
+                } else {
                     return Token.EQ;
+                }
             } else {
                 return Token.ASSIGN;
             }
 
-        case '!':
-            if (matchChar('=')) {
-                if (matchChar('='))
+        case 0x21:  // '!'
+            if ( this.matchChar('=') ) {
+                if ( this.matchChar('=') ) {
                     return Token.SHNE;
-                else
+                } else {
                     return Token.NE;
+                }
             } else {
                 return Token.NOT;
             }
 
-        case '<':
+        case 0x3C:  // '<'
             /* NB:treat HTML begin-comment as comment-till-eol */
-            if (matchChar('!')) {
-                if (matchChar('-')) {
-                    if (matchChar('-')) {
-                        skipLine();
+            if ( this.matchChar('!') ) {
+                if ( this.matchChar('-') ) {
+                    if ( this.matchChar('-') ) {
+                        this.skipLine();
                         continue retry;
                     }
-                    ungetChar('-');
+                    this.ungetChar('-');
                 }
-                ungetChar('!');
+                this.ungetChar('!');
             }
-            if (matchChar('<')) {
-                if (matchChar('=')) {
+            if ( this.matchChar('<') ) {
+                if ( this.matchChar('=') ) {
                     return Token.ASSIGN_LSH;
                 } else {
                     return Token.LSH;
                 }
             } else {
-                if (matchChar('=')) {
+                if ( this.matchChar('=') ) {
                     return Token.LE;
                 } else {
                     return Token.LT;
                 }
             }
 
-        case '>':
-            if (matchChar('>')) {
-                if (matchChar('>')) {
-                    if (matchChar('=')) {
+        case 0x3E:  // '>'
+            if ( this.matchChar('>') ) {
+                if ( this.matchChar('>') ) {
+                    if ( this.matchChar('=') ) {
                         return Token.ASSIGN_URSH;
                     } else {
                         return Token.URSH;
                     }
                 } else {
-                    if (matchChar('=')) {
+                    if ( this.matchChar('=') ) {
                         return Token.ASSIGN_RSH;
                     } else {
                         return Token.RSH;
                     }
                 }
             } else {
-                if (matchChar('=')) {
+                if ( this.matchChar('=') ) {
                     return Token.GE;
                 } else {
                     return Token.GT;
                 }
             }
 
-        case '*':
-            if (matchChar('=')) {
+        case 0x2A:  // '*'
+            if ( this.matchChar('=') ) {
                 return Token.ASSIGN_MUL;
             } else {
                 return Token.MUL;
             }
 
-        case '/':
+        case 0x2F:  // '/'
             // is it a // comment?
-            if (matchChar('/')) {
-                skipLine();
+            if ( this.matchChar('/') ) {
+                this.skipLine();
                 continue retry;
-            }
-            if (matchChar('*')) {
-                boolean lookForSlash = false;
+            } else if ( this.matchChar('*') ) {
+                c = this.getChar();
                 for (;;) {
-                    c = getChar();
-                    if (c == EOF_CHAR) {
-                        parser.addError("msg.unterminated.comment");
+                    if ( c === EOF_CHAR ) {
+                        this.parser.addError("msg.unterminated.comment");
                         return Token.ERROR;
-                    } else if (c == '*') {
-                        lookForSlash = true;
-                    } else if (c == '/') {
-                        if (lookForSlash) {
+                    } else if ( c === '*' ) {
+                        c = this.getChar();
+                        if ( c === '/' ) {
                             continue retry;
                         }
-                    } else {
-                        lookForSlash = false;
                     }
                 }
-            }
-
-            if (matchChar('=')) {
+            } else if ( this.matchChar('=') ) {
                 return Token.ASSIGN_DIV;
             } else {
                 return Token.DIV;
             }
 
-        case '%':
-            if (matchChar('=')) {
+        case 0x25:  // '%'
+            if ( this.matchChar('=') ) {
                 return Token.ASSIGN_MOD;
             } else {
                 return Token.MOD;
             }
 
-        case '~':
+        case 0x7E:  // '~'
             return Token.BITNOT;
 
-        case '+':
-            if (matchChar('=')) {
+        case 0x2B:  // '+'
+            if ( this.matchChar('=') ) {
                 return Token.ASSIGN_ADD;
-            } else if (matchChar('+')) {
+            } else if ( this.matchChar('+') ) {
                 return Token.INC;
             } else {
                 return Token.ADD;
             }
 
-        case '-':
-            if (matchChar('=')) {
+        case 0x2D:  // '-'
+            if ( this.matchChar('=') ) {
                 c = Token.ASSIGN_SUB;
-            } else if (matchChar('-')) {
-                if (!dirtyLine) {
+            } else if ( this.matchChar('-') ) {
+                if ( !this.dirtyLine ) {
                     // treat HTML end-comment after possible whitespace
-                    // after line start as comment-utill-eol
-                    if (matchChar('>')) {
-                        skipLine();
+                    // after line start as comment-untill-eol
+                    if ( this.matchChar('>')) {
+                        this.skipLine();
                         continue retry;
                     }
                 }
@@ -720,7 +612,7 @@ retry:
             } else {
                 c = Token.SUB;
             }
-            dirtyLine = true;
+            this.dirtyLine = true;
             return c;
 
         default:
@@ -728,372 +620,309 @@ retry:
             return Token.ERROR;
         }
     }
+};
+
+
+
+/**
+ * Parser calls the method when it gets / or /= in literal context.
+ */
+function readRegExp ( startToken )
+{
+    if ( startToken === Token.ASSIGN_DIV ) {
+        // Miss-scanned /=
+        stringBuffer = ["/="];
+    } else if ( startToken !== Token.DIV ) {
+        stringBuffer = ["/"];
+    } else {
+        Kit.codeBug();
+    }
+
+    var c;
+    while ( (c = this.getChar()) !== '/' ) {
+        if ( c === '\n' || c === EOF_CHAR ) {
+            this.ungetChar(c);
+            throw this.parser.reportError("msg.unterminated.re.lit");
+        }
+        if ( c === '\\' ) {
+            this.addToString(c);
+            c = this.getChar();
+        }
+        this.addToString(c);
+    }
+    this.addToString("/");
+
+    while ( isIdentifierPart(c = this.getChar()) ) {
+        this.addToString(c);
+    }
+    this.ungetChar(c);
+
+    this.string = this.getStringFromBuffer();
 }
 
 
+proto.isXMLAttribute = function ( )
+{
+    return this.xmlIsAttribute;
+};
 
-    /**
-     * Parser calls the method when it gets / or /= in literal context.
-     */
-    void readRegExp(int startToken)
-        throws IOException
-    {
-        stringBufferTop = 0;
-        if (startToken == Token.ASSIGN_DIV) {
-            // Miss-scanned /=
-            addToString('=');
-        } else {
-            if (startToken != Token.DIV) Kit.codeBug();
-        }
+proto.getFirstXMLToken = function ( )
+{
+    this.xmlOpenTagsCount = 0;
+    this.xmlIsAttribute   = false;
+    this.xmlIsTagContent  = false;
+    this.ungetChar('<');
+    return this.getNextXMLToken();
+};
 
-        int c;
-        while ((c = getChar()) != '/') {
-            if (c == '\n' || c == EOF_CHAR) {
-                ungetChar(c);
-                throw parser.reportError("msg.unterminated.re.lit");
-            }
-            if (c == '\\') {
-                addToString(c);
-                c = getChar();
-            }
+proto.getNextXMLToken = function ( )
+{
+    this.stringBuffer = []; // remember the XML
 
-            addToString(c);
-        }
-        int reEnd = stringBufferTop;
-
-        while (true) {
-            if (matchChar('g'))
-                addToString('g');
-            else if (matchChar('i'))
-                addToString('i');
-            else if (matchChar('m'))
-                addToString('m');
-            else
+    for ( var c=this.getChar();  c !== EOF_CHAR;  c=this.getChar() ) {
+        if ( this.xmlIsTagContent ) {
+            switch ( c.charCodeAt(0) ) {
+            case 0x3E:  // '>'
+                this.addToString('>');
+                this.xmlIsTagContent = false;
+                this.xmlIsAttribute  = false;
                 break;
-        }
-
-        if (isAlpha(peekChar())) {
-            throw parser.reportError("msg.invalid.re.flag");
-        }
-
-        this.string = new String(stringBuffer, 0, reEnd);
-        this.regExpFlags = new String(stringBuffer, reEnd,
-                                      stringBufferTop - reEnd);
-    }
-
-    boolean isXMLAttribute()
-    {
-        return xmlIsAttribute;
-    }
-
-    int getFirstXMLToken() throws IOException
-    {
-        xmlOpenTagsCount = 0;
-        xmlIsAttribute = false;
-        xmlIsTagContent = false;
-        ungetChar('<');
-        return getNextXMLToken();
-    }
-
-    int getNextXMLToken() throws IOException
-    {
-        stringBufferTop = 0; // remember the XML
-
-        for (int c = getChar(); c != EOF_CHAR; c = getChar()) {
-            if (xmlIsTagContent) {
-                switch (c) {
-                case '>':
-                    addToString(c);
-                    xmlIsTagContent = false;
-                    xmlIsAttribute = false;
-                    break;
-                case '/':
-                    addToString(c);
-                    if (peekChar() == '>') {
-                        c = getChar();
-                        addToString(c);
-                        xmlIsTagContent = false;
-                        xmlOpenTagsCount--;
-                    }
-                    break;
-                case '{':
-                    ungetChar(c);
-                    this.string = getStringFromBuffer();
-                    return Token.XML;
-                case '\'':
-                case '"':
-                    addToString(c);
-                    if (!readQuotedString(c)) return Token.ERROR;
-                    break;
-                case '=':
-                    addToString(c);
-                    xmlIsAttribute = true;
-                    break;
-                case ' ':
-                case '\t':
-                case '\r':
-                case '\n':
-                    addToString(c);
-                    break;
-                default:
-                    addToString(c);
-                    xmlIsAttribute = false;
-                    break;
+            case 0x2F:  // '/'
+                this.addToString('/');
+                if ( this.matchChar('>') ) {
+                    this.addToString('>');
+                    this.xmlIsTagContent = false;
+                    this.xmlOpenTagsCount--;
                 }
+                break;
+            case 0x7B:  // '{'
+                this.ungetChar('{');
+                this.string = this.getStringFromBuffer();
+                return Token.XML;
+            case 0x27:  // "'"
+            case 0x22:  // '"'
+                this.addToString(c);
+                if ( !this.readQuotedString(c) ) return Token.ERROR;
+                break;
+            case 0x3D:  // '='
+                this.addToString('=');
+                this.xmlIsAttribute = true;
+                break;
+            case 0x20:  // ' '
+            case 0x09:  // '\t'
+            // case 0x0D:  // '\r'  CR never comes here because of the implementation of getChar().
+            case 0x0A:  // '\n'
+                this.addToString(c);
+                break;
+            default:
+                this.addToString(c);
+                this.xmlIsAttribute = false;
+                break;
+            }
 
-                if (!xmlIsTagContent && xmlOpenTagsCount == 0) {
-                    this.string = getStringFromBuffer();
-                    return Token.XMLEND;
-                }
-            } else {
-                switch (c) {
-                case '<':
-                    addToString(c);
-                    c = peekChar();
-                    switch (c) {
-                    case '!':
-                        c = getChar(); // Skip !
-                        addToString(c);
-                        c = peekChar();
-                        switch (c) {
-                        case '-':
-                            c = getChar(); // Skip -
-                            addToString(c);
-                            c = getChar();
-                            if (c == '-') {
-                                addToString(c);
-                                if(!readXmlComment()) return Token.ERROR;
-                            } else {
-                                // throw away the string in progress
-                                stringBufferTop = 0;
-                                this.string = null;
-                                parser.addError("msg.XML.bad.form");
-                                return Token.ERROR;
-                            }
-                            break;
-                        case '[':
-                            c = getChar(); // Skip [
-                            addToString(c);
-                            if (getChar() == 'C' &&
-                                getChar() == 'D' &&
-                                getChar() == 'A' &&
-                                getChar() == 'T' &&
-                                getChar() == 'A' &&
-                                getChar() == '[')
-                            {
-                                addToString('C');
-                                addToString('D');
-                                addToString('A');
-                                addToString('T');
-                                addToString('A');
-                                addToString('[');
-                                if (!readCDATA()) return Token.ERROR;
-
-                            } else {
-                                // throw away the string in progress
-                                stringBufferTop = 0;
-                                this.string = null;
-                                parser.addError("msg.XML.bad.form");
-                                return Token.ERROR;
-                            }
-                            break;
-                        default:
-                            if(!readEntity()) return Token.ERROR;
-                            break;
-                        }
-                        break;
-                    case '?':
-                        c = getChar(); // Skip ?
-                        addToString(c);
-                        if (!readPI()) return Token.ERROR;
-                        break;
-                    case '/':
-                        // End tag
-                        c = getChar(); // Skip /
-                        addToString(c);
-                        if (xmlOpenTagsCount == 0) {
-                            // throw away the string in progress
-                            stringBufferTop = 0;
-                            this.string = null;
-                            parser.addError("msg.XML.bad.form");
+            if ( !this.xmlIsTagContent  &&  this.xmlOpenTagsCount === 0 ) {
+                this.string = this.getStringFromBuffer();
+                return Token.XMLEND;
+            }
+        } else {
+            switch ( c.charCodeAt(0) ) {
+            case 0x3C:  // '<'
+                this.addToString('<');
+                c = this.getChar();
+                switch ( c.charCodeAt(0) ) {
+                case 0x21:  // '!'
+                    this.addToString('!');
+                    c = this.getChar();
+                    switch ( c.charCodeAt(0) ) {
+                    case 0x2D:  // '-'
+                        if ( this.getChar() === '-' ) {
+                            this.addToString('--');
+                            if ( !this.readXmlComment() ) return Token.ERROR;
+                        } else {
+                            this.parser.addError("msg.XML.bad.form");
                             return Token.ERROR;
                         }
-                        xmlIsTagContent = true;
-                        xmlOpenTagsCount--;
+                        break;
+                    case 0x5B:  // '['
+                        if ( this.getChar() === 'C' &&
+                             this.getChar() === 'D' &&
+                             this.getChar() === 'A' &&
+                             this.getChar() === 'T' &&
+                             this.getChar() === 'A' &&
+                             this.getChar() === '['    )
+                        {
+                            this.addToString('[CDATA[');
+                            if ( !this.readCDATA() ) return Token.ERROR;
+                        } else {
+                            this.parser.addError("msg.XML.bad.form");
+                            return Token.ERROR;
+                        }
                         break;
                     default:
-                        // Start tag
-                        xmlIsTagContent = true;
-                        xmlOpenTagsCount++;
+                        this.ungetChar(c);
+                        if( !this.readEntity() ) return Token.ERROR;
                         break;
                     }
                     break;
-                case '{':
-                    ungetChar(c);
-                    this.string = getStringFromBuffer();
-                    return Token.XML;
+                case 0x3F:  // '?'
+                    this.addToString('?');
+                    if ( !this.readPI() ) return Token.ERROR;
+                    break;
+                case 0x2F:  // '/'
+                    // End tag
+                    this.addToString('/');
+                    if ( this.xmlOpenTagsCount === 0 ) {
+                        this.parser.addError("msg.XML.bad.form");
+                        return Token.ERROR;
+                    }
+                    this.xmlIsTagContent = true;
+                    this.xmlOpenTagsCount--;
+                    break;
                 default:
-                    addToString(c);
+                    // Start tag
+                    this.ungetChar(c);
+                    this.xmlIsTagContent = true;
+                    this.xmlOpenTagsCount++;
                     break;
                 }
-            }
-        }
-
-        stringBufferTop = 0; // throw away the string in progress
-        this.string = null;
-        parser.addError("msg.XML.bad.form");
-        return Token.ERROR;
-    }
-
-    /**
-     *
-     */
-    private boolean readQuotedString(int quote) throws IOException
-    {
-        for (int c = getChar(); c != EOF_CHAR; c = getChar()) {
-            addToString(c);
-            if (c == quote) return true;
-        }
-
-        stringBufferTop = 0; // throw away the string in progress
-        this.string = null;
-        parser.addError("msg.XML.bad.form");
-        return false;
-    }
-
-    /**
-     *
-     */
-    private boolean readXmlComment() throws IOException
-    {
-        for (int c = getChar(); c != EOF_CHAR;) {
-            addToString(c);
-            if (c == '-' && peekChar() == '-') {
-                c = getChar();
-                addToString(c);
-                if (peekChar() == '>') {
-                    c = getChar(); // Skip >
-                    addToString(c);
-                    return true;
-                } else {
-                    continue;
-                }
-            }
-            c = getChar();
-        }
-
-        stringBufferTop = 0; // throw away the string in progress
-        this.string = null;
-        parser.addError("msg.XML.bad.form");
-        return false;
-    }
-
-    /**
-     *
-     */
-    private boolean readCDATA() throws IOException
-    {
-        for (int c = getChar(); c != EOF_CHAR;) {
-            addToString(c);
-            if (c == ']' && peekChar() == ']') {
-                c = getChar();
-                addToString(c);
-                if (peekChar() == '>') {
-                    c = getChar(); // Skip >
-                    addToString(c);
-                    return true;
-                } else {
-                    continue;
-                }
-            }
-            c = getChar();
-        }
-
-        stringBufferTop = 0; // throw away the string in progress
-        this.string = null;
-        parser.addError("msg.XML.bad.form");
-        return false;
-    }
-
-    /**
-     *
-     */
-    private boolean readEntity() throws IOException
-    {
-        int declTags = 1;
-        for (int c = getChar(); c != EOF_CHAR; c = getChar()) {
-            addToString(c);
-            switch (c) {
-            case '<':
-                declTags++;
                 break;
-            case '>':
-                declTags--;
-                if (declTags == 0) return true;
+            case 0x7B:  // '{'
+                this.ungetChar('{');
+                this.string = this.getStringFromBuffer();
+                return Token.XML;
+            default:
+                this.addToString(c);
                 break;
             }
         }
-
-        stringBufferTop = 0; // throw away the string in progress
-        this.string = null;
-        parser.addError("msg.XML.bad.form");
-        return false;
     }
 
-    /**
-     *
-     */
-    private boolean readPI() throws IOException
-    {
-        for (int c = getChar(); c != EOF_CHAR; c = getChar()) {
-            addToString(c);
-            if (c == '?' && peekChar() == '>') {
-                c = getChar(); // Skip >
-                addToString(c);
+    this.parser.addError("msg.XML.bad.form");
+    return Token.ERROR;
+};
+
+proto.readQuotedString = function ( quote )
+{
+    for ( var c=this.getChar();  c !== EOF_CHAR;  c=this.getChar() ) {
+        this.addToString(c);
+        if ( c === quote ) return true;
+    }
+    parser.addError("msg.XML.bad.form");
+    return false;
+};
+
+proto.readXmlComment = function ( )
+{
+    for ( var c=this.getChar();  c !== EOF_CHAR; ) {
+        this.addToString(c);
+        if ( c === '-'  &&  this.matchChar('-') ) {
+            this.addToString('-');
+            if ( this.matchChar('>') ) {
+                this.addToString('>');
                 return true;
+            } else {
+                // Strictly, XMLComment MUST NOT include the sequence "--".
+                // So, if the program execution is here, the source is 
+                // syntactically wrong, according to ECMA367. However, we 
+                // allow the sequence here, so that our syntax is super-set 
+                // of the specification.
+                c = '-';
+                continue;
             }
         }
-
-        stringBufferTop = 0; // throw away the string in progress
-        this.string = null;
-        parser.addError("msg.XML.bad.form");
-        return false;
+        c = this.getChar();
     }
+    this.parser.addError("msg.XML.bad.form");
+    return false;
+};
+
+proto.readCDATA = function ( )
+{
+    for ( var c=this.getChar();  c !== EOF_CHAR; ) {
+        this.addToString(c);
+        if ( c === ']'  &&  this.matchChar(']') ) {
+            this.addToString(']');
+            if ( this.matchChar('>') ) {
+                this.addToString('>');
+                return true;
+            } else {
+                c = ']';
+                continue;
+            }
+        }
+        c = this.getChar();
+    }
+    this.parser.addError("msg.XML.bad.form");
+    return false;
+};
+
+proto.readEntity = function ( )
+{
+    var declTags = 1;
+    for ( var c=this.getChar();  c !== EOF_CHAR;  c=this.getChar() ) {
+        this.addToString(c);
+        switch ( c ) {
+        case '<':
+            declTags++;
+            break;
+        case '>':
+            declTags--;
+            if ( declTags === 0 ) return true;
+            break;
+        }
+    }
+    this.parser.addError("msg.XML.bad.form");
+    return false;
+};
+
+proto.readPI = function ( )
+{
+    for ( var c=this.getChar();  c !== EOF_CHAR;  c=this.getChar() ) {
+        this.addToString(c);
+        if ( c === '?'  &&  this.matchChar('>') ) {
+            this.addToString('>');
+            return true;
+        }
+    }
+    this.parser.addError("msg.XML.bad.form");
+    return false;
+};
+
 
 proto.getStringFromBuffer = function ( )
 {
     return this.stringBuffer.join("");
-}
+};
 
-proto.addToString = function ( c )
+proto.addToString = function ( /* variable arguments */ )
 {
-    this.stringBuffer.push(c);
-}
+    this.stringBuffer.push.apply(this.stringBuffer, arguments);
+};
 
 proto.ungetChar = function ( c )
 {
     // can not unread past across line boundary
     if ( this.ungetBuffer.length && this.ungetBuffer[this.ungetBuffer.length-1] == '\n') Kit.codeBug();
     this.ungetBuffer.push(c);
-}
+};
 
 proto.matchChar = function ( test )
 {
-    var c = getChar();
+    var c = this.getChar();
     if ( c === test ) {
         return true;
     } else {
-        ungetChar(c);
+        this.ungetChar(c);
         return false;
     }
-}
+};
 
 proto.peekChar = function ( )
 {
-    var c = getChar();
-    ungetChar(c);
+    var c = this.getChar();
+    this.ungetChar(c);
     return c;
-}
+};
 
 proto.getChar = function ( )
 {
@@ -1125,67 +954,36 @@ proto.getChar = function ( )
         }
         return c;
     }
-}
+};
 
-    private void skipLine() throws IOException
-    {
-        // skip to end of line
-        int c;
-        while ((c = getChar()) != EOF_CHAR && c != '\n') { }
-        ungetChar(c);
-    }
+proto.skipLine = function ( )
+{
+    // skip to end of line
+    var c;
+    while ((c=this.getChar()) != EOF_CHAR && c != '\n') { }
+    this.ungetChar(c);
+};
 
-    final int getOffset()
-    {
-        int n = sourceCursor - lineStart;
-        if (lineEndChar >= 0) { --n; }
-        return n;
-    }
+proto.getOffset = function ( )
+{
+    var n = this.sourceCursor - this.lineStart;
+    if ( this.lineEndChar ) { --n; }
+    return n;
+};
 
-    final String getLine()
-    {
-        if (sourceString != null) {
-            // String case
-            int lineEnd = sourceCursor;
-            if (lineEndChar >= 0) {
-                --lineEnd;
-            } else {
-                for (; lineEnd != sourceEnd; ++lineEnd) {
-                    int c = sourceString.charAt(lineEnd);
-                    if (ScriptRuntime.isJSLineTerminator(c)) {
-                        break;
-                    }
-                }
+proto.getLine = function ( )
+{
+    var lineEnd = this.sourceCursor;
+    if ( this.lineEndChar ) {
+        --lineEnd;
+    } else {
+        for (; lineEnd != this.sourceEnd; ++lineEnd) {
+            var c = this.sourceString.charAt(lineEnd);
+            if ( isLineTerminator(c) ) {
+                break;
             }
-            return sourceString.substring(lineStart, lineEnd);
-        } else {
-            // Reader case
-            int lineLength = sourceCursor - lineStart;
-            if (lineEndChar >= 0) {
-                --lineLength;
-            } else {
-                // Read until the end of line
-                for (;; ++lineLength) {
-                    int i = lineStart + lineLength;
-                    if (i == sourceEnd) {
-                        try {
-                            if (!fillSourceBuffer()) { break; }
-                        } catch (IOException ioe) {
-                            // ignore it, we're already displaying an error...
-                            break;
-                        }
-                        // i recalculuation as fillSourceBuffer can move saved
-                        // line buffer and change lineStart
-                        i = lineStart + lineLength;
-                    }
-                    int c = sourceBuffer[i];
-                    if (ScriptRuntime.isJSLineTerminator(c)) {
-                        break;
-                    }
-                }
-            }
-            return new String(sourceBuffer, lineStart, lineLength);
         }
     }
+    return this.sourceString.substring(this.lineStart, lineEnd);
+};
 
-}
