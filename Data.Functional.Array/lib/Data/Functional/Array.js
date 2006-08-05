@@ -104,7 +104,7 @@ function Iterator ( a, n ) {
     this._pos = n;
 }
 
-var proto = Iterator.prototype = new data.iterator.Iterator();
+var proto = Iterator.prototype = new Data.Iterator.Iterator();
 proto.constructor = Iterator;
 
 proto.copy = function ( ) {
@@ -168,7 +168,7 @@ function ReverseIterator ( a, n ) {
     Iterator.apply(this, arguments);
 }
 
-var proto = ReverseIterator.prototype = new data.iterator.Iterator();
+var proto = ReverseIterator.prototype = new Data.Iterator.Iterator();
 
 for ( var i in Iterator.prototype ) {
     if ( typeof Iterator.prototype[i] == "function"  &&  Iterator.prototype.hasOwnProperty(i) ) {
