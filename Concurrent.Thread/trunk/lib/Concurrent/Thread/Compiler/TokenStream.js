@@ -38,15 +38,7 @@
 
 
 /**
- * This class implements the JavaScript scanner.
- *
- * It is based on the C source files jsscan.c and jsscan.h
- * in the jsref package.
- *
- * @see org.mozilla.javascript.Parser
- *
- * @author Mike McCabe
- * @author Brendan Eich
+ * This file is based on the file TokenStream.java in Rhino 1.6R2.
  */
 
 
@@ -62,10 +54,12 @@
 /*
  * For chars - because we need something out-of-range
  * to check.  (And checking EOF by exception is annoying.)
+ * Fortunatelly, U+FFFF is guaranteed not to be assigned 
+ * for any character.
  * Note distinction from EOF token type!
  */
-var EOF_CHAR = String.fromCharCode(0xFFFF);  // This is equivalent to String.fromCharCode(-1).
-                                             // Fortunatelly, U+FFFF is guaranteed not to be assigned for any character.
+var EOF_CHAR = String.fromCharCode(0xFFFF);
+
 
 
 //@export TokenStream
@@ -289,7 +283,7 @@ retry:
             }
             this.ungetChar(c);
 
-            var str = getStringFromBuffer();
+            var str = this.getStringFromBuffer();
             if ( !containsEscape ) {
                 // OPT we shouldn't have to make a string to
                 // check if it's a keyword.
@@ -399,7 +393,7 @@ retry:
                 c = this.getChar();
             }
             this.addToString(quoteChar);
-            this.string = getStringFromBuffer();
+            this.string = this.getStringFromBuffer();
             return Token.STRING;
         }
 

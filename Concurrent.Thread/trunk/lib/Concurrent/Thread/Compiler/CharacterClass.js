@@ -67,6 +67,7 @@ function isSpace ( c )
             return true;
         default:
             return false;
+        }
     }
     else {
         // the following code is derived from the Unicode category Zs based on:
