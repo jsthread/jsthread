@@ -199,7 +199,7 @@ proto.toString = function ( ) {
     return this.base + "." + this.prop;
 };
 
-proto.containsFunctionCall ( ) {
+proto.containsFunctionCall = function ( ) {
     return this.base.containsFunctionCall();
 };
 
