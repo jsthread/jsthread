@@ -163,7 +163,7 @@ proto.containsFunctionCall = function ( ) {
 function FunctionExpression ( name, params, body ) {
     this.name   = name;
     this.params = params;
-    this.body   = body;
+    this.cdr    = body;
 }
 
 var proto = FunctionExpression.prototype = new Expression();
@@ -172,11 +172,8 @@ proto.constructor = FunctionExpression;
 proto.toString = function ( ) {
     var buf = ["function "];
     if ( this.name ) buf.push(this.name);
-    buf.push("(");
-    buf.push(this.params.join(", "));
-    buf.push(")");
-    buf.push("{");
-    buf.push(this.body);
+    buf.push( "(", this.params.join(", "), ")", "{\n");
+    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
     buf.push("}");
     return buf.join("");
 };

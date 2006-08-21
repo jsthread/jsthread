@@ -1,6 +1,4 @@
-/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*-
- *
- * The contents of this file are subject to the Netscape Public
+/* The contents of this file are subject to the Netscape Public
  * License Version 1.1 (the "License"); you may not use this file
  * except in compliance with the License. You may obtain a copy of
  * the License at http://www.mozilla.org/NPL/
@@ -38,542 +36,296 @@
  * file under either the NPL or the GPL.
  */
 
-package org.mozilla.javascript;
-
-import java.io.Reader;
-import java.io.IOException;
-import java.util.Hashtable;
-
 /**
- * This class implements the JavaScript parser.
- *
- * It is based on the C source files jsparse.c and jsparse.h
- * in the jsref package.
- *
- * @see TokenStream
- *
- * @author Mike McCabe
- * @author Brendan Eich
+ * This file is based on the file Parser.java in Rhino 1.6R2.
  */
 
-public class Parser
+
+
+//@esmodpp
+//@version 0.0.0
+//@namespace Concurrent.Thread.Compiler
+//@require   Concurrent.Thread.Compiler.Kit
+//@require   Concurrent.Thread.Compiler.Token
+//@require   Concurrent.Thread.Compiler.TokenStream
+//@require   Concurrent.Thread.Compiler.ErrorReporter
+
+//@require Data.Error
+//@require IllegalStateError
+//@with-namespace Data.Error
+
+//@require Data.Cons
+//@with-namespace Data.Cons
+var ConsCell = Data.Cons.Cell;
+
+
+// TokenInformation flags : currentFlaggedToken stores them together
+// with token type
+var CLEAR_TI_MASK  = 0xFFFF,   // mask to clear token information bits
+var TI_AFTER_EOL   = 1 << 16,  // first token of the source line
+var TI_CHECK_LABEL = 1 << 17;  // indicates to check for label
+
+
+// Exception to unwind
+var ParserException = newExceptionClass(NAMESPACE + ".ParserException");
+
+
+// default error reporter
+var defaultReporter = new ErrorReporter();
+defaultReporter.error = function ( message, line, lineSource, lineOffset ) {
+    throw new SyntaxError("(" + line + ", " + lineOffset + "): " + message + "\nline: " + lineSource);
+};
+
+
+function Parser ( errorReporter )
 {
-    // TokenInformation flags : currentFlaggedToken stores them together
-    // with token type
-    final static int
-        CLEAR_TI_MASK  = 0xFFFF,   // mask to clear token information bits
-        TI_AFTER_EOL   = 1 << 16,  // first token of the source line
-        TI_CHECK_LABEL = 1 << 17;  // indicates to check for label
+    this.errorReporter       = errorReporter instanceof ErrorReporter
+                                 ?  errorReporter  :  defaultReporter;
+    this.ts                  = undefined;
+    this.currentFlaggedToken = Token.EOF;;
+    this.syntaxErrorCount    = 0;
+    this.nestingOfFunction   = 0;
+    // The following are per function variables and should be saved/restored
+    // during function parsing.
+    // XXX Move to separated class?
+    this.nestingOfLoop   = 0;
+    this.nestingOfSwitch = 0;
+}
 
-    CompilerEnvirons compilerEnv;
-    private ErrorReporter errorReporter;
-    private String sourceURI;
-    boolean calledByCompileFunction;
+var proto = Parser.prototype;
 
-    private TokenStream ts;
-    private int currentFlaggedToken;
-    private int syntaxErrorCount;
 
-    private IRFactory nf;
+proto.getMessage = function ( messageId  /* optional args */ )
+{
+    //!! fake implementation
+    return messageId;
+};
 
-    private int nestingOfFunction;
+proto.addWarning = function ( messageId  /* optional args */ )
+{
+    this.errorReporter.warning(this.getMessage.apply(this, arguments),
+                               this.ts.getLineno()                   ,
+                               this.ts.getLine()                     ,
+                               this.ts.getOffset()                   );
+};
 
-    private Decompiler decompiler;
-    private String encodedSource;
+proto.addError = function ( messageId  /* optional args */ )
+{
+    ++this.syntaxErrorCount;
+    this.errorReporter.error(this.getMessage.apply(this, arguments),
+                             this.ts.getLineno()                   ,
+                             this.ts.getLine()                     ,
+                             this.ts.getOffset()                   );
+};
 
-// The following are per function variables and should be saved/restored
-// during function parsing.
-// XXX Move to separated class?
-    ScriptOrFnNode currentScriptOrFn;
-    private int nestingOfWith;
-    private Hashtable labelSet; // map of label names into nodes
-    private ObjArray loopSet;
-    private ObjArray loopAndSwitchSet;
-// end of per function variables
+proto.reportError = function ( messageId  /* optional args */ )
+{
+    this.addError.apply(this, arguments);
+    // Throw a ParserException exception to unwind the recursive descent
+    // parse.
+    throw new ParserException();
+};
 
-    // Exception to unwind
-    private static class ParserException extends RuntimeException
-    {
-        static final long serialVersionUID = 5882582646773765630L;
-    }
 
-    public Parser(CompilerEnvirons compilerEnv, ErrorReporter errorReporter)
-    {
-        this.compilerEnv = compilerEnv;
-        this.errorReporter = errorReporter;
-    }
-
-    protected Decompiler createDecompiler(CompilerEnvirons compilerEnv)
-    {
-        return new Decompiler();
-    }
-
-    void addWarning(String messageId, String messageArg)
-    {
-        String message = ScriptRuntime.getMessage1(messageId, messageArg);
-        errorReporter.warning(message, sourceURI, ts.getLineno(),
-                              ts.getLine(), ts.getOffset());
-    }
-
-    void addError(String messageId)
-    {
-        ++syntaxErrorCount;
-        String message = ScriptRuntime.getMessage0(messageId);
-        errorReporter.error(message, sourceURI, ts.getLineno(),
-                            ts.getLine(), ts.getOffset());
-    }
-
-    RuntimeException reportError(String messageId)
-    {
-        addError(messageId);
-
-        // Throw a ParserException exception to unwind the recursive descent
-        // parse.
-        throw new ParserException();
-    }
-
-    private int peekToken()
-        throws IOException
-    {
-        int tt = currentFlaggedToken;
-        if (tt == Token.EOF) {
-            tt = ts.getToken();
-            if (tt == Token.EOL) {
-                do {
-                    tt = ts.getToken();
-                } while (tt == Token.EOL);
-                tt |= TI_AFTER_EOL;
-            }
-            currentFlaggedToken = tt;
+proto.peekToken = function ( )
+{
+    var tt = this.currentFlaggedToken;
+    if ( tt === Token.EOF ) {
+        tt = this.ts.getToken();
+        if ( tt === Token.EOL ) {
+            do {
+                tt = this.ts.getToken();
+            } while ( tt === Token.EOL );
+            tt |= TI_AFTER_EOL;
         }
-        return tt & CLEAR_TI_MASK;
+        this.currentFlaggedToken = tt;
     }
+    return tt & CLEAR_TI_MASK;
+};
 
-    private int peekFlaggedToken()
-        throws IOException
-    {
-        peekToken();
-        return currentFlaggedToken;
+proto.peekFlaggedToken = function ( )
+{
+    this.peekToken();
+    return this.currentFlaggedToken;
+};
+
+proto.consumeToken = function ( )
+{
+    this.currentFlaggedToken = Token.EOF;
+};
+
+proto.nextToken = function ( )
+{
+    var tt = this.peekToken();
+    this.consumeToken();
+    return tt;
+};
+
+proto.nextFlaggedToken = function ( )
+{
+    this.peekToken();
+    var ttFlagged = this.currentFlaggedToken;
+    this.consumeToken();
+    return ttFlagged;
+};
+
+proto.matchToken = function ( toMatch )
+{
+    if ( this.peekToken() !== toMatch ) return false;
+    this.consumeToken();
+    return true;
+};
+
+proto.peekTokenOrEOL = function ( )
+{
+    var tt = this.peekToken();
+    // Check for last peeked token flags
+    if ( this.currentFlaggedToken & TI_AFTER_EOL ) return Token.EOL;
+    return tt;
+};
+
+proto.setCheckForLabel = function ( )
+{
+    if ( (this.currentFlaggedToken & CLEAR_TI_MASK) !== Token.NAME ) throw Kit.codeBug();
+    this.currentFlaggedToken |= TI_CHECK_LABEL;
+};
+
+proto.mustMatchToken = function ( toMatch, messageId  /* optional args */ )
+{
+    if ( !this.matchToken(toMatch) ) {
+        var args = [];
+        for ( var i=1;  i < arguments.length;  i++ ) args.push(arguments[i]);
+        this.reportError.apply(this, args);
     }
+};
 
-    private void consumeToken()
-    {
-        currentFlaggedToken = Token.EOF;
-    }
+proto.eof = function ( )
+{
+    return this.ts.eof();
+};
 
-    private int nextToken()
-        throws IOException
-    {
-        int tt = peekToken();
-        consumeToken();
-        return tt;
-    }
 
-    private int nextFlaggedToken()
-        throws IOException
-    {
-        peekToken();
-        int ttFlagged = currentFlaggedToken;
-        consumeToken();
-        return ttFlagged;
-    }
+proto.parse = function ( sourceString, lineno )
+{
+    this.ts = new TokenStream(this, sourceString, lineno);
+    this.currentFlaggedToken = Token.EOF;
+    this.syntaxErrorCount  = 0;
+    this.nestingOfFunction = 0;
+    this.nestingOfLoop     = 0;
+    this.nestingOfSwitch   = 0;
 
-    private boolean matchToken(int toMatch)
-        throws IOException
-    {
-        int tt = peekToken();
-        if (tt != toMatch) {
-            return false;
-        }
-        consumeToken();
-        return true;
-    }
-
-    private int peekTokenOrEOL()
-        throws IOException
-    {
-        int tt = peekToken();
-        // Check for last peeked token flags
-        if ((currentFlaggedToken & TI_AFTER_EOL) != 0) {
-            tt = Token.EOL;
-        }
-        return tt;
-    }
-
-    private void setCheckForLabel()
-    {
-        if ((currentFlaggedToken & CLEAR_TI_MASK) != Token.NAME)
-            throw Kit.codeBug();
-        currentFlaggedToken |= TI_CHECK_LABEL;
-    }
-
-    private void mustMatchToken(int toMatch, String messageId)
-        throws IOException, ParserException
-    {
-        if (!matchToken(toMatch)) {
-            reportError(messageId);
-        }
-    }
-
-    private void mustHaveXML()
-    {
-        if (!compilerEnv.isXmlAvailable()) {
-            reportError("msg.XML.not.available");
-        }
-    }
-
-    public String getEncodedSource()
-    {
-        return encodedSource;
-    }
-
-    public boolean eof()
-    {
-        return ts.eof();
-    }
-
-    boolean insideFunction()
-    {
-        return nestingOfFunction != 0;
-    }
-
-    private Node enterLoop(Node loopLabel)
-    {
-        Node loop = nf.createLoopNode(loopLabel, ts.getLineno());
-        if (loopSet == null) {
-            loopSet = new ObjArray();
-            if (loopAndSwitchSet == null) {
-                loopAndSwitchSet = new ObjArray();
-            }
-        }
-        loopSet.push(loop);
-        loopAndSwitchSet.push(loop);
-        return loop;
-    }
-
-    private void exitLoop()
-    {
-        loopSet.pop();
-        loopAndSwitchSet.pop();
-    }
-
-    private Node enterSwitch(Node switchSelector, int lineno, Node switchLabel)
-    {
-        Node switchNode = nf.createSwitch(switchSelector, lineno);
-        if (loopAndSwitchSet == null) {
-            loopAndSwitchSet = new ObjArray();
-        }
-        loopAndSwitchSet.push(switchNode);
-        return switchNode;
-    }
-
-    private void exitSwitch()
-    {
-        loopAndSwitchSet.pop();
-    }
-
-    /*
-     * Build a parse tree from the given sourceString.
-     *
-     * @return an Object representing the parsed
-     * program.  If the parse fails, null will be returned.  (The
-     * parse failure will result in a call to the ErrorReporter from
-     * CompilerEnvirons.)
-     */
-    public ScriptOrFnNode parse(String sourceString,
-                                String sourceURI, int lineno)
-    {
-        this.sourceURI = sourceURI;
-        this.ts = new TokenStream(this, null, sourceString, lineno);
-        try {
-            return parse();
-        } catch (IOException ex) {
-            // Should never happen
-            throw new IllegalStateException();
-        }
-    }
-
-    /*
-     * Build a parse tree from the given sourceString.
-     *
-     * @return an Object representing the parsed
-     * program.  If the parse fails, null will be returned.  (The
-     * parse failure will result in a call to the ErrorReporter from
-     * CompilerEnvirons.)
-     */
-    public ScriptOrFnNode parse(Reader sourceReader,
-                                String sourceURI, int lineno)
-        throws IOException
-    {
-        this.sourceURI = sourceURI;
-        this.ts = new TokenStream(this, sourceReader, null, lineno);
-        return parse();
-    }
-
-    private ScriptOrFnNode parse()
-        throws IOException
-    {
-        this.decompiler = createDecompiler(compilerEnv);
-        this.nf = new IRFactory(this);
-        currentScriptOrFn = nf.createScript();
-        int sourceStartOffset = decompiler.getCurrentOffset();
-        this.encodedSource = null;
-        decompiler.addToken(Token.SCRIPT);
-
-        this.currentFlaggedToken = Token.EOF;
-        this.syntaxErrorCount = 0;
-
-        int baseLineno = ts.getLineno();  // line number where source starts
-
-        /* so we have something to add nodes to until
-         * we've collected all the source */
-        Node pn = nf.createLeaf(Token.BLOCK);
-
-        try {
-            for (;;) {
-                int tt = peekToken();
-
-                if (tt <= Token.EOF) {
-                    break;
-                }
-
-                Node n;
-                if (tt == Token.FUNCTION) {
-                    consumeToken();
-                    try {
-                        n = function(calledByCompileFunction
-                                     ? FunctionNode.FUNCTION_EXPRESSION
-                                     : FunctionNode.FUNCTION_STATEMENT);
-                    } catch (ParserException e) {
-                        break;
-                    }
-                } else {
-                    n = statement();
-                }
-                nf.addChildToBack(pn, n);
-            }
-        } catch (StackOverflowError ex) {
-            String msg = ScriptRuntime.getMessage0(
-                "mag.too.deep.parser.recursion");
-            throw Context.reportRuntimeError(msg, sourceURI,
-                                             ts.getLineno(), null, 0);
-        }
-
-        if (this.syntaxErrorCount != 0) {
-            String msg = String.valueOf(this.syntaxErrorCount);
-            msg = ScriptRuntime.getMessage1("msg.got.syntax.errors", msg);
-            throw errorReporter.runtimeError(msg, sourceURI, baseLineno,
-                                             null, 0);
-        }
-
-        currentScriptOrFn.setSourceName(sourceURI);
-        currentScriptOrFn.setBaseLineno(baseLineno);
-        currentScriptOrFn.setEndLineno(ts.getLineno());
-
-        int sourceEndOffset = decompiler.getCurrentOffset();
-        currentScriptOrFn.setEncodedSourceBounds(sourceStartOffset,
-                                                 sourceEndOffset);
-
-        nf.initScript(currentScriptOrFn, pn);
-
-        if (compilerEnv.isGeneratingSource()) {
-            encodedSource = decompiler.getEncodedSource();
-        }
-        this.decompiler = null; // It helps GC
-
-        return currentScriptOrFn;
-    }
-
-    /*
-     * The C version of this function takes an argument list,
-     * which doesn't seem to be needed for tree generation...
-     * it'd only be useful for checking argument hiding, which
-     * I'm not doing anyway...
-     */
-    private Node parseFunctionBody()
-        throws IOException
-    {
-        ++nestingOfFunction;
-        Node pn = nf.createBlock(ts.getLineno());
-        try {
-            bodyLoop: for (;;) {
-                Node n;
-                int tt = peekToken();
-                switch (tt) {
-                  case Token.ERROR:
-                  case Token.EOF:
-                  case Token.RC:
-                    break bodyLoop;
-
-                  case Token.FUNCTION:
-                    consumeToken();
-                    n = function(FunctionNode.FUNCTION_STATEMENT);
-                    break;
-                  default:
-                    n = statement();
-                    break;
-                }
-                nf.addChildToBack(pn, n);
-            }
-        } catch (ParserException e) {
-            // Ignore it
-        } finally {
-            --nestingOfFunction;
-        }
-
-        return pn;
-    }
-
-    private Node function(int functionType)
-        throws IOException, ParserException
-    {
-        int syntheticType = functionType;
-        int baseLineno = ts.getLineno();  // line number where source starts
-
-        int functionSourceStart = decompiler.markFunctionStart(functionType);
-        String name;
-        Node memberExprNode = null;
-        if (matchToken(Token.NAME)) {
-            name = ts.getString();
-            decompiler.addName(name);
-            if (!matchToken(Token.LP)) {
-                if (compilerEnv.isAllowMemberExprAsFunctionName()) {
-                    // Extension to ECMA: if 'function <name>' does not follow
-                    // by '(', assume <name> starts memberExpr
-                    Node memberExprHead = nf.createName(name);
-                    name = "";
-                    memberExprNode = memberExprTail(false, memberExprHead);
-                }
-                mustMatchToken(Token.LP, "msg.no.paren.parms");
-            }
-        } else if (matchToken(Token.LP)) {
-            // Anonymous function
-            name = "";
+    try {
+        var body = this.statements();
+        this.mustMatchToken(Token.EOF, "msg.syntax");
+    } catch ( e ) {
+        if ( e instanceof ParserException ) {
+            // Ignore it.
         } else {
-            name = "";
-            if (compilerEnv.isAllowMemberExprAsFunctionName()) {
-                // Note that memberExpr can not start with '(' like
-                // in function (1+2).toString(), because 'function (' already
-                // processed as anonymous function
-                memberExprNode = memberExpr(false);
-            }
-            mustMatchToken(Token.LP, "msg.no.paren.parms");
+            // Maybe stack overflow.
+            //!!fake implementation
+            throw e;
         }
-
-        if (memberExprNode != null) {
-            syntheticType = FunctionNode.FUNCTION_EXPRESSION;
-        }
-
-        boolean nested = insideFunction();
-
-        FunctionNode fnNode = nf.createFunction(name);
-        if (nested || nestingOfWith > 0) {
-            // 1. Nested functions are not affected by the dynamic scope flag
-            // as dynamic scope is already a parent of their scope.
-            // 2. Functions defined under the with statement also immune to
-            // this setup, in which case dynamic scope is ignored in favor
-            // of with object.
-            fnNode.itsIgnoreDynamicScope = true;
-        }
-
-        int functionIndex = currentScriptOrFn.addFunction(fnNode);
-
-        int functionSourceEnd;
-
-        ScriptOrFnNode savedScriptOrFn = currentScriptOrFn;
-        currentScriptOrFn = fnNode;
-        int savedNestingOfWith = nestingOfWith;
-        nestingOfWith = 0;
-        Hashtable savedLabelSet = labelSet;
-        labelSet = null;
-        ObjArray savedLoopSet = loopSet;
-        loopSet = null;
-        ObjArray savedLoopAndSwitchSet = loopAndSwitchSet;
-        loopAndSwitchSet = null;
-
-        Node body;
-        String source;
-        try {
-            decompiler.addToken(Token.LP);
-            if (!matchToken(Token.RP)) {
-                boolean first = true;
-                do {
-                    if (!first)
-                        decompiler.addToken(Token.COMMA);
-                    first = false;
-                    mustMatchToken(Token.NAME, "msg.no.parm");
-                    String s = ts.getString();
-                    if (fnNode.hasParamOrVar(s)) {
-                        addWarning("msg.dup.parms", s);
-                    }
-                    fnNode.addParam(s);
-                    decompiler.addName(s);
-                } while (matchToken(Token.COMMA));
-
-                mustMatchToken(Token.RP, "msg.no.paren.after.parms");
-            }
-            decompiler.addToken(Token.RP);
-
-            mustMatchToken(Token.LC, "msg.no.brace.body");
-            decompiler.addEOL(Token.LC);
-            body = parseFunctionBody();
-            mustMatchToken(Token.RC, "msg.no.brace.after.body");
-
-            decompiler.addToken(Token.RC);
-            functionSourceEnd = decompiler.markFunctionEnd(functionSourceStart);
-            if (functionType != FunctionNode.FUNCTION_EXPRESSION) {
-                 if (compilerEnv.getLanguageVersion() >= Context.VERSION_1_2) {
-                    // function f() {} function g() {} is not allowed in 1.2
-                    // or later but for compatibility with old scripts
-                    // the check is done only if language is
-                    // explicitly set.
-                    //  XXX warning needed if version == VERSION_DEFAULT ?
-                    int tt = peekTokenOrEOL();
-                    if (tt == Token.FUNCTION) {
-                         reportError("msg.no.semi.stmt");
-                    }
-                 }
-                // Add EOL only if function is not part of expression
-                // since it gets SEMI + EOL from Statement in that case
-                decompiler.addToken(Token.EOL);
-            }
-        }
-        finally {
-            loopAndSwitchSet = savedLoopAndSwitchSet;
-            loopSet = savedLoopSet;
-            labelSet = savedLabelSet;
-            nestingOfWith = savedNestingOfWith;
-            currentScriptOrFn = savedScriptOrFn;
-        }
-
-        fnNode.setEncodedSourceBounds(functionSourceStart, functionSourceEnd);
-        fnNode.setSourceName(sourceURI);
-        fnNode.setBaseLineno(baseLineno);
-        fnNode.setEndLineno(ts.getLineno());
-
-        Node pn = nf.initFunction(fnNode, functionIndex, body, syntheticType);
-        if (memberExprNode != null) {
-            pn = nf.createAssignment(Token.ASSIGN, memberExprNode, pn);
-            if (functionType != FunctionNode.FUNCTION_EXPRESSION) {
-                // XXX check JScript behavior: should it be createExprStatement?
-                pn = nf.createExprStatementNoReturn(pn, baseLineno);
-            }
-        }
-        return pn;
     }
 
-    private Node statements()
-        throws IOException
-    {
-        Node pn = nf.createBlock(ts.getLineno());
-
-        int tt;
-        while((tt = peekToken()) > Token.EOF && tt != Token.RC) {
-            nf.addChildToBack(pn, statement());
-        }
-
-        return pn;
+    if ( this.syntaxErrorCount ) {
+        var msg = "msg.got.syntax.errors";
+        this.addError(msg);
+        throw new SyntaxError(this.getMessage("msg.got.syntax.errors"));
     }
+
+    this.ts = null; // It helps GC
+    return body;
+};
+
+
+proto.statements = function ( )
+{
+    var head = new ConsCell(nil, nil);
+    var cell = head;
+    bodyLoop: for (;;) {
+        var n;
+        switch ( this.peekToken() ) {
+          case Token.ERROR:
+          case Token.EOF:
+          case Token.RC:
+            break bodyLoop;
+          case Token.FUNCTION:  // save the stack
+            this.consumeToken();
+            n = this.functionDecl([]);
+            break;
+          default:
+            n = this.statement();
+            break;
+        }
+        cell = cell.cdr = new ConsCell(n, nil);
+    }
+    return head.cdr;
+};
+
+
+proto.functionDecl = function ( labels )
+{
+    var baseLineno = this.ts.getLineno();  // line number where source starts
+    this.mustMatchToken(Token.NAME, "msg.no.func.name");
+    var name   = this.ts.getString();
+    var params = this.parameterList();
+    var body   = this.functionBody();
+    return new FunctionDeclaration(labels, name, params, body, baseLineno);
+};
+
+proto.functionExpr = function ( )
+{
+    var name = null;
+    if ( this.matchToken(Token.NAME) ) name = this.ts.getString();
+    var params = this.parameterList();
+    var body   = this.functionBody();
+    return new FunctionExpression(name, params, body);
+};
+
+proto.parameterList = function ( )
+{
+    this.mustMatchToken(Token.LP, "msg.no.paren.parms");
+    if ( this.matchToken(Token.RP) ) return [];
+    var params = [];
+    var exists = {};
+    do {
+        this.mustMatchToken(Token.NAME, "msg.no.parm");
+        var s = this.ts.getString();
+        if ( exists[s] ) this.addWarning("msg.dup.parms", s);
+        params.push(s);
+        exists[s] = true;
+    } while ( this.matchToken(Token.COMMA) );
+    this.mustMatchToken(Token.RP, "msg.no.paren.after.parms");
+    return params;
+};
+
+proto.functionBody = function ( )
+{
+    this.mustMatchToken(Token.LC, "msg.no.brace.body");
+    
+    var saveLoop   = this.nestingOfLoop;
+    var saveSwitch = this.nestingOfSwitch;
+    this.nestingOfLoop   = 0;
+    this.nestingOfSwitch = 0;
+    this.nestingOfFunction++;
+    try {
+        var body = this.statements();
+    } catch ( e ) {
+        if ( e instanceof ParserException ) {
+            // Ignore it
+        } else {
+            throw e;
+        }
+    } finally {
+        this.nestingOfLoop   = saveLoop;
+        this.nestingOfSwitch = saveSwitch;
+        this.nestingOfFunction--;
+    }
+
+    this.mustMatchToken(Token.RC, "msg.no.brace.after.body");
+    return body;
+};
+
 
     private Node condition()
         throws IOException, ParserException

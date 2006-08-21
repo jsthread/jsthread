@@ -9,9 +9,10 @@
 
 
 //@export Statement
-function Statement ( labels ) {
+function Statement ( labels, lineno ) {
     // This is kind of abstract class.
     this.labels = labels;
+    this.lineno = lineno;
 }
 
 Statement.prototype.toString = function ( ) {
@@ -29,8 +30,8 @@ function labelsToString ( ) {
 
 
 //@export Block
-function Block ( labels, statements ) {
-    Statement.call(this, labels);
+function Block ( labels, statements, lineno ) {
+    Statement.call(this, labels, lineno);
     this.cdr = statements;
 }
 
@@ -46,8 +47,8 @@ proto.toString = function ( ) {
 
 
 //@export ExpStatement
-function ExpStatement ( labels, exp ) {
-    Statement.call(this, labels);
+function ExpStatement ( labels, exp, lineno ) {
+    Statement.call(this, labels, lineno);
     this.exp = exp;
 }
 
@@ -64,8 +65,8 @@ proto.containsFunctionCall = function ( ) {
 
 
 //@export VarStatement
-function VarStatement ( labels, decls ) {
-    Statement.call(this, labels);
+function VarStatement ( labels, decls, lineno ) {
+    Statement.call(this, labels, lineno);
     this.decls = decls;
 }
 
@@ -100,8 +101,8 @@ proto.containsFunctionCall = function ( ) {
 
 
 //@export IfStatement
-function IfStatement ( labels, condition, statement ) {
-    Statement.call(this, labels);
+function IfStatement ( labels, condition, statement, lineno ) {
+    Statement.call(this, labels, lineno);
     this.condition = condition;
     this.statement = statement;
 }
@@ -120,8 +121,8 @@ proto.toString = function ( ) {
 
 
 //@export IfElseStatement
-function IfElseStatement ( labels, condition, tstatement, fstatement ) {
-    Statement.call(this, labels);
+function IfElseStatement ( labels, condition, tstatement, fstatement, lineno ) {
+    Statement.call(this, labels, lineno);
     this.condition  = condition;
     this.tstatement = tstatement;
     this.fstatement = fstatement;
@@ -144,8 +145,8 @@ proto.toString = function ( ) {
 
 
 //@export DoWhileStatement
-function DoWhileStatement ( labels, statement, condition ) {
-    Statement.call(this, labels);
+function DoWhileStatement ( labels, statement, condition, lineno ) {
+    Statement.call(this, labels, lineno);
     this.statement = statement;
     this.condition = condition;
 }
@@ -165,8 +166,8 @@ proto.toString = function ( ) {
 
 
 //@export WhileStatement
-function WhileStatement ( labels, condition, statement ) {
-    Statement.call(this, labels);
+function WhileStatement ( labels, condition, statement, lineno ) {
+    Statement.call(this, labels, lineno);
     this.condition = condition;
     this.statement = statement;
 }
@@ -185,8 +186,8 @@ proto.toString = function ( ) {
 
 
 //@export ForStatement
-function ForStatement ( labels, init, cond, loop, statement ) {
-    Statement.call(this, labels);
+function ForStatement ( labels, init, cond, loop, statement, lineno ) {
+    Statement.call(this, labels, lineno);
     this.init      = init;
     this.cond      = cond;
     this.loop      = loop;
@@ -209,8 +210,8 @@ proto.toString = function ( ) {
 
 
 //@export ForVarStatement
-function ForVarStatement ( labels, decls, cond, loop, statement ) {
-    Statement.call(this, labels);
+function ForVarStatement ( labels, decls, cond, loop, statement, lineno ) {
+    Statement.call(this, labels, lineno);
     this.decls     = decls;
     this.cond      = cond;
     this.loop      = loop;
@@ -233,8 +234,8 @@ proto.toString = function ( ) {
 
 
 //@export ForInStatement
-function ForInStatement ( labels, lhs, exp, statement ) {
-    Statement.call(this, labels);
+function ForInStatement ( labels, lhs, exp, statement, lineno ) {
+    Statement.call(this, labels, lineno);
     this.lhs       = lhs;
     this.exp       = exp;
     this.statement = statement;
@@ -252,8 +253,8 @@ proto.toString = function ( ) {
 
 
 //@export ForInVarStatement
-function ForInVarStatement ( labels, decl, exp, statement ) {
-    Statement.call(this, labels);
+function ForInVarStatement ( labels, decl, exp, statement, lineno ) {
+    Statement.call(this, labels, lineno);
     this.decl      = decl;
     this.exp       = exp;
     this.statement = statement;
@@ -276,8 +277,8 @@ proto.toString = function ( ) {
 
 
 //@export ContinueStatement
-function ContinueStatement ( labels, target ) {
-    Statement.call(this, labels);
+function ContinueStatement ( labels, target, lineno ) {
+    Statement.call(this, labels, lineno);
     this.target = target;
 }
 
@@ -293,8 +294,8 @@ proto.toString = function ( ) {
 
 
 //@export BreakStatement
-function BreakStatement ( labels, target ) {
-    Statement.call(this, labels);
+function BreakStatement ( labels, target, lineno ) {
+    Statement.call(this, labels, lineno);
     this.target = target;
 }
 
@@ -309,9 +310,87 @@ proto.toString = function ( ) {
 };
 
 
+//@export ReturnStatement
+function ReturnStatement ( labels, exp, lineno ) {
+    Statement.call(this, labels, lineno);
+    this.exp = exp;
+}
+
+var proto = ReturnStatement.prototype = new Statement();
+proto.constructor = ReturnStatement;
+
+proto.toString = function ( ) {
+    return [ labelsToString.call(this),
+             "return ",
+             this.exp ? this.exp : "",
+             ";"
+           ].join("");
+};
+
+
+//@export WithStatement
+function WithStatement ( labels, exp, statement, lineno ) {
+    Statement.call(this, labels, lineno);
+    this.exp       = exp;
+    this.statement = statement;
+}
+
+var proto = WithStatement.prototype = new Statement();
+proto.constructor = WithStatement;
+
+proto.toString = function ( ) {
+    return [ "with (", this.exp, ") ", this.statement ].join("");
+};
+
+
+//@export SwitchStatement
+function SwitchStatement ( labels, exp, clauses, lineno ) {
+    Statement.call(this, labels, lineno);
+    this.exp    = exp;
+    this.clases = clauses;
+}
+
+var proto = SwitchStatement.prototype = new Statement();
+proto.constructor = SwitchStatement;
+
+proto.toString = function ( ) {
+    var buf = [ "switch ( ", this.exp, ") {\n"];
+    for ( var c=this.clauses;  c !=== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    buf.push("}");
+    return buf.join("");
+};
+
+
+//@export CaseClause
+function CaseClause ( exp, statements, lineno ) {
+    this.exp = exp;
+    this.cdr = statements;
+    this.lineno = lineno;
+}
+
+CaseClause.prototype.toString = function ( ) {
+    var buf = ["case ", this.exp, ":\n"];
+    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    return buf.join("");
+};
+
+
+//@export DefaultClause
+function DefaultClause ( statements, lineno ) {
+    this.cdr = statements;
+    this.lineno = lineno;
+}
+
+DefaultClause.prototype.toString = function ( ) {
+    var buf = ["default:\n"];
+    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    return buf.join("");
+};
+
+
 //@export ThrowStatement
-function ThrowStatement ( labels, exp ) {
-    Statement.call(this, labels);
+function ThrowStatement ( labels, exp, lineno ) {
+    Statement.call(this, labels, lineno);
     this.exp = exp;
 }
 
@@ -326,8 +405,8 @@ proto.toString = function ( ) {
 
 
 //@export TryCatchStatement
-function TryCatchStatement ( labels, try_block, variable, catch_block ) {
-    Statement.call(this, labels);
+function TryCatchStatement ( labels, try_block, variable, catch_block, lineno ) {
+    Statement.call(this, labels, lineno);
     this.try_block   = try_block;
     this.variable    = variable;
     this.catch_block = catch_block;
@@ -345,8 +424,8 @@ proto.toString = function ( ) {
 
 
 //@export TryFinallyStatement
-function TryFinallyStatement ( labels, try_block, finally_block ) {
-    Statement.call(this, labels);
+function TryFinallyStatement ( labels, try_block, finally_block, lineno ) {
+    Statement.call(this, labels, lineno);
     this.try_block     = try_block;
     this.finally_block = finally_block;
 }
@@ -363,8 +442,8 @@ proto.toString = function ( ) {
 
 
 //@export TryCatchFinallyStatement
-function TryCatchFinallyStatement ( labels, try_block, variable, catch_block, finally_block ) {
-    Statement.call(this, labels);
+function TryCatchFinallyStatement ( labels, try_block, variable, catch_block, finally_block, lineno ) {
+    Statement.call(this, labels, lineno);
     this.try_block     = try_block;
     this.variable      = variable;
     this.catch_block   = catch_block;
@@ -382,4 +461,23 @@ proto.toString = function ( ) {
            ].join("");
 };
 
+
+//@export FunctionDeclaration
+function FunctionDeclaration ( labels, name, params, body, lineno ) {
+    Statement.call(this, labels, lineno);
+    this.name   = name;
+    this.params = params;
+    this.cdr    = body;
+}
+
+var proto = FunctionDeclaration.prototype = new Statement();
+proto.constructor = FunctionDeclaration;
+
+proto.toString = function ( ) {
+    var buf = [ "function ", this.name,
+                " (", this.params.join(", "), ") {\n" ];
+    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    buf.push("}");
+    return buf.join("");
+};
 

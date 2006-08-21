@@ -81,7 +81,7 @@ function TokenStream( parser, sourceString, lineno )
     this.hitEOF = false;
 
     this.lineStart   = 0;
-    this.lineno      = Number(lineno) || 0;
+    this.lineno      = Number(lineno) || 1;
     this.lineEndChar = undefined;
 
     // for xml tokenizer
