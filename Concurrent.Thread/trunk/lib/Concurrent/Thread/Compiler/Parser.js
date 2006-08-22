@@ -70,6 +70,18 @@ var TI_CHECK_LABEL = 1 << 17;  // indicates to check for label
 var ParserException = newExceptionClass(NAMESPACE + ".ParserException");
 
 
+// Represent a label is in a scope or not.
+function LabelSet ( ) { }
+var proto = LabeSet.prototype;
+proto.constructor          = false;  // Becase these properties are inherited 
+proto.toString             = false;  // from Object.prototype, we need to 
+proto.toLocaleString       = false;  // override them to return false-value by 
+proto.valueOf              = false;  // default.
+proto.hasOwnProperty       = false;
+proto.isPrototypeOf        = false;
+proto.propertyIsEnumerable = false;
+
+
 // default error reporter
 var defaultReporter = new ErrorReporter();
 defaultReporter.error = function ( message, line, lineSource, lineOffset ) {
@@ -90,6 +102,7 @@ function Parser ( errorReporter )
     // XXX Move to separated class?
     this.nestingOfLoop   = 0;
     this.nestingOfSwitch = 0;
+    this.labelSet        = null;
 }
 
 var proto = Parser.prototype;
@@ -213,6 +226,7 @@ proto.parse = function ( sourceString, lineno )
     this.nestingOfFunction = 0;
     this.nestingOfLoop     = 0;
     this.nestingOfSwitch   = 0;
+    this.labelSet          = new LabelSet();
 
     try {
         var body = this.statements();
@@ -287,13 +301,13 @@ proto.parameterList = function ( )
     this.mustMatchToken(Token.LP, "msg.no.paren.parms");
     if ( this.matchToken(Token.RP) ) return [];
     var params = [];
-    var exists = {};
+    var exists = new LabelSet();
     do {
         this.mustMatchToken(Token.NAME, "msg.no.parm");
-        var s = this.ts.getString();
-        if ( exists[s] ) this.addWarning("msg.dup.parms", s);
-        params.push(s);
-        exists[s] = true;
+        var p = new Identifier(this.ts.getString());
+        if ( exists[p.valueOf()] ) this.addWarning("msg.dup.parms", s);
+        params.push(p);
+        exists[p.valueOf()] = true;
     } while ( this.matchToken(Token.COMMA) );
     this.mustMatchToken(Token.RP, "msg.no.paren.after.parms");
     return params;
@@ -303,8 +317,10 @@ proto.functionBody = function ( )
 {
     this.mustMatchToken(Token.LC, "msg.no.brace.body");
     
+    var saveLabel  = this.labelSet;
     var saveLoop   = this.nestingOfLoop;
     var saveSwitch = this.nestingOfSwitch;
+    this.labelSet = new LabelSet();
     this.nestingOfLoop   = 0;
     this.nestingOfSwitch = 0;
     this.nestingOfFunction++;
@@ -317,6 +333,7 @@ proto.functionBody = function ( )
             throw e;
         }
     } finally {
+        this.labelSet        = saveLabel;
         this.nestingOfLoop   = saveLoop;
         this.nestingOfSwitch = saveSwitch;
         this.nestingOfFunction--;
@@ -327,42 +344,25 @@ proto.functionBody = function ( )
 };
 
 
-    private Node condition()
-        throws IOException, ParserException
-    {
-        Node pn;
-        mustMatchToken(Token.LP, "msg.no.paren.cond");
-        decompiler.addToken(Token.LP);
-        pn = expr(false);
-        mustMatchToken(Token.RP, "msg.no.paren.after.cond");
-        decompiler.addToken(Token.RP);
+proto.condition = function ( )
+{
+    this.mustMatchToken(Token.LP, "msg.no.paren.cond");
+    var exp = this.expr(false);
+    this.mustMatchToken(Token.RP, "msg.no.paren.after.cond");
+    if ( exp instanceof SimpleAssignExpression ) this.addWarning("msg.assign.cond");
+    return exp;
+};
 
-        // there's a check here in jsparse.c that corrects = to ==
 
-        return pn;
-    }
-
-    // match a NAME; return null if no match.
-    private Node matchJumpLabelName()
-        throws IOException, ParserException
-    {
-        Node label = null;
-
-        int tt = peekTokenOrEOL();
-        if (tt == Token.NAME) {
-            consumeToken();
-            String name = ts.getString();
-            decompiler.addName(name);
-            if (labelSet != null) {
-                label = (Node)labelSet.get(name);
-            }
-            if (label == null) {
-                reportError("msg.undef.label");
-            }
-        }
-
-        return label;
-    }
+// match a NAME; return null if no match.
+proto.matchJumpLabelName = function ( )
+{
+    if ( this.peekTokenOrEOL() !== Token.NAME ) return null;
+    var label = new Identifier(this.ts.getString());
+    this.consumeToken();
+    if ( !this.labelSet[label.valueOf()] ) this.reportError("msg.undef.label");
+    return label;
+};
 
     private Node statement()
         throws IOException

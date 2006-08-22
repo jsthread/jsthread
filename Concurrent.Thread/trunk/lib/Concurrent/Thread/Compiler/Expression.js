@@ -69,6 +69,7 @@ proto.containsFunctionCall = function ( ) {
 //@export Identifier
 function Identifier ( s ) {
     this.string = String(s);
+    this.value  = eval('"' + this.string + '"');
 }
 
 var proto = Identifier.prototype = new Expression();
@@ -76,6 +77,10 @@ proto.constructor = Identifier;
 
 proto.toString = function ( ) {
     return this.string;
+};
+
+proto.valueOf = function ( ) {
+    return this.value;
 };
 
 proto.containsFunctionCall = function ( ) {
@@ -86,6 +91,7 @@ proto.containsFunctionCall = function ( ) {
 //@export Literal
 function Literal ( s ) {
     this.string = String(s);
+    this.value  = eval(this.string);
 }
 
 var proto = Literal.prototype = new Expression();
@@ -93,6 +99,10 @@ proto.constructor = Literal;
 
 proto.toString = function ( ) {
     return this.string;
+};
+
+proto.valueOf = function ( ) {
+    return this.value;
 };
 
 proto.containsFunctionCall = function ( ) {
