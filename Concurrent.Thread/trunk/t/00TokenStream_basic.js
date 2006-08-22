@@ -9,17 +9,17 @@
 test(14, function(){
 
     var token = [
-        {token:Token.IF  , str:"if"},
-        {token:Token.LP  , str:"("},
-        {token:Token.NAME, str:"x"},
-        {token:Token.EQ  , str:"=="},
-        {token:Token.NAME, str:"y"},
-        {token:Token.RP  , str:")"},
-        {token:Token.NAME, str:"f"},
-        {token:Token.LP  , str:"("},
-        {token:Token.NAME, str:"z"},
-        {token:Token.RP  , str:")"},
-        {token:Token.SEMI, str:";"}
+        {token:Token.IF    , str:"if"},
+        {token:Token.LP    , str:"("},
+        {token:Token.NAME  , str:"toString"},
+        {token:Token.EQ    , str:"=="},
+        {token:Token.STRING, str:"'hoge'"},
+        {token:Token.RP    , str:")"},
+        {token:Token.NAME  , str:"f"},
+        {token:Token.LP    , str:"("},
+        {token:Token.NULL  , str:"null"},
+        {token:Token.RP    , str:")"},
+        {token:Token.SEMI  , str:";"}
     ];
 
     var src = token.map(function(it){

@@ -127,6 +127,7 @@ function isKeyword ( s )
 var strIdMap = {
     "break"         : Token.BREAK,
     "case"          : Token.CASE,
+    "catch"         : Token.CATCH,
     "continue"      : Token.CONTINUE,
     "default"       : Token.DEFAULT,
     "delete"        : Token.DELPROP,
@@ -134,27 +135,29 @@ var strIdMap = {
     "else"          : Token.ELSE,
     "export"        : Token.EXPORT,
     "false"         : Token.FALSE,
+    "finally"       : Token.FINALLY,
     "for"           : Token.FOR,
     "function"      : Token.FUNCTION,
     "if"            : Token.IF,
     "in"            : Token.IN,
+    "instanceof"    : Token.INSTANCEOF,
     "new"           : Token.NEW,
     "null"          : Token.NULL,
     "return"        : Token.RETURN,
     "switch"        : Token.SWITCH,
     "this"          : Token.THIS,
+    "throw"         : Token.THROW,
     "true"          : Token.TRUE,
+    "try"           : Token.TRY,
     "typeof"        : Token.TYPEOF,
     "var"           : Token.VAR,
     "void"          : Token.VOID,
     "while"         : Token.WHILE,
     "with"          : Token.WITH,
-
-    // the following are #ifdef RESERVE_JAVA_KEYWORDS in jsscan.c
+    // Future Reserved Words
     "abstract"      : Token.RESERVED,
     "boolean"       : Token.RESERVED,
     "byte"          : Token.RESERVED,
-    "catch"         : Token.CATCH,
     "char"          : Token.RESERVED,
     "class"         : Token.RESERVED,
     "const"         : Token.RESERVED,
@@ -163,12 +166,10 @@ var strIdMap = {
     "enum"          : Token.RESERVED,
     "extends"       : Token.RESERVED,
     "final"         : Token.RESERVED,
-    "finally"       : Token.FINALLY,
     "float"         : Token.RESERVED,
     "goto"          : Token.RESERVED,
     "implements"    : Token.RESERVED,
     "import"        : Token.IMPORT,
-    "instanceof"    : Token.INSTANCEOF,
     "int"           : Token.RESERVED,
     "interface"     : Token.RESERVED,
     "long"          : Token.RESERVED,
@@ -181,16 +182,14 @@ var strIdMap = {
     "static"        : Token.RESERVED,
     "super"         : Token.RESERVED,
     "synchronized"  : Token.RESERVED,
-    "throw"         : Token.THROW,
     "throws"        : Token.RESERVED,
     "transient"     : Token.RESERVED,
-    "try"           : Token.TRY,
     "volatile"      : Token.RESERVED
 };
 
 function stringToKeyword ( name )
 {
-    return strIdMap[name] || Token.EOF;
+    return strIdMap.hasOwnProperty(name) ? strIdMap[name] : Token.EOF;
 }
 
 
