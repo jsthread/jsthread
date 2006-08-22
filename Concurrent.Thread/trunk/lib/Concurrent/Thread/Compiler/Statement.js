@@ -11,8 +11,8 @@
 //@export Statement
 function Statement ( labels, lineno ) {
     // This is kind of abstract class.
-    this.labels = labels;
-    this.lineno = lineno;
+    this.labels = labels;  // array of Identifier
+    this.lineno = lineno;  // Number (optional)
 }
 
 Statement.prototype.toString = function ( ) {
@@ -32,7 +32,7 @@ function labelsToString ( ) {
 //@export Block
 function Block ( labels, statements, lineno ) {
     Statement.call(this, labels, lineno);
-    this.cdr = statements;
+    this.cdr = statements;  // cons-list of Statement
 }
 
 var proto = Block.prototype = new Statement();
@@ -49,7 +49,7 @@ proto.toString = function ( ) {
 //@export ExpStatement
 function ExpStatement ( labels, exp, lineno ) {
     Statement.call(this, labels, lineno);
-    this.exp = exp;
+    this.exp = exp;  // Expression
 }
 
 var proto = ExpStatement.prototype = new Statement();
@@ -67,7 +67,7 @@ proto.containsFunctionCall = function ( ) {
 //@export VarStatement
 function VarStatement ( labels, decls, lineno ) {
     Statement.call(this, labels, lineno);
-    this.decls = decls;
+    this.decls = decls;  // array of {id: Identifier,  exp: Expression or null}
 }
 
 var proto = VarStatement.prototype = new Statement();
@@ -103,8 +103,8 @@ proto.containsFunctionCall = function ( ) {
 //@export IfStatement
 function IfStatement ( labels, condition, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.condition = condition;
-    this.statement = statement;
+    this.condition = condition;  // Expression
+    this.statement = statement;  // Statement
 }
 
 var proto = IfStatement.prototype = new Statement();
@@ -123,9 +123,9 @@ proto.toString = function ( ) {
 //@export IfElseStatement
 function IfElseStatement ( labels, condition, tstatement, fstatement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.condition  = condition;
-    this.tstatement = tstatement;
-    this.fstatement = fstatement;
+    this.condition  = condition;   // Expression
+    this.tstatement = tstatement;  // Statement
+    this.fstatement = fstatement;  // Statement
 }
 
 var proto = IfElseStatement.prototype = new Statement();
@@ -147,8 +147,8 @@ proto.toString = function ( ) {
 //@export DoWhileStatement
 function DoWhileStatement ( labels, statement, condition, lineno ) {
     Statement.call(this, labels, lineno);
-    this.statement = statement;
-    this.condition = condition;
+    this.statement = statement;  // Statement
+    this.condition = condition;  // Expression
 }
 
 var proto = DoWhileStatement.prototype = new Statement();
@@ -168,8 +168,8 @@ proto.toString = function ( ) {
 //@export WhileStatement
 function WhileStatement ( labels, condition, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.condition = condition;
-    this.statement = statement;
+    this.condition = condition;  // Expression
+    this.statement = statement;  // Statement
 }
 
 var proto = WhileStatement.prototype = new Statement();
@@ -188,10 +188,10 @@ proto.toString = function ( ) {
 //@export ForStatement
 function ForStatement ( labels, init, cond, loop, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.init      = init;
-    this.cond      = cond;
-    this.loop      = loop;
-    this.statement = statement;
+    this.init      = init;       // Expression
+    this.cond      = cond;       // Expression
+    this.loop      = loop;       // Expression
+    this.statement = statement;  // Statement
 }
 
 var proto = ForStatement.prototype = new Statement();
@@ -212,10 +212,10 @@ proto.toString = function ( ) {
 //@export ForVarStatement
 function ForVarStatement ( labels, decls, cond, loop, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.decls     = decls;
-    this.cond      = cond;
-    this.loop      = loop;
-    this.statement = statement;
+    this.decls     = decls;      // array of {id: Identifier,  exp: Expression or null}
+    this.cond      = cond;       // Expression
+    this.loop      = loop;       // Expression
+    this.statement = statement;  // Statement
 }
 
 var proto = ForVarStatement.prototype = new Statement();
@@ -224,7 +224,7 @@ proto.constructor = ForVarStatement;
 proto.toString = function ( ) {
     return [ labelsToString.call(this),
              "for (",
-             new VarStatement(decls), " ",
+             new VarStatement([], decls), " ",
              this.cond ? this.cond : "", "; ",
              this.loop ? this.loop : "",
              ") ",
@@ -236,9 +236,9 @@ proto.toString = function ( ) {
 //@export ForInStatement
 function ForInStatement ( labels, lhs, exp, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.lhs       = lhs;
-    this.exp       = exp;
-    this.statement = statement;
+    this.lhs       = lhs;        // Identifier or DotAccessor or BracketAccessor
+    this.exp       = exp;        // Expression
+    this.statement = statement;  // Statement
 }
 
 var proto = ForInStatement.prototype = new Statement();
@@ -255,9 +255,9 @@ proto.toString = function ( ) {
 //@export ForInVarStatement
 function ForInVarStatement ( labels, decl, exp, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.decl      = decl;
-    this.exp       = exp;
-    this.statement = statement;
+    this.decl      = decl;       // {id: Identifier,  exp: Expression or null}
+    this.exp       = exp;        // Expression
+    this.statement = statement;  // Statement
 }
 
 var proto = ForInVarStatement.prototype = new Statement();
@@ -279,7 +279,7 @@ proto.toString = function ( ) {
 //@export ContinueStatement
 function ContinueStatement ( labels, target, lineno ) {
     Statement.call(this, labels, lineno);
-    this.target = target;
+    this.target = target;  // Identifier or null
 }
 
 var proto = ContinueStatement.prototype = new Statement();
@@ -296,7 +296,7 @@ proto.toString = function ( ) {
 //@export BreakStatement
 function BreakStatement ( labels, target, lineno ) {
     Statement.call(this, labels, lineno);
-    this.target = target;
+    this.target = target;  // Identifier or null
 }
 
 var proto = BreakStatement.prototype = new Statement();
@@ -313,7 +313,7 @@ proto.toString = function ( ) {
 //@export ReturnStatement
 function ReturnStatement ( labels, exp, lineno ) {
     Statement.call(this, labels, lineno);
-    this.exp = exp;
+    this.exp = exp;  // Expression or null
 }
 
 var proto = ReturnStatement.prototype = new Statement();
@@ -331,8 +331,8 @@ proto.toString = function ( ) {
 //@export WithStatement
 function WithStatement ( labels, exp, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.exp       = exp;
-    this.statement = statement;
+    this.exp       = exp;        // Expression
+    this.statement = statement;  // Statement
 }
 
 var proto = WithStatement.prototype = new Statement();
@@ -346,8 +346,8 @@ proto.toString = function ( ) {
 //@export SwitchStatement
 function SwitchStatement ( labels, exp, clauses, lineno ) {
     Statement.call(this, labels, lineno);
-    this.exp    = exp;
-    this.clases = clauses;
+    this.exp = exp;      // Expression
+    this.cdr = clauses;  // cons-list of (CaseClause or DefaultClause)
 }
 
 var proto = SwitchStatement.prototype = new Statement();
@@ -363,9 +363,9 @@ proto.toString = function ( ) {
 
 //@export CaseClause
 function CaseClause ( exp, statements, lineno ) {
-    this.exp = exp;
-    this.cdr = statements;
-    this.lineno = lineno;
+    this.exp    = exp;         // Expression
+    this.cdr    = statements;  // cons-list of Statement
+    this.lineno = lineno;      // Number (optional)
 }
 
 CaseClause.prototype.toString = function ( ) {
@@ -377,8 +377,8 @@ CaseClause.prototype.toString = function ( ) {
 
 //@export DefaultClause
 function DefaultClause ( statements, lineno ) {
-    this.cdr = statements;
-    this.lineno = lineno;
+    this.cdr = statements;  // cons-list of Statement
+    this.lineno = lineno;   // Number (optional)
 }
 
 DefaultClause.prototype.toString = function ( ) {
@@ -391,7 +391,7 @@ DefaultClause.prototype.toString = function ( ) {
 //@export ThrowStatement
 function ThrowStatement ( labels, exp, lineno ) {
     Statement.call(this, labels, lineno);
-    this.exp = exp;
+    this.exp = exp;  // Expression
 }
 
 var proto = ThrowStatement.prototype = new Statement();
@@ -407,9 +407,9 @@ proto.toString = function ( ) {
 //@export TryCatchStatement
 function TryCatchStatement ( labels, try_block, variable, catch_block, lineno ) {
     Statement.call(this, labels, lineno);
-    this.try_block   = try_block;
-    this.variable    = variable;
-    this.catch_block = catch_block;
+    this.try_block   = try_block;    // Block
+    this.variable    = variable;     // Identifier
+    this.catch_block = catch_block;  // Block
 }
 
 var proto = TryCatchStatement.prototype = new Statement();
@@ -426,8 +426,8 @@ proto.toString = function ( ) {
 //@export TryFinallyStatement
 function TryFinallyStatement ( labels, try_block, finally_block, lineno ) {
     Statement.call(this, labels, lineno);
-    this.try_block     = try_block;
-    this.finally_block = finally_block;
+    this.try_block     = try_block;      // Block
+    this.finally_block = finally_block;  // Block
 }
 
 var proto = TryFinallyStatement.prototype = new Statement();
@@ -444,10 +444,10 @@ proto.toString = function ( ) {
 //@export TryCatchFinallyStatement
 function TryCatchFinallyStatement ( labels, try_block, variable, catch_block, finally_block, lineno ) {
     Statement.call(this, labels, lineno);
-    this.try_block     = try_block;
-    this.variable      = variable;
-    this.catch_block   = catch_block;
-    this.finally_block = finally_block;
+    this.try_block     = try_block;      // Block
+    this.variable      = variable;       // Identifier
+    this.catch_block   = catch_block;    // Block
+    this.finally_block = finally_block;  // Block
 }
 
 var proto = TryCatchFinallyStatement.prototype = new Statement();
@@ -465,9 +465,9 @@ proto.toString = function ( ) {
 //@export FunctionDeclaration
 function FunctionDeclaration ( labels, name, params, body, lineno ) {
     Statement.call(this, labels, lineno);
-    this.name   = name;
-    this.params = params;
-    this.cdr    = body;
+    this.name   = name;    // Identifier
+    this.params = params;  // array of Identifier
+    this.cdr    = body;    // cons-list of Statement
 }
 
 var proto = FunctionDeclaration.prototype = new Statement();
