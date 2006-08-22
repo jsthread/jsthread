@@ -24,7 +24,7 @@ proto.containsFunctionCall = function ( ) {
 function UnaryExpression ( e ) {
     // This is kind of abstract class and should not be instantiated directly.
     // It just provides default implementations of methods and constructor.
-    this.exp = e;
+    this.exp = e;  // Expression
 }
 
 var proto = UnaryExpression.prototype = new Expression();
@@ -39,8 +39,8 @@ proto.containsFunctionCall = function ( ) {
 function BinaryExpression ( l, r ) {
     // This is kind of abstract class and should not be instantiated directly.
     // It just provides default implementations of methods and constructor.
-    this.left  = l;
-    this.right = r;
+    this.left  = l;  // Expression
+    this.right = r;  // Expression
 }
 
 var proto = BinaryExpression.prototype = new Expression();
@@ -112,7 +112,7 @@ proto.containsFunctionCall = function ( ) {
 
 //@export ArrayInitializer
 function ArrayInitializer ( v ) {
-    this.elements = v;
+    this.elements = v;  // array of Expression
 }
 
 var proto = ArrayInitializer.prototype = new Expression();
@@ -147,7 +147,7 @@ proto.containsFunctionCall = function ( ) {
 
 //@export ObjectInitializer
 function ObjectInitializer ( v ) {
-    this.pairs = v;
+    this.pairs = v;  // array of {prop: Identifier or Literal,  exp: Expression}
 }
 
 var proto = ObjectInitializer.prototype = new Expression();
@@ -171,9 +171,9 @@ proto.containsFunctionCall = function ( ) {
 
 //@export FunctionExpression
 function FunctionExpression ( name, params, body ) {
-    this.name   = name;
-    this.params = params;
-    this.cdr    = body;
+    this.name   = name;    // Identifier or null
+    this.params = params;  // array of Identifier
+    this.cdr    = body;    // cons-list of Statement
 }
 
 var proto = FunctionExpression.prototype = new Expression();
@@ -195,8 +195,8 @@ proto.containsFunctionCall = function ( ) {
 
 //@export DotAccessor
 function DotAccessor ( base, prop ) {
-    this.base = base;
-    this.prop = prop;
+    this.base = base;  // Expression
+    this.prop = prop;  // Identifier
 }
 
 var prop = DotAccessor.prototype = new Expression();
@@ -226,8 +226,8 @@ proto.toString = function ( ) {
 
 //@export NewExpression
 function NewExpression ( func, args ) {
-    this.func = func;
-    this.args = args;
+    this.func = func;  // Expression
+    this.args = args;  // array of Expression
 }
 
 var proto = NewExpression.prototype = new Expression();
@@ -244,8 +244,8 @@ proto.containsFunctionCall = function ( ) {
 
 //@export CallExpression
 function CallExpression ( func, args ) {
-    this.func = func;
-    this.args = args;
+    this.func = func;  // Expression
+    this.args = args;  // array of Expression
 }
 
 var proto = CallExpression.prototype = new Expression();
@@ -704,9 +704,9 @@ proto.toString = function ( ) {
 
 //@export ConditionalExpression
 function ConditionalExpression ( c, t, f ) {
-    this.cond = c;
-    this.texp = t;
-    this.fexp = f;
+    this.cond = c;  // Expression
+    this.texp = t;  // Expression
+    this.fexp = f;  // Expression
 }
 
 var proto = ConditionalExpression.prototype = new Expression();
@@ -718,8 +718,8 @@ proto.toString = function ( ) {
 
 proto.containsFunctionCall = function ( ) {
     return this.cond.containsFunctionCall()
-        && this.texp.containsFunctionCall()
-        && this.fexp.containsFunctionCall();
+        || this.texp.containsFunctionCall()
+        || this.fexp.containsFunctionCall();
 };
 
 
@@ -886,6 +886,19 @@ proto.constructor = BitOrAssignExpression;
 
 proto.toString = function ( ) {
     return "(" + this.left + " |= " + this.right + ")";
+};
+
+
+//@export CommaExpression
+function CommaExpression ( left, right ) {
+    BinaryExpression.apply(this, arguments);
+}
+
+var proto = CommaExpression.prototype = new BinaryExpression();
+proto.constructor = CommaExpression;
+
+proto.toString = function ( ) {
+    return "(" + this.left + ", " + this.right + ")";
 };
 
 
