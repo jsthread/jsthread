@@ -19,7 +19,8 @@ Statement.prototype.toString = function ( ) {
     codeBug();
 };
 
-// kind of protected method.
+// kind of final protected method.
+// Use this like: labelsToString.call(obj, arg0, arg1 ...)
 function labelsToString ( ) {
     var buf = [];
     for ( var i=0;  i < this.labels.length;  i++ ) {
@@ -27,6 +28,19 @@ function labelsToString ( ) {
     }
     return buf.join("");
 }
+
+
+//@export EmptyStatement
+function EmptyStatement ( labels, lineno ) {
+    Statement.call(this, labels, lineno);
+}
+
+var proto = EmptyStatement.prototype = new Statement();
+proto.constructor = EmptyStatement;
+
+proto.toString = function ( ) {
+    return labelsToString.call(this) + ";";
+};
 
 
 //@export Block
