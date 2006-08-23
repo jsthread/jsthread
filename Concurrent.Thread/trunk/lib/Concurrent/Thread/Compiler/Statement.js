@@ -188,9 +188,9 @@ proto.toString = function ( ) {
 //@export ForStatement
 function ForStatement ( labels, init, cond, loop, statement, lineno ) {
     Statement.call(this, labels, lineno);
-    this.init      = init;       // Expression
-    this.cond      = cond;       // Expression
-    this.loop      = loop;       // Expression
+    this.init      = init;       // Expression or null
+    this.cond      = cond;       // Expression or null
+    this.loop      = loop;       // Expression or null
     this.statement = statement;  // Statement
 }
 
@@ -213,8 +213,8 @@ proto.toString = function ( ) {
 function ForVarStatement ( labels, decls, cond, loop, statement, lineno ) {
     Statement.call(this, labels, lineno);
     this.decls     = decls;      // array of {id: Identifier,  exp: Expression or null}
-    this.cond      = cond;       // Expression
-    this.loop      = loop;       // Expression
+    this.cond      = cond;       // Expression or null
+    this.loop      = loop;       // Expression or null
     this.statement = statement;  // Statement
 }
 
