@@ -290,6 +290,50 @@ proto.toString = function ( ) {
 };
 
 
+// Mozilla extention "for each ( ... in ... )"
+//@export ForEachStatement
+function ForEachStatement ( labels, lhs, exp, statement, lineno ) {
+    Statement.call(this, labels, lineno);
+    this.lhs       = lhs;        // Identifier or DotAccessor or BracketAccessor
+    this.exp       = exp;        // Expression
+    this.statement = statement;  // Statement
+}
+
+var proto = ForEachStatement.prototype = new Statement();
+proto.constructor = ForEachStatement;
+
+proto.toString = function ( ) {
+    return [ labelsToString.call(this),
+             "for each (", this.lhs, " in ", this.exp, ") ",
+             this.statement
+           ].join("");
+};
+
+
+//@export ForEachVarStatement
+function ForEachVarStatement ( labels, decl, exp, statement, lineno ) {
+    Statement.call(this, labels, lineno);
+    this.decl      = decl;       // {id: Identifier,  exp: Expression or null}
+    this.exp       = exp;        // Expression
+    this.statement = statement;  // Statement
+}
+
+var proto = ForEachVarStatement.prototype = new Statement();
+proto.constructor = ForEachVarStatement;
+
+proto.toString = function ( ) {
+    return [ labelsToString.call(this),
+             "for each ( var ",
+             this.decl.exp ? this.decl.id + "=" + this.decl.exp
+                           : this.decl,
+             " in ",
+             this.exp,
+             ") ",
+             this.statement
+           ].join("");
+};
+
+
 //@export ContinueStatement
 function ContinueStatement ( labels, target, lineno ) {
     Statement.call(this, labels, lineno);
