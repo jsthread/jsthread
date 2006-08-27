@@ -542,15 +542,15 @@ proto.toString = function ( ) {
 
 
 //@export TryCatchListFinallyStatement
-function TryCatchListStatement ( labels, tryBlock, catchList, finallyBlock, lineno, source ) {
+function TryCatchListFinallyStatement ( labels, tryBlock, catchList, finallyBlock, lineno, source ) {
     Statement.call(this, labels, lineno, source);
     this.tryBlock     = tryBlock;      // Block
     this.cdr          = catchList;     // cons-list of CatchGuard
     this.finallyBlock = finallyBlock;  // Block
 }
 
-var proto = TryCatchListStatement.prototype = new Statement();
-proto.constructor = TryCatchListStatement;
+var proto = TryCatchListFinallyStatement.prototype = new Statement();
+proto.constructor = TryCatchListFinallyStatement;
 
 proto.toString = function ( ) {
     var buf = [ labelsToString.call(this),
