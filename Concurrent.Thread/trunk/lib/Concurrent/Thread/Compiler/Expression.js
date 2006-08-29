@@ -119,20 +119,20 @@ proto.containsFunctionCall = function ( ) {
 
 
 //@export ArrayInitializer
-function ArrayInitializer ( v ) {
-    this.elements = v;  // array of Expression
+function ArrayInitializer ( elems ) {
+    this.elems = elems;  // array of Expression
 }
 
 var proto = ArrayInitializer.prototype = new Expression();
 proto.constructor = ArrayInitializer;
 
 proto.toString = function ( ) {
-    return "[" + this.elements.join(", ") + "]";
+    return "[" + this.elems.join(", ") + "]";
 };
 
 proto.containsFunctionCall = function ( ) {
-    for ( var i=0;  i < this.elements.length;  i++ ) {
-        if ( this.elements[i].containsFunctionCall() ) return true;
+    for ( var i=0;  i < this.elems.length;  i++ ) {
+        if ( this.elems[i].containsFunctionCall() ) return true;
     }
     return false;
 };
