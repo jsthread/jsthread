@@ -118,6 +118,112 @@ proto.containsFunctionCall = function ( ) {
 };
 
 
+//@export NumberLiteral
+function NumberLiteral ( s ) {
+    Literal.apply(this, arguments);
+}
+
+var proto = NumberLiteral.prototype = new Literal();
+proto.constructor = NumberLiteral;
+
+
+//@export StringLiteral
+function StringLiteral ( s ) {
+    Literal.apply(this, arguments);
+}
+
+var proto = StringLiteral.prototype = new Literal();
+proto.constructor = StringLiteral;
+
+
+//@export RegExpLiteral
+function RegExpLiteral ( s ) {
+    Literal.apply(this, arguments);
+}
+
+var proto = RegExpLiteral.prototype = new Literal();
+proto.constructor = RegExpLiteral;
+
+
+//@export NullLiteral
+function NullLiteral ( ) {
+    return NULL_LITERAL;  // Reuse object.
+}
+
+var proto = NullLiteral.prototype = new Literal();
+proto.constructor = NullLiteral;
+
+proto.string = "null";
+proto.vakue  = null;
+
+proto.toString = function ( ) {
+    return "null";
+};
+
+proto.valueOf = function ( ) {
+    return null;
+};
+
+function temp ( ) { }
+temp.prototype = NullLiteral.prototype;
+var NULL_LITERAL = new temp();
+
+
+//@export BooleanLiteral
+function BooleanLiteral ( ) { }
+
+var proto = BooleanLiteral.prototype = new Literal();
+proto.constructor = BooleanLiteral;
+
+
+//@export TrueLiteral
+function TrueLiteral ( ) {
+    return TRUE_LITERAL;  // Reuse object.
+}
+
+var proto = TrueLiteral.prototype = new BooleanLiteral();
+proto.constructor = TrueLiteral;
+
+proto.string = "true";
+proto.vakue  = true;
+
+proto.toString = function ( ) {
+    return "true";
+};
+
+proto.valueOf = function ( ) {
+    return true;
+};
+
+function temp ( ) { }
+temp.prototype = TrueLiteral.prototype;
+var TRUE_LITERAL = new temp();
+
+
+//@export FalseLiteral
+function FalseLiteral ( ) {
+    return FALSE_LITERAL;  // Reuse object.
+}
+
+var proto = FalseLiteral.prototype = new BooleanLiteral();
+proto.constructor = FalseLiteral;
+
+proto.string = "false";
+proto.vakue  = false;
+
+proto.toString = function ( ) {
+    return "false";
+};
+
+proto.valueOf = function ( ) {
+    return false;
+};
+
+function temp ( ) { }
+temp.prototype = FalseLiteral.prototype;
+var FALSE_LITERAL = new temp();
+
+
 //@export ArrayInitializer
 function ArrayInitializer ( elems ) {
     this.elems = elems;  // array of Expression
