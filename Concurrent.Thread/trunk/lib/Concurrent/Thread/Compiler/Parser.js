@@ -88,6 +88,7 @@ defaultReporter.error = function ( message, line, lineSource, lineOffset ) {
 };
 
 
+//@export Parser
 function Parser ( errorReporter )
 {
     this.errorReporter       = errorReporter instanceof ErrorReporter
