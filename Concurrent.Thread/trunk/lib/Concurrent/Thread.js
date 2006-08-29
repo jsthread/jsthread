@@ -1,15 +1,15 @@
 //@esmodpp
 
-//@namespace concurrent.thread
+//@namespace Concurrent.Thread
 
-//@require data.LinkedList
-//@with-namespace data
+//@require Data.LinkedList
+//@with-namespace Data
 
-//@require data.conscell.ConsCell
-//@with-namespace data.conscell
+//@require Data.Cons
+//@with-namespace Data.Cons
 
-//@require data.error
-//@with-namespace data.error
+//@require Data.Error
+//@with-namespace Data.Error
 
 
 
