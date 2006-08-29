@@ -55,11 +55,13 @@ proto.containsFunctionCall = function ( ) {
 };
 
 
-//@export ThisKeyword
-function ThisKeyword ( ) { }
+//@export ThisExpression
+function ThisExpression ( ) {
+    return THIS_EXPRESSION;  // Reuse object.
+}
 
-var proto = ThisKeyword.prototype = new Expression();
-proto.constructor = ThisKeyword;
+var proto = ThisExpression.prototype = new Expression();
+proto.constructor = ThisExpression;
 
 proto.toString = function ( ) {
     return "this";
@@ -68,6 +70,10 @@ proto.toString = function ( ) {
 proto.containsFunctionCall = function ( ) {
     return false;
 };
+
+function temp ( ) { }
+temp.prototype = ThisExpression.prototype;
+var THIS_EXPRESSION = new temp();
 
 
 //@export Identifier
