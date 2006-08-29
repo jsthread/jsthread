@@ -414,7 +414,7 @@ proto.constructor = SwitchStatement;
 
 proto.toString = function ( ) {
     var buf = [ "switch ( ", this.exp, ") {\n"];
-    for ( var c=this.clauses;  c !=== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    for ( var c=this.clauses;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
     buf.push("}");
     return buf.join("");
 };
