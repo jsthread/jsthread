@@ -19,6 +19,10 @@ proto.containsFunctionCall = function ( ) {
     Kit.codeBug("Unimplemented method `containsFunctionCall' of class: " + this.constructor);
 };
 
+proto.hasLvalue = function ( ) {
+    return false;
+};
+
 
 //@export UnaryExpression
 function UnaryExpression ( e ) {
@@ -81,6 +85,10 @@ proto.toString = function ( ) {
 
 proto.valueOf = function ( ) {
     return this.value;
+};
+
+proto.hasLvalue = function ( ) {
+    return true;
 };
 
 proto.containsFunctionCall = function ( ) {
@@ -206,6 +214,10 @@ proto.toString = function ( ) {
     return this.base + "." + this.prop;
 };
 
+proto.hasLvalue = function ( ) {
+    return true;
+};
+
 proto.containsFunctionCall = function ( ) {
     return this.base.containsFunctionCall();
 };
@@ -221,6 +233,10 @@ proto.constructor = BracketAccessor;
 
 proto.toString = function ( ) {
     return this.left + "[" + this.right + "]";
+};
+
+proto.hasLvalue = function ( ) {
+    return true;
 };
 
 
