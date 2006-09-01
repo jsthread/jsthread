@@ -1,12 +1,10 @@
 //@esmodpp
-//@version 0.3.0
-
+//@version 0.4.0
 //@namespace Data.Functional
 
-//@require Data.Functional.Enumerable
+//@require Data.Functional.Enumerable 0.4.0
 
 //@require Data.Error.NotImplementedError
-//@require Data.Error.NotSupportedError
 //@with-namespace Data.Error
 
 
@@ -19,16 +17,25 @@ function Collection ( ) {
 var proto = Collection.prototype = new Enumerable();
 proto.constructor = Collection;
 
-+function(){  //closure
-    var obj_name = "[object " + NAMESPACE + ".Collection]";
-    proto.toString = function ( ) {
-        return obj_name;
-    };
+var obj_name = "[object " + NAMESPACE + ".Collection]";
+
+
+proto.toString = function ( ) {
+    return obj_name;
 };
 
-proto.add = function ( ) {
+
+proto.toArray = function ( ) {
+    var a = [];
+    for ( var it=this.iterator();  !it.isTail();  it=it.next() ) a.push(it.value());
+    return a;
+};
+
+
+proto.add = function ( /* variable args */ ) {
     throw new NotImplementedError(undefined, "add");
 };
+
 
 proto.addAll = function ( /* variable arguments */ ) {
     for ( var i=0;  i < arguments.length;  i++ ) {
@@ -39,9 +46,7 @@ proto.addAll = function ( /* variable arguments */ ) {
             }
         }
         else if ( c instanceof Array ) {
-            for ( var j=0;  j < c.length;  j++ ) {
-                this.add(c[j]);
-            }
+            this.add.apply(this, c);
         }
         else {
             this.add(c);
@@ -49,76 +54,51 @@ proto.addAll = function ( /* variable arguments */ ) {
     }
 };
 
-proto.remove = function ( /* variable arguments */ ) {
-    throw new NotSupportedError(undefined, "remove");
+
+proto.removeAt = function ( it ) {
+    throw new NotImplementedError(undefined, "removeAt");
 };
 
-proto.removeAll = function ( /* variable arguments */ ) {
-    var args = [];
-    for ( var i=0;  i < arguments.length;  i++ ) {
-        var c = arguments[i];
-        if ( c instanceof Collection ) {
-            c.forEach(function(it){
-                args.push(it);
-            });
-        }
-        else if ( c instanceof Array ) {
-            for ( var j=0;  j < c.length;  j++ ) {
-                args.push(c[j]);
-            }
-        }
-        else {
-            args.push(c);
-        }
-    }
-    return this.remove.apply(this, args);
-};
 
 proto.isEmpty = function ( ) {
     return this.iterator().isTail();
 };
 
+
 proto.empty = function ( ) {
-    throw new NotSupportedError(undefined, "empty");
+    throw new NotImplementedError(undefined, "empty");
 };
+
 
 proto.size = function ( ) {
     for ( var i=0, it=this.iterator();  !it.isTail();  i++, it=it.next() );
     return i;
 };
 
+
+proto.emptyCopy = function ( ) {
+    return new this.constructor();
+};
+
+
 proto.copy = function ( ) {
-    var c = new this.constructor();
+    var c = this.emptyCopy();
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         c.add(it.value());
     }
     return c;
 };
 
-proto.equals = function ( another ) {
-    if ( !(another instanceof Collection) ) return false;
-    var it1 = this.iterator(), it2 = another.iterator();
-    for ( ;  !it1.isTail() && !it2.isTail();  it1=it1.next(), it2=it2.next() ) {
-        var l = it1.value();
-        var r = it2.value();
-        if ( typeof l.equals == "function" ) {
-            if ( !l.equals(r) ) return false;
-        }
-        else {
-            if ( l !== r ) return false;
-        }
-    }
-    return it1.isTail() && it2.isTail();
-};
 
 proto.filter = function ( f ) {
-    var c = new this.constructor();
+    var c = this.emptyCopy();
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         var v = it.value();
         if ( f(v) ) c.add(v);
     }
     return c;
 };
+
 
 proto.grep = function ( re ) {
     if ( !(re instanceof RegExp) ) re = new Regex(re);
@@ -127,8 +107,9 @@ proto.grep = function ( re ) {
     });
 };
 
+
 proto.map = function ( f ) {
-    var c = new this.constructor();
+    var c = this.emptyCopy();
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         try {
             c.add( f(it.value()) );

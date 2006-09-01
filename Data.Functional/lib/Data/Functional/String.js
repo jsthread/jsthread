@@ -1,10 +1,9 @@
 //@esmodpp
-//@version 0.1.0
+//@version 0.4.0
 
-//@require Data.Iterator
-//@with-namespace Data.Iterator
-
-//@require Data.Functional.Array
+//@require Data.Functional.List  0.4.0
+//@require Data.Functional.Array 0.4.0
+//@with-namespace Data.Functional
 
 //@require Data.Error.NotSupportedError
 //@with-namespace Data.Error
@@ -12,52 +11,20 @@
 
 var proto = String.prototype;
 
-for ( var i in data.functional.List.prototype ) {
-    if ( !proto.hasOwnProperty(i) ) proto[i] = data.functional.List.prototype[i];
+for ( var i in List.prototype ) {
+    if ( !proto.hasOwnProperty(i) ) proto[i] = List.prototype[i];
 }
 
-proto.add = function ( ) {
-    throw new NotSupportedError("String does not support `add' method, because it is immutable.", "add");
-};
-
-proto.addAll = function ( ) {
-    throw new NotSupportedError("String does not support `addAll' method, because it is immutable.", "addAll");
-};
-
-proto.remove = function ( ) {
-    throw new NotSupportedError("String does not support `remove' method, because it is immutable.", "remove");
-};
-
-proto.removeAll = function ( ) {
-    throw new NotSupportedError("String does not support `removeAll' method, because it is immutable.", "removeAll");
-};
-
-proto.removeAt = function ( ) {
-    throw new NotSupportedError("String does not support `removeAt' method, because it is immutable.", "removeAt");
-};
-
-proto.pop = function ( ) {
-    throw new NotSupportedError("String does not support `pop' method, because it is immutable.", "pop");
-};
-
-proto.push = function ( ) {
-    throw new NotSupportedError("String does not support `push' method, because it is immutable.", "push");
-};
-
-proto.shift = function ( ) {
-    throw new NotSupportedError("String does not support `shift' method, because it is immutable.", "shift");
-};
-
-proto.unshift = function ( ) {
-    throw new NotSupportedError("String does not support `unshift' method, because it is immutable.", "unshift");
+proto.get = function ( it ) {
+    if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.value();
+    it = Math.floor(it) || 0;
+    if ( it < 0 ) it += this.length;
+    if ( it < 0 || it >= this.length ) return undefined;
+    return this.charAt(i);
 };
 
 proto.isEmpty = function ( ) {
     return this.length == 0;
-};
-
-proto.empty = function ( ) {
-    throw new NotSupportedError("String does not support `empty' method, because it is immutable.", "empty");
 };
 
 proto.size = function ( ) {
@@ -68,58 +35,78 @@ proto.copy = function ( ) {
     return new String(this);
 };
 
-proto.equals = function ( str ) {
-    return this.toString() === str.toString();
-};
-
-proto.head = function ( ) {
-    return this.charAt(0);
-};
-
-proto.tail = function ( ) {
-    return this.charAt(this.length-1);
-}
-
 proto.toArray = function ( ) {
     return this.split("");
 };
 
-proto.iterator = function ( n ) {
+
+proto.head = function ( n ) {
+    if ( n < 0 ) return this.tail(-n);
+    n = Math.floor(n) || 0;
+    if ( n > this.length ) n = this.length;
     return new Iterator(this, n);
 };
 
-proto.reverseIterator = function ( n ) {
+proto.tail = function ( n ) {
+    if ( n < 0 ) return this.head(-n);
+    n = Math.floor(n) || 0;
+    if ( n > this.length ) n = this.length;
+    return new Iterator(this, this.length-n);
+};
+
+proto.iterator = proto.head;
+
+proto.reverseHead = function ( n ) {
+    if ( n < 0 ) return this.reverseTail(-n);
+    n = Math.floor(n) || 0;
+    if ( n > this.length ) n = this.length;
     return new ReverseIterator(this, n);
 };
 
+proto.reverseTail = function ( n ) {
+    if ( n < 0 ) return this.reverseHead(-n);
+    n = Math.floor(n) || 0;
+    if ( n > this.length ) n = this.length;
+    return new ReverseIterator(this, this.length-n);
+};
 
-// We define String-specifc-version of "map" and "filter",
+
+// Generate non-supported methods.
+[ "add" , "addAll"  , "empty", "insertAt", "pop"    ,
+  "push", "removeAt", "set"  , "shift"   , "unshift" ].forEach(function( it )
+{
+    proto[it] = function ( ) {
+        throw new NotSupportedError("String does not support `" + it + "' method, because it is immutable.", it);
+    };
+});
+
+
+// We define String-specifc-version of "filter", "map" and "reverse",
 // because we can not implement "add" method on String.
+proto.filter = function ( f ) {
+    return this.split("").filter(f).join("");
+};
+
 proto.map = function ( f ) {
     return this.split("").map(f).join("");
 };
 
-proto.filter = function ( f ) {
-    return this.split("").filter(f).join("");
+proto.reverse = function ( ) {
+    return this.split("").reverse().join("");
 };
 
 
 
 function Iterator ( s, n ) {
-    n = Math.floor(n);
-    if ( !n ) n = 0;
-    if      ( n < -s.length ) n = 0;
-    else if ( n < 0         ) n = n + s.length;
-    else if ( n >  s.length ) n = s.length;
     this._str = s;
     this._pos = n;
 }
 
-var proto = Iterator.prototype = new data.iterator.Iterator();
+var proto = Iterator.prototype = new List.Iterator();
 proto.constructor = Iterator;
 
-proto.copy = function ( ) {
-    return new this.constructor(this._str, this._pos);
+proto.isBoundTo = function ( that ) {
+    return String(this._str) === String(that);
 };
 
 proto.isHead = function ( ) {
@@ -131,7 +118,8 @@ proto.isTail = function ( ) {
 };
 
 proto.value = function ( ) {
-    if ( this._pos < 0 ) this._pos = 0;
+    if ( this._pos <  0                ) this._pos = 0;
+    if ( this._pos >= this._str.length ) return undefined;
     return this._str.charAt(Math.floor(this._pos));
 };
 
@@ -147,33 +135,43 @@ proto.previous = function ( ) {
     return new this.constructor(this._str, this._pos-1);
 };
 
-proto.compareTo = function ( another ) {
-    if ( !(another instanceof this.constructor) ) throw new TypeError("String-iterators cannot be compared to values of the other types.");
-    if ( this._str != another._str      ) throw new IllegalStateException("Two iterators belong to different strings.");
+proto.compareTo = function ( that ) {
+    if ( !(that instanceof this.constructor) ) return undefined;
+    if ( that.isBoundTo(this._str)           ) return undefined;
     var l = this._pos;
-    var r = another._pos;
+    var r = that._pos;
     return l < r  ?  -1  :
            l > r  ?   1  :  0;
 };
 
-proto.equals = function ( another ) {
-    if ( this.constructor != another.constructor ) return false;
-    if ( this._str != another._str ) return false;
+proto.equals = function ( that ) {
+    if ( !(that instanceof this.constructor) ) return false;
+    if ( that.isBoundTo(this._str)           ) return false;
     return this._pos == another._pos;
 };
 
 proto.distance = function ( another ) {
-    if ( this.constructor != another.constructor ) return undefined;
+    if ( !(that instanceof this.constructor) ) return undefined;
+    if ( that.isBoundTo(this._str)           ) return undefined;
     if ( this._str != another._str ) return undefined;
     return another._pos - this._pos;
 };
+
+
+// Generate non-supported methods.
+[ "assign", "insert", "remove" ].forEach(function( it ){
+    proto[it] = function ( ) {
+        throw new NotSupportedError("string-iterator does not support `" + it + "' method, because string is immutable.", it);
+    };
+});
+
 
 
 function ReverseIterator ( s, n ) {
     Iterator.apply(this, arguments);
 }
 
-var proto = ReverseIterator.prototype = new data.iterator.Iterator();
+var proto = ReverseIterator.prototype = new List.Iterator();
 
 for ( var i in Iterator.prototype ) {
     if ( typeof Iterator.prototype[i] == "function"  &&  Iterator.prototype.hasOwnProperty(i) ) {
