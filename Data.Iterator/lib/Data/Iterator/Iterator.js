@@ -1,5 +1,5 @@
 //@esmodpp
-//@version 0.2.0
+//@version 0.2.1
 //@namespace Data.Iterator
 
 //@require Data.Error.NotImplementedError
@@ -56,5 +56,13 @@ proto.value = function ( ) {
 // which may throws Data.Iterator.NoSuchElementError.
 proto.next = function ( ) {
     mustImplement("next");
+};
+
+
+proto.find = function ( f ) {
+    for ( var it=this;  !it.isTail();  it=it.next() ) {
+        if ( f(it.value()) ) break;
+    }
+    return it;
 };
 
