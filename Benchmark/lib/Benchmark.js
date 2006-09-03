@@ -1,5 +1,5 @@
 //@esmodpp
-//@version 0.0.0
+//@version 0.0.1
 //@namespace Benchmark
 
 //@require Data.Functional.Array
@@ -42,6 +42,8 @@ function print ( /* variable-arguments */ )
 
 
 
+function nullFunction ( ) { }
+
 function compile ( code )
 {
     if ( typeof code == "function" ) return code;
@@ -61,15 +63,30 @@ function time ( f )
 //@export countit
 function countit ( t, f )
 {
+    if ( isNaN( t=Number(t) ) ) throw new TypeError("first argument must be of type Number");
+
     f = compile(f);
     var i = 0;
-    var t0 = (new Date).valueOf();
-    var limit = t0 + t * 1000;
+    var t0 = new Date();
+    var limit = t0.valueOf() + t * 1000;
     do {
         f();
         ++i;
-    } while ( (t = (new Date).valueOf()) < limit );
-    return new Benchmark(t-t0, i);
+    } while ( (t = new Date()) < limit );
+    var time  = t - t0;
+    var iters = i;
+
+    f = nullFunction;
+    i = 0;
+    t0 = new Date();
+    limit = t0.valueOf() + t * 1000;  // dummy
+    do {
+        f();
+        ++i;
+        t = new Date();
+    } while ( i < iters );
+    
+    return new Benchmark(time-(t-t0), iters);
 }
 
 
@@ -95,8 +112,6 @@ function timeit ( iters, code )
         return new Benchmark(t1-t0, iters);
     }
 }
-
-function nullFunction ( ) { }
 
 
 //@export timethis
