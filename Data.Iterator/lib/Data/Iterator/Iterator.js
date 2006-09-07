@@ -59,6 +59,14 @@ proto.next = function ( ) {
 };
 
 
+// Returns true if and only if this iterator is associated with the 
+// object specified by the argument, false otherwise.
+// The default implementation just returns false.
+proto.isBoundTo = function ( list ) {
+    return false;
+};
+
+
 proto.find = function ( f ) {
     for ( var it=this;  !it.isTail();  it=it.next() ) {
         if ( f(it.value()) ) break;

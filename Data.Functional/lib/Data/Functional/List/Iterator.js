@@ -28,14 +28,6 @@ proto.toString = function ( ) {
 };
 
 
-// Returns true if and only if this iterator is bound to a list 
-// specified by the argument, false otherwise.
-// The default implementation merely throws NotImplementedError.
-proto.isBoundTo = function ( list ) {
-    throw new NotImplementedError(undefined, "isBoundTo");
-};
-
-
 // Assign the argument to the element which is just after the position 
 // this iterator points to, then returns the new value of the element, 
 // which can be defferent from the argument.
