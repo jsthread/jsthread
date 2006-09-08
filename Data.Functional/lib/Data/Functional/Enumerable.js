@@ -39,7 +39,7 @@ proto.forEach = function ( f ) {
     var ret_val;
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         try {
-            ret_val = f( it.value() );
+            ret_val = f.call(this, it.value());
         }
         catch ( e ) {
             if ( e instanceof DiscontinueException ) {
@@ -63,7 +63,7 @@ proto.forEach = function ( f ) {
 proto.fold = function ( f, s ) {
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         try {
-            s = f(s, it.value());
+            s = f.call(this, s, it.value());
         }
         catch ( e ) {
             if ( e instanceof DiscontinueException ) {
@@ -91,7 +91,7 @@ proto.fold1 = function ( f ) {
     it = it.next();
     for ( ;  !it.isTail();  it=it.next() ) {
         try {
-            s = f(s, it.value());
+            s = f.call(this, s, it.value());
         }
         catch ( e ) {
             if ( e instanceof DiscontinueException ) {
@@ -114,14 +114,14 @@ proto.fold1 = function ( f ) {
 
 proto.every = function ( f ) {
     return this.fold(function ( x, y ) {
-        y = f(y);
+        y = f.call(this, y);
         return y || discontinue(y);
     }, true);
 };
 
 proto.some = function ( f ) {
     return this.fold(function ( x, y ) {
-        y = f(y);
+        y = f.call(this, y);
         return y && discontinue(y);
     }, false);
 };

@@ -205,7 +205,7 @@ proto.foldl1 = proto.fold1;
 proto.foldr = function ( f, s ) {
     for ( var it=this.reverseHead();  !it.isTail();  it=it.next() ) {
         try {
-            s = f(it.value(), s);
+            s = f.call(this, it.value(), s);
         }
         catch ( e ) {
             if ( e instanceof DiscontinueException ) {
@@ -232,7 +232,7 @@ proto.foldr1 = function ( f ) {
     it = it.next();
     for ( ;  !it.isTail();  it=it.next() ) {
         try {
-            s = f(it.value(), s);
+            s = f.call(this, it.value(), s);
         }
         catch ( e ) {
             if ( e instanceof DiscontinueException ) {

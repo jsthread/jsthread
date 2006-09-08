@@ -94,7 +94,7 @@ proto.filter = function ( f ) {
     var c = this.emptyCopy();
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         var v = it.value();
-        if ( f(v) ) c.add(v);
+        if ( f.call(this, v) ) c.add(v);
     }
     return c;
 };
@@ -112,7 +112,7 @@ proto.map = function ( f ) {
     var c = this.emptyCopy();
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         try {
-            c.add( f(it.value()) );
+            c.add( f.call(this, it.value()) );
         }
         catch ( e ) {
             if ( e instanceof DiscontinueException ) {
