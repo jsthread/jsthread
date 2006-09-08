@@ -22,25 +22,14 @@ var proto = List.prototype = new Collection();
 proto.constructor = List;
 
 
-// PRIVATE
-// Returns iterator corresponding to index n.
-function index2iterator ( l, n ) {
-    n = Math.floor(n) || 0;
-    var it;
-    if ( n < 0 ) {
-        n  = -n;
-        it = l.tail();
-    } else {
-        it = l.head();
-    }
-    for ( var i=0;  ;  i++, it=it.next() ) {
-        if ( i === n     ) return it;
-        if ( it.isTail() ) return null;
-    }
-}
-
-
 // Iterator methods.
+// Return an iterator pointing to just before the n'th element
+// (the first element is the 0th one). If there are only n elements 
+// in this list, return an iterator pointing to the tail.
+// If n is negative, it is treated as size+n, where size is the length 
+// of this list. Thus, the result of head(n) and the one of tail(-n) 
+// should always be equivalent.
+// These methods can throw IndexOutOfBoundsError.
 proto.head = function ( n ) {
     throw new NotImplementedError(undefined, "head");
 };
@@ -80,13 +69,19 @@ proto.empty = function ( ) {
 // If there is no corresponding value in this list, returns undefined.
 // The argument can be either number or iterator.
 proto.get = function ( it ) {
-    if ( it instanceof List.Iterator  &&  it.isBoundTo(this) ) {
-        if ( it.isTail() ) return undefined;
-        else               return it.value();
+    if ( !(it instanceof List.Iterator  &&  it.isBoundTo(this)) ) {
+        try {
+            it = this.head(it);
+        } catch ( e ) {
+            if ( e instanceof IndexOutOfBoundsError ) {
+                it = this.tail();
+            } else {
+                throw e;
+            }
+        }
     }
-    it = index2iterator(this, it);
-    if ( it==null || it.isTail() ) return undefined;
-    return it.value();
+    if ( it.isTail() ) return undefined;
+    else               return it.value();
 };
 
 // Assigns the second argument to the container indexed by the first 
@@ -94,8 +89,7 @@ proto.get = function ( it ) {
 // The argument can be either number or iterator.
 proto.set = function ( it, v ) {
     if ( !(it instanceof List.Iterator  &&  it.isBoundTo(this)) ) {
-        it = index2iterator(this, it);
-        if ( it == null ) throw new IndexOutOfBoundsError("index is out of bounds");
+        it = this.head(it);
     }
     return it.assign(v);
 };
@@ -108,8 +102,7 @@ proto.set = function ( it, v ) {
 // implementation-dependent.
 proto.insertAt = function ( it, v ) {
     if ( !(it instanceof List.Iterator  &&  it.isBoundTo(this)) ) {
-        it = index2iterator(this, it);
-        if ( it == null ) throw new IndexOutOfBoundsError("index is out of bounds");
+        it = this.head(it);
     }
     return it.insert(v);
 };
@@ -121,8 +114,7 @@ proto.insertAt = function ( it, v ) {
 // implementation-dependent.
 proto.removeAt = function ( it ) {
     if ( !(it instanceof List.Iterator  &&  it.isBoundTo(this)) ) {
-        it = index2iterator(this, it);
-        if ( it == null ) throw new IndexOutOfBoundsError("index is out of bounds");
+        it = this.head(it);
     }
     return it.remove();
 };
@@ -179,8 +171,24 @@ proto.slice = function ( start, end ) {
             && start.isBoundTo(this) && end.isBoundTo(this)
             && start.constructor === end.constructor ) )  // one can be reverse-iterator even though the other is iterator.
     {
-        start = this.head(start);
-        end   = this.head(end);
+        try {
+            start = this.head(start);
+        } catch ( e ) {
+            if ( e instanceof IndexOutOfBoundsError ) {
+                start = start < 0 ? this.head() : this.tail();
+            } else {
+                throw e;
+            }
+        }
+        try {
+            end = this.head(end);
+        } catch ( e ) {
+            if ( e instanceof IndexOutOfBoundsError ) {
+                end = end < 0 ? this.head() : this.tail();
+            } else {
+                throw e;
+            }
+        }
     }
     var l = this.emptyCopy();
     while ( !start.equals(end) ) {

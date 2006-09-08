@@ -17,17 +17,25 @@ for ( var i in List.prototype ) {
 }
 
 
+// PRIVATE
+// Emulate ECMA262's ToInteger conversion.
+function ToInteger ( n ) {
+    return n < 0 ? Math.ceil(n)
+                 : Math.floor(n) || 0;
+}
+
+
 proto.head = function ( n ) {
     if ( n < 0 ) return this.tail(-n);
-    n = Math.floor(n) || 0;
-    if ( n > this.length ) n = this.length;
+    n = ToInteger(n);
+    if ( n > this.length ) throw new IndexOutOfBoundsError();
     return new Iterator(this, n);
 };
 
 proto.tail = function ( n ) {
     if ( n < 0 ) return this.head(-n);
-    n = Math.floor(n) || 0;
-    if ( n > this.length ) n = this.length;
+    n = ToInteger(n);
+    if ( n > this.length ) throw new IndexOutOfBoundsError();
     return new Iterator(this, this.length-n);
 };
 
@@ -35,15 +43,15 @@ proto.iterator = proto.head;
 
 proto.reverseHead = function ( n ) {
     if ( n < 0 ) return this.reverseTail(-n);
-    n = Math.floor(n) || 0;
-    if ( n > this.length ) n = this.length;
+    n = ToInteger(n);
+    if ( n > this.length ) throw new IndexOutOfBoundsError();
     return new ReverseIterator(this, n);
 };
 
 proto.reverseTail = function ( n ) {
     if ( n < 0 ) return this.reverseHead(-n);
-    n = Math.floor(n) || 0;
-    if ( n > this.length ) n = this.length;
+    n = ToInteger(n);
+    if ( n > this.length ) throw new IndexOutOfBoundsError();
     return new ReverseIterator(this, this.length-n);
 };
 
@@ -55,24 +63,27 @@ proto.add = function ( /* variable args */ ) {
 
 proto.get = function ( it ) {
     if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.value();
-    it = Math.floor(it) || 0;
+    it = ToInteger(n);
     if ( it < 0 ) it += this.length;
     return this[it];
 };
 
 proto.set = function ( it, v ) {
     if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.assign(v);
-    it = Math.floor(it) || 0;
-    if ( it < 0 ) it += this.length;
-    if ( it < 0 || this.length <= it ) throw new IndexOutOfBoundsError();
+    i = ToInteger(it);
+    if ( i < 0            ) i += this.length;
+    if ( i < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
+    if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
     return this[it] = v;
 };
 
 proto.insertAt = function ( it, v ) {
     if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.insert(v);
-    it = Math.floor(it) || 0;
-    if ( it < 0 ) it += this.length;
-    if ( it < 0 || this.length < it ) throw new IndexOutOfBoundsError();
+    it = ToInteger(it);
+    i = ToInteger(it);
+    if ( i < 0            ) i += this.length;
+    if ( i < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
+    if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
     for ( var i=this.length-1;  i >= it;  i-- ) this[i+1] = this[i];
     return this[it] = v;
 };
@@ -81,15 +92,11 @@ proto.removeAt = function ( it ) {
     if ( (it instanceof Iterator || it instanceof ReverseIterator) && it.isBoundTo(this) ) {
         return it.remove();
     }
-    i = Math.floor(it);
-    if ( isNaN(i) ) {
-        throw new TypeError("`" + it + "' is neither number nor iterator.");
-    } else {
-        if ( i < 0            ) i += this.length;
-        if ( i < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
-        if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
-        return this.splice(i, 1)[0];
-    }
+    i = ToInteger(it);
+    if ( i < 0            ) i += this.length;
+    if ( i < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
+    if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
+    return this.splice(i, 1)[0];
 };
 
 
@@ -156,29 +163,29 @@ proto.isBoundTo = function ( that ) {
 };
 
 proto.isHead = function ( ) {
-    return this._pos <= 0
+    return ToInteger(this._pos) <= 0
         || this._arr.length == 0;
 };
 
 proto.isTail = function ( ) {
-    return this._pos >= this._arr.length
+    return ToInteger(this._pos) >= this._arr.length
         || this._arr.length == 0;
 };
 
 proto.value = function ( ) {
-    if ( this.isTail()  ) return undefined;
-    if ( this._pos <= 0 ) return this._arr[0];
-    else                  return this._arr[Math.floor(this._pos)];
+    if ( this.isTail() ) return undefined;
+    if ( this.isHead() ) return this._arr[0];
+    else                 return this._arr[ToInteger(this._pos)];
 };
 
 proto.assign = function ( v ) {
-    if ( this.isTail()  ) this.insert();
-    if ( this._pos <= 0 ) return this._arr[0] = v;
-    else                  return this._arr[Math.floor(this._pos)] = v;
+    if ( this.isTail() ) return this.insert();
+    if ( this.isHead() ) return this._arr[0] = v;
+    else                 return this._arr[ToInteger(this._pos)] = v;
 };
 
 proto.insert = function ( v ) {
-    var i = Math.floor(this._pos);
+    var i = ToInteger(this._pos);
     if ( i <= 0 ) i = 0;
     else          i = Math.min(i, this._arr.length);
     return this._arr.insertAt(i, v);
@@ -190,23 +197,23 @@ proto.remove = function ( ) {
 };
 
 proto.next = function ( ) {
-    if ( this.isTail()  ) throw new NoSuchElement("no next element");
-    if ( this._pos <= 0 ) return new this.constructor(this._arr, 1);
-    else                  return new this.constructor(this._arr, this._pos+1);
+    if ( this.isTail() ) throw new NoSuchElement("no next element");
+    if ( this.isHead() ) return new this.constructor(this._arr, 1);
+    else                 return new this.constructor(this._arr, this._pos+1);
 };
 
 proto.previous = function ( ) {
-    if ( this.isHead()                 ) throw new NoSuchElement("no previous element");
-    if ( this._pos >= this._arr.length ) return new this.constructor(this._arr, this._arr.length-1);
-    else                                 return new this.constructor(this._arr, this._pos-1);
+    if ( this.isHead() ) throw new NoSuchElement("no previous element");
+    if ( this.isTail() ) return new this.constructor(this._arr, this._arr.length-1);
+    else                 return new this.constructor(this._arr, this._pos-1);
 };
 
 proto.compareTo = function ( that ) {
     if ( !(that instanceof this.constructor) ) return undefined;
     if ( this._arr !== that._arr             ) return undefined;
     var a = this._arr;
-    var l = this._pos;
-    var r = that._pos;
+    var l = ToInteger(this._pos);
+    var r = ToInteger(that._pos);
     if ( l <= 0         &&  r <= 0
       || l >= a.length  &&  r >= a.length ) return 0;
     return l < r  ?  -1  :
@@ -216,8 +223,8 @@ proto.compareTo = function ( that ) {
 proto.distance = function ( that ) {
     if ( !(that instanceof this.constructor) ) return undefined;
     if ( this._arr !== that._arr             ) return undefined;
-    var l = this._pos;
-    var r = that._pos;
+    var l = ToInteger(this._pos);
+    var r = ToInteger(that._pos);
     if ( l <= 0         &&  r <= 0
       || l >= a.length  &&  r >= a.length ) return 0;
     return r - l;
@@ -241,27 +248,27 @@ for ( var i in Iterator.prototype ) {
 proto.constructor = ReverseIterator;
 
 proto.value = function ( ) {
-    if ( this.isTail()  ) return undefined;
-    if ( this._pos <= 0 ) return this._arr[this._arr.length-1];
-    else                  return this._arr[this._arr.length-1-Math.floor(this._pos)];
+    if ( this.isTail() ) return undefined;
+    if ( this.isHead() ) return this._arr[this._arr.length-1];
+    else                 return this._arr[this._arr.length-1-ToInteger(this._pos)];
 };
 
 proto.assign = function ( v ) {
-    if ( this.isTail()  ) this.insert(v);
-    if ( this._pos <= 0 ) return this._arr[this._arr.length-1] = v;
-    else                  return this._arr[this._arr.length-1-Math.floor(this._pos)] = v;
+    if ( this.isTail() ) this.insert(v);
+    if ( this.isHead() ) return this._arr[this._arr.length-1] = v;
+    else                 return this._arr[this._arr.length-1-ToInteger(this._pos)] = v;
 };
 
 proto.insert = function ( v ) {
-    var i = Math.floor(this._pos);
+    var i = ToInteger(this._pos);
     if ( i <= 0 ) i = 0;
     else          i = Math.min(i, this._arr.length);
     return this._arr.insertAt(this._arr.length-i, v);
 };
 
 proto.remove = function ( ) {
-    if ( this.isTail()  ) throw new IllegalStateError("can't remove at the tail of list");
-    if ( this._pos <= 0 ) return this._arr.splice(this._arr.length-1, 1)[0];
-    else                  return this._arr.splice(this._arr.length-1-Math.floor(this._pos), 1)[0];
+    if ( this.isTail() ) throw new IllegalStateError("can't remove at the tail of list");
+    if ( this.isHead() ) return this._arr.splice(this._arr.length-1, 1)[0];
+    else                 return this._arr.splice(this._arr.length-1-ToInteger(this._pos), 1)[0];
 };
 
