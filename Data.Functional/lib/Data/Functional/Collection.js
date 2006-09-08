@@ -38,20 +38,21 @@ proto.add = function ( /* variable args */ ) {
 
 
 proto.addAll = function ( /* variable arguments */ ) {
+    var self    = this;
+    var changed = false;
     for ( var i=0;  i < arguments.length;  i++ ) {
         var c = arguments[i];
         if ( c instanceof Collection ) {
-            for ( var it=c.iterator();  !it.isTail();  it=it.next() ) {
-                this.add(it.value());
-            }
-        }
-        else if ( c instanceof Array ) {
-            this.add.apply(this, c);
-        }
-        else {
-            this.add(c);
+            c.forEach(function( it ){
+                changed = self.add(it) || changed;
+            });
+        } else if ( c instanceof Array ) {
+            changed = this.add.apply(this, c) || changed;
+        } else {
+            chagned = this.add(c) || changed;
         }
     }
+    return changed;
 };
 
 
