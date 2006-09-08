@@ -41,10 +41,6 @@ function index2iterator ( l, n ) {
 
 
 // Iterator methods.
-proto.iterator = function ( /* delegate */ ) {
-    this.head.apply(this, arguments);
-};
-
 proto.head = function ( n ) {
     throw new NotImplementedError(undefined, "head");
 };
@@ -59,6 +55,24 @@ proto.reverseHead = function ( n ) {
 
 proto.reverseTail = function ( n ) {
     throw new NotImplementedError(undefined, "reverseTail");
+};
+
+
+proto.iterator = function ( /* delegate */ ) {
+    return this.head.apply(this, arguments);
+};
+
+proto.add = function ( /* variable args */ ) {
+    if ( arguments.length == 0 ) return false;
+    for ( var i=0;  i < arguments.length;  i++ ) {
+        this.tail().insert(arguments[i]);
+    }
+    return true;
+};
+
+proto.empty = function ( ) {
+    var it;
+    while ( !(it=this.head()).isTail() ) it.remove();
 };
 
 
@@ -119,9 +133,7 @@ proto.pop = function ( ) {
 };
 
 proto.push = function ( /* variable args */ ) {
-    for ( var i=0;  i < arguments.length;  i++ ) {
-        this.reverseHead().insert(arguments[i]);
-    }
+    this.add.apply(this, arguments);
     return this.size();
 };
 
@@ -156,7 +168,7 @@ proto.toLocaleString = function ( /* delegate */ ) {
 proto.reverse = function ( ) {
     var r = this.emptyCopy();
     for ( var it=this.reverseHead();  !it.isTail();  it=it.next() ) {
-        r.push(it.value());
+        r.add(it.value());
     }
     return r;
 };
@@ -172,7 +184,7 @@ proto.slice = function ( start, end ) {
     }
     var l = this.emptyCopy();
     while ( !start.equals(end) ) {
-        l.push(start.value());
+        l.add(start.value());
         start = start.next();
     }
 };
@@ -184,14 +196,14 @@ proto.concat = function ( /* variable arguments */ ) {
         var e = arguments[i];
         if ( e instanceof List ) {
             e.forEach(function(it){
-                list.push(it)
+                list.add(it)
             });
         }
         else if ( e instanceof Array ) {
-            for ( var j=0;  j < e.length;  j++ ) list.push(e[j])
+            for ( var j=0;  j < e.length;  j++ ) list.add(e[j])
         }
         else {
-            list.push(e);
+            list.add(e);
         }
     }
     return list;
