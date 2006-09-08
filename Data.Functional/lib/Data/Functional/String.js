@@ -147,14 +147,14 @@ proto.compareTo = function ( that ) {
 proto.equals = function ( that ) {
     if ( !(that instanceof this.constructor) ) return false;
     if ( that.isBoundTo(this._str)           ) return false;
-    return this._pos == another._pos;
+    return this._pos == that._pos;
 };
 
-proto.distance = function ( another ) {
+proto.distance = function ( that ) {
     if ( !(that instanceof this.constructor) ) return undefined;
     if ( that.isBoundTo(this._str)           ) return undefined;
-    if ( this._str != another._str ) return undefined;
-    return another._pos - this._pos;
+    if ( this._str != that._str ) return undefined;
+    return that._pos - this._pos;
 };
 
 

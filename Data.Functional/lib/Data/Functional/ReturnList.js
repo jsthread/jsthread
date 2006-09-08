@@ -16,5 +16,5 @@ function ReturnListException ( args ) {
 }
 var proto = ReturnListException.prototype;
 proto.name    = NAMESPACE + ".ReturnListException";
-proto.message = "unusual use of `return_list' (this should be caught by `forEach' or another iteration-methods).";
+proto.message = "unusual use of `return_list' (this should be caught by `forEach' or other iteration-methods).";
 

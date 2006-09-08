@@ -16,5 +16,5 @@ function IgnoreException ( args ) {
 }
 var proto = IgnoreException.prototype;
 proto.name    = NAMESPACE + ".IgnoreException";
-proto.message = "unusual use of `ignore' (this should be caught by `forEach' or another iteration-methods).";
+proto.message = "unusual use of `ignore' (this should be caught by `forEach' or other iteration-methods).";
 

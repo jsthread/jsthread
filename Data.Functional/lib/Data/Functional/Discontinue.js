@@ -16,5 +16,5 @@ function DiscontinueException ( args ) {
 }
 var proto = DiscontinueException.prototype;
 proto.name    = NAMESPACE + ".DiscontinueException";
-proto.message = "unusual use of `discontinue' (this should be caught by `forEach' or another iteration-methods).";
+proto.message = "unusual use of `discontinue' (this should be caught by `forEach' or other iteration-methods).";
 

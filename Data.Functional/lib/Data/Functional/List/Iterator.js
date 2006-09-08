@@ -97,11 +97,11 @@ proto.equals = function ( that ) {
 // The default implementation is based on `next', `equals' and `isTail' method.
 proto.distance = function ( that ) {
     if ( !(that instanceof Iterator) ) return undefined;
-    for ( var i=0, l=this, r=another;  ;  i++, l=l.next() ) {
+    for ( var i=0, l=this, r=that;  ;  i++, l=l.next() ) {
         if ( l.equals(r) ) return i;
         if ( l.isTail() ) break;
     }
-    for ( var i=-1, l=another.next(), r=this;  ;  i--, l=l.next() ) {
+    for ( var i=-1, l=that.next(), r=this;  ;  i--, l=l.next() ) {
         if ( l.equals(r) ) return i;
         if ( l.isTail() ) break;
     }
