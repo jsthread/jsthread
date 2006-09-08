@@ -48,7 +48,10 @@ proto.reverseTail = function ( n ) {
 };
 
 
-proto.add = proto.push;
+proto.add = function ( /* variable args */ ) {
+    this.push.apply(this, arguments);
+    return true;
+};
 
 proto.get = function ( it ) {
     if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.value();
