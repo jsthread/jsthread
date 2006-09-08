@@ -27,7 +27,9 @@ proto.toString = function ( ) {
 
 proto.toArray = function ( ) {
     var a = [];
-    for ( var it=this.iterator();  !it.isTail();  it=it.next() ) a.push(it.value());
+    this.forEach(function( it ){
+        a.push(it);
+    });
     return a;
 };
 
@@ -72,7 +74,8 @@ proto.empty = function ( ) {
 
 
 proto.size = function ( ) {
-    for ( var i=0, it=this.iterator();  !it.isTail();  i++, it=it.next() );
+    var i = 0;
+    this.forEach(function(){ ++i; });
     return i;
 };
 
@@ -84,19 +87,18 @@ proto.emptyCopy = function ( ) {
 
 proto.copy = function ( ) {
     var c = this.emptyCopy();
-    for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
-        c.add(it.value());
-    }
+    this.forEach(function( it ){
+        c.add(it);
+    });
     return c;
 };
 
 
 proto.filter = function ( f ) {
     var c = this.emptyCopy();
-    for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
-        var v = it.value();
-        if ( f.call(this, v) ) c.add(v);
-    }
+    this.forEach(function( it ){
+        if ( f.call(this, it) ) c.add(it);
+    });
     return c;
 };
 
