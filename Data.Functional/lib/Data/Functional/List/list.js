@@ -31,19 +31,19 @@ proto.constructor = List;
 // should always be equivalent.
 // These methods can throw IndexOutOfBoundsError.
 proto.head = function ( n ) {
-    throw new NotImplementedError(undefined, "head");
+    return this.tail(-n);
 };
 
 proto.tail = function ( n ) {
-    throw new NotImplementedError(undefined, "tail");
+    return this.head(-n);
 };
 
 proto.reverseHead = function ( n ) {
-    throw new NotImplementedError(undefined, "reverseHead");
+    return this.reverseHead(-n);
 };
 
 proto.reverseTail = function ( n ) {
-    throw new NotImplementedError(undefined, "reverseTail");
+    return this.reverseTail(-n);
 };
 
 
@@ -74,7 +74,7 @@ proto.get = function ( it ) {
             it = this.head(it);
         } catch ( e ) {
             if ( e instanceof IndexOutOfBoundsError ) {
-                it = this.tail();
+                return undefined;
             } else {
                 throw e;
             }
