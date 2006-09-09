@@ -69,7 +69,8 @@ proto.isEmpty = function ( ) {
 
 
 proto.empty = function ( ) {
-    throw new NotImplementedError(undefined, "empty");
+    var it;
+    while ( !(it=this.iterator()).isTail() ) this.removeAt(it);
 };
 
 

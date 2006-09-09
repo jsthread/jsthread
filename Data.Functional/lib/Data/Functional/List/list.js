@@ -59,11 +59,6 @@ proto.add = function ( /* variable args */ ) {
     return true;
 };
 
-proto.empty = function ( ) {
-    var it;
-    while ( !(it=this.head()).isTail() ) it.remove();
-};
-
 
 // Returns the value indexed by the argument.
 // If there is no corresponding value in this list, returns undefined.
