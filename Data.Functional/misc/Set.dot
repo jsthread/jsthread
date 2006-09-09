@@ -1,0 +1,91 @@
+digraph Set {
+    graph [ rankdir  = BT
+            color    = black
+            fontname = Arial
+            fontsize = 18    ]
+    node  [ fontname = Arial ]
+    
+    
+    subgraph cluster_Iterator {
+        label = "Data.Iterator.Iterator"
+        
+        value  [ style=filled, color=lightgray ]
+        isTail [ style=filled, color=lightgray ]
+        next   [ style=filled, color=lightgray ]
+        
+        isBoundTo
+        
+        find -> isTail
+        find -> next
+        find -> value
+    }
+    
+    
+    subgraph cluster_Set {
+        label = "Data.Functional.Set"
+        
+        /* From Enumerable --> */
+        iterator [ style=filled, color=lightgray ]
+        
+        forEach -> iterator
+        forEach -> isTail
+        forEach -> next
+        forEach -> value
+        fold    -> iterator
+        fold    -> isTail
+        fold    -> next
+        fold    -> value
+        fold1   -> iterator
+        fold1   -> isTail
+        fold1   -> next
+        fold1   -> value
+        every   -> fold
+        some    -> fold
+        /* <-- From Enumerable */
+        
+        /* From Collection --> */
+        add      [ style=filled, color=lightgray ]
+        /* removeAt [ style=filled, color=lightgray ] */
+    
+        toArray -> forEach
+        addAll  -> add
+        addAll  -> forEach
+        isEmpty -> iterator
+        isEmpty -> isTail
+        empty   -> iterator
+        empty   -> isTail
+        empty   -> removeAt
+        size    -> forEach
+        copy    -> emptyCopy
+        copy    -> forEach
+        copy    -> add
+        filter  -> emptyCopy
+        filter  -> forEach
+        filter  -> add
+        grep    -> filter
+        map     -> emptyCopy
+        map     -> isTail
+        map     -> next
+        map     -> value
+        map     -> iterator
+        map     -> add
+        /* <-- From Collection */
+        
+        contains [ style=filled, color=lightgray ]
+        remove   [ style=filled, color=lightgray ]
+        
+        containsAll -> contains
+        containsAll -> every
+        removeAll   -> remove
+        removeAll   -> forEach
+        removeAt    -> isBoundTo
+        removeAt    -> value
+        removeAt    -> remove
+        retainAll   -> emptyCopy
+        retainAll   -> addAll
+        retainAll   -> removeAll
+        retainAll   -> filter
+        retainAll   -> contains
+    }
+    
+}

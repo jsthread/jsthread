@@ -1,0 +1,46 @@
+digraph Enumerable {
+    graph [ rankdir  = BT
+            color    = black
+            fontname = Arial
+            fontsize = 18    ]
+    node  [ fontname = Arial ]
+
+
+    subgraph cluster_Iterator {
+        label = "Data.Iterator.Iterator"
+        
+        value  [ style=filled, color=lightgray ]
+        isTail [ style=filled, color=lightgray ]
+        next   [ style=filled, color=lightgray ]
+        
+        isBoundTo
+        
+        find -> isTail
+        find -> next
+        find -> value
+    }
+
+
+    subgraph cluster_Enumerable {
+        label = "Data.Functional.Enumerable"
+    
+        iterator [ style=filled, color=lightgray ]
+    
+        forEach -> iterator
+        forEach -> isTail
+        forEach -> next
+        forEach -> value
+        fold    -> iterator
+        fold    -> isTail
+        fold    -> next
+        fold    -> value
+        fold1   -> iterator
+        fold1   -> isTail
+        fold1   -> next
+        fold1   -> value
+        every   -> fold
+        some    -> fold
+    }
+    
+    
+}

@@ -1,0 +1,166 @@
+digraph List {
+    graph [ rankdir  = BT
+            color    = black
+            fontname = Arial
+            fontsize = 18    ]
+    node  [ fontname = Arial ]
+    
+    
+    subgraph cluster_Iterator {
+        label = "Data.Functional.List.Iterator"
+        
+        /* From Data.Iterator.Iterator --> */
+        value  [ style=filled, color=lightgray ]
+        isTail [ style=filled, color=lightgray ]
+        next   [ style=filled, color=lightgray ]
+        
+        isBoundTo
+        
+        find -> isTail
+        find -> next
+        find -> value
+        /* <-- From Data.Iterator.Iterator */
+        
+        /* From Data.Iterator.BidirectionalIterator --> */
+        isHead   [ style=filled, color=lightgray ]
+        previous [ style=filled, color=lightgray ]
+        /* <-- From Data.Iterator.BidirectionalIterator */
+
+        assign  [ style=filled, color=lightgray ]
+        insert  [ style=filled, color=lightgray ]
+        remove  [ style=filled, color=lightgray ]
+        
+        compareTo -> equals [ color=red ]
+        compareTo -> isTail
+        compareTo -> next
+        equals    -> compareTo [ color=red ]
+        distance  -> equals
+        distance  -> isTail
+        distance  -> next
+    }
+    
+    
+    subgraph cluster_List {
+        label = "Data.Functional.List"
+        
+        /* From Enumerable --> */
+        /* iterator [ style=filled, color=lightgray ] */
+        
+        forEach -> iterator
+        forEach -> isTail
+        forEach -> next
+        forEach -> value
+        fold    -> iterator
+        fold    -> isTail
+        fold    -> next
+        fold    -> value
+        fold1   -> iterator
+        fold1   -> isTail
+        fold1   -> next
+        fold1   -> value
+        every   -> fold
+        some    -> fold
+        /* <-- From Enumerable */
+        
+        /* From Collection --> */
+        /* add      [ style=filled, color=lightgray ] */
+        /* removeAt [ style=filled, color=lightgray ] */
+    
+        toArray -> forEach
+        addAll  -> add
+        addAll  -> forEach
+        isEmpty -> iterator
+        isEmpty -> isTail
+        empty   -> iterator
+        empty   -> isTail
+        empty   -> removeAt
+        size    -> forEach
+        copy    -> emptyCopy
+        copy    -> forEach
+        copy    -> add
+        filter  -> emptyCopy
+        filter  -> forEach
+        filter  -> add
+        grep    -> filter
+        map     -> emptyCopy
+        map     -> isTail
+        map     -> next
+        map     -> value
+        map     -> iterator
+        map     -> add
+        /* <-- From Collection */
+        
+        head        -> tail        [ color=red ]
+        head        -> isHead
+        head        -> previous
+        tail        -> head        [ color=red ]
+        tail        -> isTail
+        tail        -> next
+        reverseHead -> reverseTail [ color=red ]
+        reverseHead -> isHead
+        reverseHead -> previous
+        reverseTail -> reverseHead [ color=red ]
+        reverseTail -> isTail
+        reverseTail -> next
+        iterator    -> head
+        add         -> tail
+        add         -> insert
+        get         -> isBoundTo
+        get         -> head
+        get         -> value
+        set         -> isBoundTo
+        set         -> head
+        set         -> assign
+        insertAt    -> isBoundTo
+        insertAt    -> head
+        insertAt    -> insert
+        removeAt    -> isBoundTo
+        removeAt    -> head
+        removeAt    -> remove
+        pop         -> reverseHead
+        pop         -> remove
+        push        -> add
+        push        -> size
+        shift       -> head
+        shift       -> remove
+        unshift     -> head
+        unshift     -> insert
+        unshift     -> size
+        join        -> toArray
+        toString    -> toArray
+        toLocaleString -> toArray
+        reverse     -> emptyCopy
+        reverse     -> reverseHead
+        reverse     -> isTail
+        reverse     -> next
+        reverse     -> add
+        slice       -> isBoundTo
+        slice       -> head
+        slice       -> tail
+        slice       -> emptyCopy
+        slice       -> equals
+        slice       -> add
+        slice       -> next
+        concat      -> emptyCopy
+        concat      -> forEach
+        concat      -> add
+        foldl       -> iterator
+        foldl       -> isTail
+        foldl       -> next
+        foldl       -> value
+        foldl1      -> iterator
+        foldl1      -> isTail
+        foldl1      -> next
+        foldl1      -> value
+        foldr       -> reverseHead
+        foldr       -> isTail
+        foldr       -> next
+        foldr       -> value
+        foldr1      -> reverseHead
+        foldr1      -> isTail
+        foldr1      -> next
+        foldr1      -> value
+        
+    }
+    
+}
