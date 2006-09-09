@@ -213,26 +213,16 @@ proto.previous = function ( ) {
     else                 return new this.constructor(this._arr, this._pos-1);
 };
 
-proto.compareTo = function ( that ) {
+proto.compareTo = 
+proto.distance  = function ( that ) {
     if ( !(that instanceof this.constructor) ) return undefined;
     if ( this._arr !== that._arr             ) return undefined;
-    var a = this._arr;
+    var s = this._arr.length;
     var l = ToInteger(this._pos);
     var r = ToInteger(that._pos);
-    if ( l <= 0         &&  r <= 0
-      || l >= a.length  &&  r >= a.length ) return 0;
-    return l < r  ?  -1  :
-           l > r  ?   1  :  0;
-};
-
-proto.distance = function ( that ) {
-    if ( !(that instanceof this.constructor) ) return undefined;
-    if ( this._arr !== that._arr             ) return undefined;
-    var l = ToInteger(this._pos);
-    var r = ToInteger(that._pos);
-    if ( l <= 0         &&  r <= 0
-      || l >= a.length  &&  r >= a.length ) return 0;
-    return r - l;
+    if ( l <= 0  &&  r <= 0
+      || l >= s  &&  r >= s ) return 0;
+    return l - r;
 };
 
 

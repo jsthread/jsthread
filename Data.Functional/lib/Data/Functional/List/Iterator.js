@@ -60,28 +60,6 @@ proto.remove = function ( ) {
 };
 
 
-// Returns 0 if both this iterator and the argument points to the same position,
-// -1 if the position this iterator points to precedes the one of the argument,
-// 1 if the position this iterator points to succedes the one of the argument,
-// undefined otherwise.
-// The default implementation is based on `equals', `next' and `isTail' methods.
-proto.compareTo = function ( r ) {
-    if ( !(r instanceof Iterator) ) return undefined;
-    var l = this;
-    if ( l.equals(r) ) return 0;
-    while ( !l.isTail() ) {
-        l = l.next();
-        if ( l.equals(r) ) return -1;
-    }
-    l = this;
-    while ( !r.isTail() ) {
-        r = r.next();
-        if ( r.equals(l) ) return 1
-    }
-    return undefined;
-};
-
-
 // Returns true if both this iterator and the argument points to the same position,
 // false otherwise.
 // The default implementation is based on `compareTo' method.
@@ -91,17 +69,19 @@ proto.equals = function ( that ) {
 
 
 // Returns the distance of this iterator and the argument,
-// or undefined if the iterators seem to point to defferent sets.
-// A negative return value means the arguments precedes this iterator
-// and the absolute value of it represents the distance of them.
+// or undefined if the iterators seem to point to defferent list.
+// A negative return value means the arguments succeeds this iterator
+// and its magnitude represents the distance of them. Thus, this can be 
+// used as comparison-function.
 // The default implementation is based on `next', `equals' and `isTail' method.
-proto.distance = function ( that ) {
+proto.distance  = 
+proto.compareTo = function ( that ) {
     if ( !(that instanceof Iterator) ) return undefined;
-    for ( var i=0, l=this, r=that;  ;  i++, l=l.next() ) {
+    for ( var i=0, l=this, r=that;  ;  i--, l=l.next() ) {
         if ( l.equals(r) ) return i;
         if ( l.isTail() ) break;
     }
-    for ( var i=-1, l=that.next(), r=this;  ;  i--, l=l.next() ) {
+    for ( var i=1, l=that.next(), r=this;  ;  i++, l=l.next() ) {
         if ( l.equals(r) ) return i;
         if ( l.isTail() ) break;
     }

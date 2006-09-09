@@ -32,11 +32,11 @@ proto.isHead = function ( ) {
 };
 
 proto.next = function ( ) {
-    return this._it.previous();
+    return new ReverseIterator(this._it.previous());
 };
 
 proto.previous = function ( ) {
-    return this._it.next();
+    return new ReverseIterator(this._it.next());
 };
 
 proto.value = function ( ) {

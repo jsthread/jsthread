@@ -50,7 +50,7 @@ proto.reverseHead = function ( n ) {
 
 proto.reverseTail = function ( n ) {
     if ( n < 0 ) return this.reverseHead(-n);
-    return nNextFromHead(this.reverseHead(), n);
+    return nPreviousFromTail(this.reverseHead(), n);
 };
 
 function nNextFromHead ( it, n ) {

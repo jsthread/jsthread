@@ -6,9 +6,9 @@
 //@version 0.0.0
 //@namespace Data.Functional
 //@require Data.Functional.List.ReverseIterator
-//@with-namespace Data.Error
-//@with-namespace Data.Iterator 
-
+//@require Data.Iterator.NoSuchElementError
+//@require Math.ToInteger
+//@with-namespace Data.Iterator Data.Error Math
 
 //@export MinimalList
 function MinimalList ( /* variable args */ ) {
@@ -32,8 +32,7 @@ function Iterator ( l, n ) {
     if ( n < 0 ) n += l._entity.length;
     if ( n < 0 || n > l._entity.length ) throw new IndexOutOfBoundsError();
     this._list = l;
-    this._pos  = n < 0 ? Math.ceil(n)
-                       : Math.floor(n) || 0;
+    this._pos  = ToInteger(n);
 }
 
 var proto = Iterator.prototype = new List.Iterator();
@@ -90,9 +89,9 @@ proto.equals = function ( that ) {
 
 
 function ReverseIterator ( l, n ) {
-    var it = new Iterator(l, n);
-    it._pos = it._list._entity.length - it._pos;
-    List.ReverseIterator.call(this, it);
+    if ( n < 0 ) n += l._entity.length;
+    if ( n < 0 || n > l._entity.length ) throw new IndexOutOfBoundsError();
+    List.ReverseIterator.call( this, new Iterator(l, l._entity.length-ToInteger(n)) );
 }
 
 var proto = ReverseIterator.prototype = new List.ReverseIterator();
