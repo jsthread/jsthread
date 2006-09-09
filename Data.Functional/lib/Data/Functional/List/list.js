@@ -11,6 +11,9 @@
 //@require Data.Error.IndexOutOfBoundsError
 //@with-namespace Data.Error
 
+//@require Math.ToInteger
+//@with-namespace Math
+
 
 
 //@export List
@@ -27,24 +30,72 @@ proto.constructor = List;
 // (the first element is the 0th one). If there are only n elements 
 // in this list, return an iterator pointing to the tail.
 // If n is negative, it is treated as size+n, where size is the length 
-// of this list. Thus, the result of head(n) and the one of tail(-n) 
-// should always be equivalent.
+// of this list. Thus, if n is negative, the result of head(n) and 
+// the one of tail(-n) should be equivalent.
 // These methods can throw IndexOutOfBoundsError.
 proto.head = function ( n ) {
-    return this.tail(-n);
+    if ( n < 0 ) return this.tail(-n);
+    return nNextFromHead(this.tail(), n);
 };
 
 proto.tail = function ( n ) {
-    return this.head(-n);
+    if ( n < 0 ) return this.head(-n);
+    return nPreviousFromTail(this.head(), n);
 };
 
 proto.reverseHead = function ( n ) {
-    return this.reverseHead(-n);
+    if ( n < 0 ) return this.reverseTail(-n);
+    return nNextFromHead(this.reverseTail(), n);
 };
 
 proto.reverseTail = function ( n ) {
-    return this.reverseTail(-n);
+    if ( n < 0 ) return this.reverseHead(-n);
+    return nNextFromHead(this.reverseHead(), n);
 };
+
+function nNextFromHead ( it, n ) {
+    var q = [];
+    n = ToInteger(n);
+    if ( n == 0 ) {  // simple optimization
+        while ( !it.isHead() ) it = it.previous();
+        return it;
+    } else {
+        while ( n-- > 0 ) {
+            if ( it.isHead() ) throw new IndexOutOfBoundsError();
+            q.push(it);
+            it = it.previous();
+        }
+        while ( !it.isHead() ) {
+            q.shift();
+            q.push(it);
+            it = it.previous();
+        }
+        q.push(it);
+        return q[0];
+    }
+}
+
+function nPreviousFromTail ( it, n ) {
+    var q = [];
+    n = ToInteger(n);
+    if ( n == 0 ) {  // simple optimization
+        while ( !it.isTail() ) it = it.next();
+        return it;
+    } else {
+        while ( n-- > 0 ) {
+            if ( it.isTail() ) throw new IndexOutOfBoundsError();
+            q.push(it);
+            it = it.next();
+        }
+        while ( !it.isTail() ) {
+            q.shift();
+            q.push(it);
+            it = it.next();
+        }
+        q.push(it);
+        return q[0];
+    }
+}
 
 
 proto.iterator = function ( /* delegate */ ) {
@@ -143,7 +194,7 @@ proto.join = function ( /* delegate */ ) {
 
 proto.toString = function ( /* delegate */ ) {
     var arr = this.toArray();
-    return arr.join.toString(arr, arguments);
+    return arr.toString.apply(arr, arguments);
 };
 
 proto.toLocaleString = function ( /* delegate */ ) {
@@ -190,6 +241,7 @@ proto.slice = function ( start, end ) {
         l.add(start.value());
         start = start.next();
     }
+    return l;
 };
 
 proto.concat = function ( /* variable arguments */ ) {

@@ -8,20 +8,15 @@
 //@require Data.Error.IllegalStateError
 //@with-namespace Data.Error
 
+//@require Math.ToInteger
+//@with-namespace Math
+
 
 
 var proto = Array.prototype;
 
 for ( var i in List.prototype ) {
     if ( typeof proto[i] != "function" ) proto[i] = List.prototype[i];
-}
-
-
-// PRIVATE
-// Emulate ECMA262's ToInteger conversion.
-function ToInteger ( n ) {
-    return n < 0 ? Math.ceil(n)
-                 : Math.floor(n) || 0;
 }
 
 
@@ -62,41 +57,50 @@ proto.add = function ( /* variable args */ ) {
 };
 
 proto.get = function ( it ) {
-    if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.value();
+    if ( it instanceof Iterator || it instanceof ReverseIterator ) {
+        if ( it.isBoundTo(this) ) return it.value();
+        throw new IllegalStateError();
+    }
     it = ToInteger(n);
     if ( it < 0 ) it += this.length;
     return this[it];
 };
 
 proto.set = function ( it, v ) {
-    if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.assign(v);
-    i = ToInteger(it);
-    if ( i < 0            ) i += this.length;
-    if ( i < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
-    if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
-    return this[it] = v;
+    if ( it instanceof Iterator || it instanceof ReverseIterator ) {
+        if ( it.isBoundTo(this) ) return it.assign(v);
+        throw new IllegalStateError();
+    }
+    var n = ToInteger(it);
+    if ( n < 0            ) n += this.length;
+    if ( n < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
+    if ( n >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
+    return this[n] = v;
 };
 
 proto.insertAt = function ( it, v ) {
-    if ( it instanceof Iterator || it instanceof ReverseIterator ) return it.insert(v);
-    it = ToInteger(it);
-    i = ToInteger(it);
-    if ( i < 0            ) i += this.length;
-    if ( i < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
-    if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
-    for ( var i=this.length-1;  i >= it;  i-- ) this[i+1] = this[i];
-    return this[it] = v;
+    if ( it instanceof Iterator || it instanceof ReverseIterator ) {
+        if ( it.isBoundTo(this) ) return it.insert(v);
+        throw new IllegalStateError();
+    }
+    var n = ToInteger(it);
+    if ( n < 0            ) n += this.length;
+    if ( n < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
+    if ( n >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
+    this.splice(n, 0, v);
+    return v;
 };
 
 proto.removeAt = function ( it ) {
-    if ( (it instanceof Iterator || it instanceof ReverseIterator) && it.isBoundTo(this) ) {
-        return it.remove();
+    if ( it instanceof Iterator || it instanceof ReverseIterator ) {
+        if ( it.isBoundTo(this) ) return it.remove();
+        throw new IllegalStateError();
     }
-    i = ToInteger(it);
-    if ( i < 0            ) i += this.length;
-    if ( i < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
-    if ( i >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
-    return this.splice(i, 1)[0];
+    var n = ToInteger(it);
+    if ( n < 0            ) n += this.length;
+    if ( n < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
+    if ( n >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
+    return this.splice(n, 1)[0];
 };
 
 
@@ -114,7 +118,7 @@ proto.size = function ( ) {
 
 proto.copy = function ( ) {
     var a = [];
-    for ( var i=0;  i < this.length;  i++ ) a.push(this[i]);
+    for ( var i=0;  i < this.length;  i++ ) a[i] = this[i];
     return a;
 };
 
@@ -187,13 +191,14 @@ proto.assign = function ( v ) {
 proto.insert = function ( v ) {
     var i = ToInteger(this._pos);
     if ( i <= 0 ) i = 0;
-    else          i = Math.min(i, this._arr.length);
+    else          i = min(i, this._arr.length);
     return this._arr.insertAt(i, v);
 };
 
 proto.remove = function ( ) {
-    if ( this.isTail() ) throw new IllegalStateError("can't remove at the tail of list");
-    return this._arr.splice(this._pos, 1)[0];
+    if      ( this.isTail() ) throw new IllegalStateError("can't remove at the tail of list");
+    else if ( this.isHead() ) return this._arr.aplice(0, 1)[0];
+    else                      return this._arr.splice(this._pos, 1)[0];
 };
 
 proto.next = function ( ) {
@@ -262,7 +267,7 @@ proto.assign = function ( v ) {
 proto.insert = function ( v ) {
     var i = ToInteger(this._pos);
     if ( i <= 0 ) i = 0;
-    else          i = Math.min(i, this._arr.length);
+    else          i = min(i, this._arr.length);
     return this._arr.insertAt(this._arr.length-i, v);
 };
 
