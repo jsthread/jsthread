@@ -1,20 +1,19 @@
 //@esmodpp
-//@version 0.2.0
-
+//@version 0.3.0
 //@namespace Data
-
 
 //@require Data.Functional.List
 //@with-namespace Data.Functional
 
-//@require Data.Iterator
+//@require Data.Iterator.NoSuchElementError
 //@with-namespace Data.Iterator
 
-//@require Util.Equivalent
-//@with-namespace Util
-
 //@require Data.Error.IndexOutOfBoundsError
+//@require Data.Error.IllegalStateError
 //@with-namespace Data.Error
+
+//@require Math.ToInteger
+//@with-namespace Math
 
 
 
@@ -24,26 +23,90 @@ function LinkedList ( /* variable arguments */ ) {
     this._prev    = this;
     this._next    = this;
     this._removed = false;
-    for ( var i=0;  i < arguments.length;  i++ ) this.push(arguments[i]);
+    this.add.apply(this, arguments);
 }
 
-LinkedList.fromArray = function ( arr ) {
-    if ( !arr ) throw new TypeError("Array object is required");
+LinkedList.fromCollection = function ( /* variable args */ ) {
     var l = new LinkedList();
-    for ( var i=0;  i < arr.length;  i++ ) l.push(arr[i]);
+    l.addAll.apply(l, arguments);
     return l;
 };
 
 
 function makeContainer ( v ) {
-    var c = new LinkedList();
-    c._value = v;
-    return c;
+    return { _value: v, _removed: false };
 }
 
 
 var proto = LinkedList.prototype = new List();
 proto.constructor = LinkedList;
+
+
+function nForward ( top, c, n ) {
+    if ( n == 0 ) return c;
+    c = c._next;
+    while ( --n > 0 ) {
+        if ( c === top ) throw new IndexOutOfBoundsError();
+        c = c._next;
+    }
+    return c;
+}
+
+function nBackward ( top, c, n ) {
+    if ( n == 0 ) return c;
+    c = c._prev;
+    while ( --n > 0 ) {
+        if ( c === top ) throw new IndexOutOfBoundsError();
+        c = c._prev;
+    }
+    return c;
+}
+
+
+proto.head = function ( n ) {
+    if ( n < 0 ) return this.tail(-n);
+    return new Iterator( this, nForward(this, this._next, ToInteger(n)) );
+};
+
+proto.tail = function ( n ) {
+    if ( n < 0 ) return this.head(-n);
+    return new Iterator( this, nBackward(this, this, ToInteger(n)) );
+};
+
+proto.reverseHead = function ( n ) {
+    if ( n < 0 ) return this.reverseTail(-n);
+    return new ReverseIterator( this, nBackward(this, this._prev, ToInteger(n)) );
+};
+
+proto.reverseTail = function ( n ) {
+    if ( n < 0 ) return this.reverseHead(-n);
+    return new ReverseIterator( this, nBackward(this, this, ToInteger(n)) );
+};
+
+proto.iterator = proto.head;
+
+
+proto.add = function ( /* variable args */ ) {
+    if ( !arguments.length ) return false;
+    var it = new Iterator(this, this);
+    for ( var i=0;  i < arguments.length;  i++ ) it.insert(arguments[i]);
+    return true;
+};
+
+proto.pop = function ( ) {
+    return (new Iterator(this, this._prev)).remove();
+};
+
+proto.shift = function ( ) {
+    return (new Iterator(this, this._next)).remove();
+};
+
+proto.unshift = function ( /* variable arguments */ ) {
+    var it = new Iterator(this, this._next);
+    for ( var i=0;  i < arguments.length;  i++ ) it.insert(arguments[i]);
+    return this.size();
+};
+
 
 proto.isEmpty = function ( ) {
     return this._next === this;
@@ -54,127 +117,14 @@ proto.empty = function ( ) {
 };
 
 proto.size = function ( ) {
-    var l = 0;
-    for ( var c=this._next;  c !== this;  c=c._next ) l++;
-    return l;
+    for ( var i=0, c=this._next;  c !== this;  ++i, c=c._next );
+    return i;
 };
 
 proto.copy = function ( ) {
-    var l = new this.constructor();
-    for ( var c=this._next;  c !== this;  c=c._next ) {
-        l.push(c._value);
-    }
+    var l = this.emptyCopy();
+    for ( var c=this._next;  c !== this;  c=c._next ) l.add(c._value);
     return l;
-};
-
-proto.equals = function ( list ) {
-    if ( !( list instanceof LinkedList ) ) return false;
-    var c1 = this._next;
-    var c2 = list._next;
-    for ( ;  c1 !== this  &&  c2 !== list;  c1=c1._next, c2=c2._next ) {
-        if ( c1._value !== c2._value ) return false;
-    }
-    return c1 === this  &&  c2 === list;
-};
-
-proto.head = function ( ) {
-    return this._next._value;
-};
-
-proto.tail = function ( ) {
-    return this._prev._value;
-};
-
-proto.get = function ( n ) {
-    n = Math.floor(n);
-    if ( isNaN(n) ) return;
-    if ( n >= 0 ) {
-        for ( var c=this._next;  n && c !== this;  c=c._next, n-- );
-    }
-    else {
-        for ( var c=this._next;  n && c !== this;  c=c._next, n++ );
-    }
-    return c._value;
-};
-
-proto.set = function ( n, v ) {
-    n = Math.floor(n);
-    if ( isNaN(n) ) throw new IllegalArgumentError("index is not a number");
-    if ( n >= 0 ) {
-        for ( var c=this._next;  n && c !== this;  c=c._next, n-- );
-        if ( c === this ) throw new IndexOutOfBoundsError("index is too large");
-    }
-    else {
-        for ( var c=this._prev;  n && c !== this;  c=c._prev, n++ );
-        if ( c === this ) throw new IndexOutOfBoundsError("index is too small");
-    }
-    var old = c._value;
-    c._value = v;
-    return old;
-};
-
-proto.pop = function ( ) {
-    var c = this._prev;
-    if ( c === this ) return;
-    this._prev = c._prev;
-    this._prev._next = this;
-    c._removed = true;
-    return c._value;
-};
-
-proto.push = function ( /* variable arguments */ ) {
-    for ( var i=0;  i < arguments.length;  i++ ) {
-        var c = new makeContainer(arguments[i]);
-        c._prev = this._prev;
-        c._next = this;
-        this._prev._next = c;
-        this._prev = c;
-    }
-};
-
-proto.add = proto.push;
-
-proto.shift = function ( ) {
-    var c = this._next;
-    if ( c === this ) return;
-    this._next = c._next;
-    this._next._prev = this;
-    c._removed = true;
-    return c._value;
-};
-
-proto.unshift = function ( /* variable arguments */ ) {
-    for ( var i=0;  i < arguments.length; i++ ) {
-        var c = new makeContainer(arguments[i]);
-        c._prev = this;
-        c._next = this._next;
-        this._next._prev = c;
-        this._next = c;
-    }
-};
-
-proto.remove = function ( /* variable arguments */ ) {
-    var changed = 0;
-    for ( var i=0;  i < arguments.length;  i++ ) {
-        var arg = arguments[i];
-        for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
-            if ( equivalent(arg, it.value()) ) {
-                it.remove();
-                changed++;
-                break;
-            }
-        }
-    }
-    return changed;
-};
-
-proto.removeAt = function ( x ) {
-    i = Math.floor(x);
-    if ( isNaN(i)                    ) throw new TypeError("`" + x + "' is not a number");
-    if ( i < 0  &&  i < -this.size() ) throw new IndexOutOfBoundsError("`" + x + "' is too small.");
-    i = this.iterator(i);
-    if ( i.isTail()                  ) throw new IndexOutOfBoundsError("`" + x + "' is too large.");
-    return i.remove();
 };
 
 proto.toArray = function ( ) {
@@ -183,32 +133,28 @@ proto.toArray = function ( ) {
     return a;
 };
 
-proto.iterator = function ( n ) {
-    n = Math.floor(n);
-    if ( !n ) n = 0;
-    var it;
-    if ( n >= 0 ) {
-        for ( it=new Iterator(this, this._next);  n > 0  &&  !it.isTail();  n-- ) it = it.next();
-    }
-    else {
-        for ( it=new Iterator(this, this);        n < 0  &&  !it.isHead();  n++ ) it = it.previous();
-    }
-    return it;
-};
 
-proto.reverseIterator = function ( n ) {
-    n = Math.floor(n);
-    if ( !n ) n = 0;
-    var it;
-    if ( n >= 0 ) {
-        for ( it=new ReverseIterator(this, this._prev);  n > 0  &&  !it.isTail();  n-- ) it = it.next();
-    }
-    else {
-        for ( it=new ReverseIterator(this, this);        n < 0  &&  !it.isHead();  n++ ) it = it.previous();
-    }
-    return it;
-};
 
+// comparison function about containers
+function comp ( top, l, r ) {
+    if ( l === r ) return 0;
+    do {
+        l = l._next;
+        if ( l === r ) return -1;
+    } while ( l !== top );
+    return 1;
+}
+
+// distance function about containers
+function dist ( top, l, r ) {
+    for ( var i=0, it=l;  it !== top;  i--, it=it._next ) {
+        if ( it === r ) return i;
+    }
+    for ( var i=1, it=r._next;  it !== top;  i++, it=it._next ) {
+        if ( it === l ) return i;
+    }
+    return undefined;
+}
 
 
 function Iterator ( l, c ) {
@@ -216,85 +162,85 @@ function Iterator ( l, c ) {
     this._pos = c;  // Current position; abstractly iterator points to just before this container
 }
 
-var proto = Iterator.prototype = new data.iterator.Iterator();
+var proto = Iterator.prototype = new List.Iterator();
 proto.constructor = Iterator;
 
-proto.copy = function ( ) {
-    return new Iterator(this._top, this._pos);
+function validate ( it ) {
+    while ( it._pos._removed ) {
+        it._pos = it._pos._next;
+    }
+}
+
+proto.isBoundTo = function ( that ) {
+    return this._top === that;
 };
 
-proto.compareTo = function ( another ) {
-    if ( !(another instanceof Iterator) ) throw new TypeError("`" + another + "' is not a iterator of " + NAMESPACE + ".LinkedList");
-    if ( this._top !== another._top     ) throw new IllegalStateError("Two iterators belong to different lists.");
-    var l = this._pos;
-    var r = another._pos;
-    if ( l === r ) return 0;
-    for ( ;  l !== this._top;  l=l._next ) {
-        if ( l === r ) return -1;
-    }
-    return 1;
+proto.equals = function ( that ) {
+    if ( !(that instanceof Iterator && that.isBoundTo(this._top)) ) return false;
+    validate(this);
+    validate(that);
+    return  this._pos === that._pos;
 };
 
-proto.equals = function ( another ) {
-    return  another instanceof Iterator
-        &&  this._top === another._top
-        &&  this._pos === another._pos;
+proto.compareTo = function ( that ) {
+    if ( !(that instanceof Iterator && that.isBoundTo(this._top)) ) return undefined;
+    validate(this);
+    validate(that);
+    return comp(this._top, this._pos, that._pos);
 };
 
-proto.distance = function ( another ) {
-    if ( !(another instanceof Iterator) ) return undefined;
-    if ( this._top !== another._top     ) return undefined;
-    var l = this._pos;
-    var r = another._pos;
-    for ( var i=0, it=l;  it !== this._top;  i++, it=it._next ) {
-        if ( it === r ) return i;
-    }
-    for ( var i=0, it=r;  it !== this._top;  i--, it=it._next ) {
-        if ( it === l ) return i;
-    }
-    return undefined;
+proto.distance = function ( that ) {
+    if ( !(that instanceof Iterator && that.isBoundTo(this._top)) ) return undefined;
+    validate(this);
+    validate(that);
+    return dist(this._top, this._pos, that._pos);
 };
 
 proto.isHead = function ( ) {
+    validate(this);
     return this._pos === this._top._next;
 };
 
 proto.isTail = function ( ) {
+    validate(this);
     return this._pos === this._top;
-};
-
-proto.value = function ( ) {
-    return this._pos._value;
-};
-
-proto.assign = function ( v ) {
-    if ( this.isTail() ) throw new IllegalStateError("can't assign at the tail of list");
-    return this._pos._value = v;
 };
 
 proto.next = function ( ) {
     if ( this.isTail() ) throw new NoSuchElementError("no next element");
-    var it = this.copy();
-    do{ it._pos = it._pos._next } while( it._pos._removed );
-    return it;
+    return new Iterator(this._top, this._pos._next);
 };
 
 proto.previous = function ( ) {
     if ( this.isHead() ) throw new NoSuchElementError("no previous element");
-    var it = this.copy();
-    do{ it._pos = it._pos._prev } while( it._pos._removed );
-    return it;
+    return new Iterator(this._top, this._pos._prev);
+};
+
+proto.value = function ( ) {
+    validate(this);
+    return this._pos._value;
+};
+
+proto.assign = function ( v ) {
+    if ( this.isTail() ) return this.insert(v);
+    else                 return this._pos._value = v;
 };
 
 proto.insert = function ( v ) {
-    if ( this._pos._removed ) throw new IllegalStateError("can't insert before a removed element");
-    return this._pos.push(v);
+    validate(this);
+    var c = makeContainer(v);
+    c._prev = this._pos._prev;
+    c._next = this._pos;
+    this._pos._prev = this._pos._prev._next = c;
+    return v;
 };
 
 proto.remove = function ( ) {
-    if ( this.isTail() )      throw new IllegalStateError("can't remove at the tail of list");
-    if ( this._pos._removed ) throw new IllegalStateError("element already removed");
-    return this._pos._next.pop();
+    if ( this.isTail() ) throw new IllegalStateError("can't remove at the tail of list");
+    this._pos._prev._next = this._pos._next;
+    this._pos._next._prev = this._pos._prev;
+    this._pos._removed = true;
+    return this._pos._value;
 };
 
 
@@ -304,73 +250,75 @@ function ReverseIterator ( l, c ) {
     this._pos = c;  // Current position; abstractly iterator points to just before this container
 }
 
-var proto = ReverseIterator.prototype = new data.iterator.Iterator();
+var proto = ReverseIterator.prototype = new List.Iterator();
 for ( var i in Iterator.prototype ) proto[i] = Iterator.prototype[i];
 proto.constructor = ReverseIterator;
 
-proto.copy = function ( ) {
-    return new ReverseIterator(this._top, this._pos);
+function rvalidate ( it ) {
+    while ( it._pos._removed ) {
+        it._pos = it._pos._prev;
+    }
+}
+
+proto.isBoundTo = Iterator.prototype.isBoundTo;
+
+proto.equals = function ( that ) {
+    if ( !(that instanceof Iterator && that.isBoundTo(this._top)) ) return false;
+    rvalidate(this);
+    rvalidate(that);
+    return  this._pos === that._pos;
 };
 
-proto.compareTo = function ( another ) {
-    if ( !(another instanceof ReverseIterator) ) throw new TypeError("`" + another + "' is not a reverse-iterator of " + NAMESPACE + ".LinkedList");
-    if ( this._top !== another._top            ) throw new IllegalStateError("Two iterators belong to different lists.");
-    var l = this._pos;
-    var r = another._pos;
-    if ( l === r ) return 0;
-    for ( ;  l !== this._top;  l=l._next ) {
-        if ( l === r ) return 1;
-    }
-    return -1;
+proto.compareTo = function ( that ) {
+    if ( !(that instanceof Iterator && that.isBoundTo(this._top)) ) return undefined;
+    rvalidate(this);
+    rvalidate(that);
+    return -comp(this._top, this._pos, that._pos);
 };
 
-proto.equals = function ( another ) {
-    return  another instanceof ReverseIterator
-        &&  this._top === another._top
-        &&  this._pos === another._pos;
-};
-
-proto.distance = function ( another ) {
-    if ( !(another instanceof ReverseIterator) ) return undefined;
-    if ( this._top !== another._top             ) return undefined;
-    var l = this._pos;
-    var r = another._pos;
-    for ( var i=0, it=l;  it !== this._top;  i++, it=it._prev ) {
-        if ( it === r ) return i;
-    }
-    for ( var i=0, it=r;  it !== this._top;  i--, it=it._prev ) {
-        if ( it === l ) return i;
-    }
-    return undefined;
+proto.distance = function ( that ) {
+    if ( !(that instanceof Iterator && that.isBoundTo(this._top)) ) return undefined;
+    rvalidate(this);
+    rvalidate(that);
+    var d = dist(this._top, this._pos, that._pos);
+    return isNaN(d) ? d : -d;
 };
 
 proto.isHead = function ( ) {
+    rvalidate(this);
     return this._pos === this._top._prev;
+};
+
+proto.isTail = function ( ) {
+    rvalidate(this);
+    return this._pos === this._top;
 };
 
 proto.next = function ( ) {
     if ( this.isTail() ) throw new NoSuchElementError("no next element");
-    var it = this.copy();
-    do{ it._pos = it._pos._prev } while( it._pos._removed );
-    return it;
+    return new ReverseIterator(this._top, this._pos._prev);
 };
 
 proto.previous = function ( ) {
     if ( this.isHead() ) throw new NoSuchElementError("no previous element");
-    var it = this.copy();
-    do{ it._pos = it._pos._next } while( it._pos._removed );
-    return it;
+    return new ReverseIterator(this._top, this._pos._next);
 };
+
+proto.value = function ( ) {
+    rvalidate(this);
+    return this._pos._value;
+};
+
+proto.assign = Iterator.prototype.assign;
 
 proto.insert = function ( v ) {
-    if ( this._pos._removed ) throw new IllegalStateError("can't insert before a removed element");
-    return this._pos.unshift(v);
+    rvalidate(this);
+    var c = makeContainer(v);
+    c._next = this._pos._next;
+    c._prev = this._pos;
+    this._pos._next = this._pos._next._prev = c;
+    return v;
 };
 
-proto.remove = function ( ) {
-    if ( this.isTail() )      throw new IllegalStateError("can't remove at the tail of list");
-    if ( this._pos._removed ) throw new IllegalStateError("element already removed");
-    return this._pos._next.pop();
-};
-
+proto.remove = Iterator.prototype.remove;
 
