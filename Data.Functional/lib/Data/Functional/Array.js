@@ -4,7 +4,6 @@
 //@require Data.Functional.List 0.4.0
 //@with-namespace Data.Functional
 
-//@require Data.Error.IndexOutOfBoundsError
 //@require Data.Error.IllegalStateError
 //@with-namespace Data.Error
 
@@ -23,14 +22,14 @@ for ( var i in List.prototype ) {
 proto.head = function ( n ) {
     if ( n < 0 ) return this.tail(-n);
     n = ToInteger(n);
-    if ( n > this.length ) throw new IndexOutOfBoundsError();
+    if ( n > this.length ) throw new RangeError();
     return new Iterator(this, n);
 };
 
 proto.tail = function ( n ) {
     if ( n < 0 ) return this.head(-n);
     n = ToInteger(n);
-    if ( n > this.length ) throw new IndexOutOfBoundsError();
+    if ( n > this.length ) throw new RangeError();
     return new Iterator(this, this.length-n);
 };
 
@@ -39,14 +38,14 @@ proto.iterator = proto.head;
 proto.reverseHead = function ( n ) {
     if ( n < 0 ) return this.reverseTail(-n);
     n = ToInteger(n);
-    if ( n > this.length ) throw new IndexOutOfBoundsError();
+    if ( n > this.length ) throw new RangeError();
     return new ReverseIterator(this, n);
 };
 
 proto.reverseTail = function ( n ) {
     if ( n < 0 ) return this.reverseHead(-n);
     n = ToInteger(n);
-    if ( n > this.length ) throw new IndexOutOfBoundsError();
+    if ( n > this.length ) throw new RangeError();
     return new ReverseIterator(this, this.length-n);
 };
 
@@ -73,8 +72,8 @@ proto.set = function ( it, v ) {
     }
     var n = ToInteger(it);
     if ( n < 0            ) n += this.length;
-    if ( n < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
-    if ( n >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
+    if ( n < 0            ) throw new RangeError("`" + it + "' is too small.");
+    if ( n >= this.length ) throw new RangeError("`" + it + "' is too large.");
     return this[n] = v;
 };
 
@@ -85,8 +84,8 @@ proto.insertAt = function ( it, v ) {
     }
     var n = ToInteger(it);
     if ( n < 0            ) n += this.length;
-    if ( n < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
-    if ( n >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
+    if ( n < 0            ) throw new RangeError("`" + it + "' is too small.");
+    if ( n >= this.length ) throw new RangeError("`" + it + "' is too large.");
     this.splice(n, 0, v);
     return v;
 };
@@ -98,8 +97,8 @@ proto.removeAt = function ( it ) {
     }
     var n = ToInteger(it);
     if ( n < 0            ) n += this.length;
-    if ( n < 0            ) throw new IndexOutOfBoundsError("`" + it + "' is too small.");
-    if ( n >= this.length ) throw new IndexOutOfBoundsError("`" + it + "' is too large.");
+    if ( n < 0            ) throw new RangeError("`" + it + "' is too small.");
+    if ( n >= this.length ) throw new RangeError("`" + it + "' is too large.");
     return this.splice(n, 1)[0];
 };
 

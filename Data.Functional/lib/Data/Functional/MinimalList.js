@@ -30,7 +30,7 @@ proto.reverseHead = function ( n ) {
 
 function Iterator ( l, n ) {
     if ( n < 0 ) n += l._entity.length;
-    if ( n < 0 || n > l._entity.length ) throw new IndexOutOfBoundsError();
+    if ( n < 0 || n > l._entity.length ) throw new RangeError();
     this._list = l;
     this._pos  = ToInteger(n);
 }
@@ -90,7 +90,7 @@ proto.equals = function ( that ) {
 
 function ReverseIterator ( l, n ) {
     if ( n < 0 ) n += l._entity.length;
-    if ( n < 0 || n > l._entity.length ) throw new IndexOutOfBoundsError();
+    if ( n < 0 || n > l._entity.length ) throw new RangeError();
     List.ReverseIterator.call( this, new Iterator(l, l._entity.length-ToInteger(n)) );
 }
 

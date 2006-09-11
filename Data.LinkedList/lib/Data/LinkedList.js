@@ -8,7 +8,6 @@
 //@require Data.Iterator.NoSuchElementError
 //@with-namespace Data.Iterator
 
-//@require Data.Error.IndexOutOfBoundsError
 //@require Data.Error.IllegalStateError
 //@with-namespace Data.Error
 
@@ -46,7 +45,7 @@ function nForward ( top, c, n ) {
     if ( n == 0 ) return c;
     c = c._next;
     while ( --n > 0 ) {
-        if ( c === top ) throw new IndexOutOfBoundsError();
+        if ( c === top ) throw new RangeError();
         c = c._next;
     }
     return c;
@@ -56,7 +55,7 @@ function nBackward ( top, c, n ) {
     if ( n == 0 ) return c;
     c = c._prev;
     while ( --n > 0 ) {
-        if ( c === top ) throw new IndexOutOfBoundsError();
+        if ( c === top ) throw new RangeError();
         c = c._prev;
     }
     return c;

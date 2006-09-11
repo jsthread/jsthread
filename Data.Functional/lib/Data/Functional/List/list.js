@@ -8,7 +8,6 @@
 //@require Data.Functional.Collection 0.4.0
 
 //@require Data.Error.NotImplementedError
-//@require Data.Error.IndexOutOfBoundsError
 //@with-namespace Data.Error
 
 //@require Math.ToInteger
@@ -32,7 +31,7 @@ proto.constructor = List;
 // If n is negative, it is treated as size+n, where size is the length 
 // of this list. Thus, if n is negative, the result of head(n) and 
 // the one of tail(-n) should be equivalent.
-// These methods can throw IndexOutOfBoundsError.
+// These methods can throw RangeError.
 proto.head = function ( n ) {
     if ( n < 0 ) return this.tail(-n);
     return nNextFromHead(this.tail(), n);
@@ -61,7 +60,7 @@ function nNextFromHead ( it, n ) {
         return it;
     } else {
         while ( n-- > 0 ) {
-            if ( it.isHead() ) throw new IndexOutOfBoundsError();
+            if ( it.isHead() ) throw new RangeError();
             q.push(it);
             it = it.previous();
         }
@@ -83,7 +82,7 @@ function nPreviousFromTail ( it, n ) {
         return it;
     } else {
         while ( n-- > 0 ) {
-            if ( it.isTail() ) throw new IndexOutOfBoundsError();
+            if ( it.isTail() ) throw new RangeError();
             q.push(it);
             it = it.next();
         }
@@ -119,7 +118,7 @@ proto.get = function ( it ) {
         try {
             it = this.head(it);
         } catch ( e ) {
-            if ( e instanceof IndexOutOfBoundsError ) {
+            if ( e instanceof RangeError ) {
                 return undefined;
             } else {
                 throw e;
@@ -220,7 +219,7 @@ proto.slice = function ( start, end ) {
         try {
             start = this.head(start);
         } catch ( e ) {
-            if ( e instanceof IndexOutOfBoundsError ) {
+            if ( e instanceof RangeError ) {
                 start = start < 0 ? this.head() : this.tail();
             } else {
                 throw e;
@@ -229,7 +228,7 @@ proto.slice = function ( start, end ) {
         try {
             end = this.head(end);
         } catch ( e ) {
-            if ( e instanceof IndexOutOfBoundsError ) {
+            if ( e instanceof RangeError ) {
                 end = end < 0 ? this.head() : this.tail();
             } else {
                 throw e;
