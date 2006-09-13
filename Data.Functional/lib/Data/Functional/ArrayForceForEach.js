@@ -1,7 +1,7 @@
-//@esmodpp
+//@esmodpp 0.10.0
 //@namespace Data.Functional.ArrayForceForEach
 
-//@require Data.Functional.Array
+//@extend Data.Functional.Array
 
 
 // This module forces into overwriting `forEach' method of Array.
