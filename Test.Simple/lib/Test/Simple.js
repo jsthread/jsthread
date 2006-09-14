@@ -1,13 +1,10 @@
 //@esmodpp
 //@namespace Test.Simple
-//@version   0.0.0
+//@version   0.1.0
 
+//@require StdIO
 //@require Data.Error
 //@with-namespace Data.Error
-
-
-//@shared PRINT_FUNC
-PRINT_LINE = function ( s ) { document.writeln(s + "<br>"); };
 
 
 var n_of_test = undefined;
@@ -24,14 +21,21 @@ function test ( n, t ) {
     var old_i = i_of_test;
     n_of_test = Number(n);
     i_of_test = 0;
-    PRINT_LINE("1.." + n);
+    StdIO.Out.writeln("1.." + n);
     try {
         t();
-    }
-    finally {
-        if ( i_of_test == 0 )        PRINT_LINE("# No tests run!");
-        if ( i_of_test < n_of_test ) PRINT_LINE("# Looks like you planned " + n_of_test + " tests but only ran " + i_of_test + ".");
-        if ( i_of_test > n_of_test ) PRINT_LINE("# Looks like you planned " + n_of_test + " tests but ran " + (i_of_test-n_of_test) + " extra.");
+    } catch ( e ) {
+        StdIO.Err.writeln("# Exception thrown: " + e);
+        if ( e.stack ) {
+            StdIO.Err.writeln("# Stack trace ----- ");
+            StdIO.Err.write(e.stack);
+            StdIO.Err.writeln("# ----------------- ");
+        }
+        throw e;
+    } finally {
+        if ( i_of_test == 0 )        StdIO.Out.writeln("# No tests run!");
+        if ( i_of_test < n_of_test ) StdIO.Out.writeln("# Looks like you planned " + n_of_test + " tests but only ran " + i_of_test + ".");
+        if ( i_of_test > n_of_test ) StdIO.Out.writeln("# Looks like you planned " + n_of_test + " tests but ran " + (i_of_test-n_of_test) + " extra.");
         n_of_test = old_n;
         i_of_test = old_i;
     }
@@ -46,7 +50,7 @@ function ok ( e, m ) {
     else     str += "not ok";
     str += " " + ++i_of_test;
     if ( arguments.length >= 2 ) str += " - " + m;
-    PRINT_LINE(str);
+    StdIO.Out.writeln(str);
 }
 
 
