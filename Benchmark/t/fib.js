@@ -1,5 +1,5 @@
 //@esmodpp
-//@require Benchmark.CScript
+//@require Benchmark
 //@with-namespace Benchmark
 
 

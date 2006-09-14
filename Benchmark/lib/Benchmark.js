@@ -24,6 +24,11 @@ Benchmark.prototype.toString = function ( )
 };
 
 
+function print ( /* delegate */ ) {
+    Out.write.apply(Out, arguments);
+}
+
+
 function nullFunction ( ) { }
 
 function compile ( code )
@@ -101,7 +106,7 @@ function timethis ( iters, code, title )
 {
     if ( arguments.length < 3 ) title = "timethis " + iters;
     var r = timeit(iters, code);
-    Out.write(title, ": ", r, "\n");
+    print(title, ": ", r, "\n");
     return r;
 }
 
@@ -124,12 +129,12 @@ function cmpthese ( iters, hash )
     if ( iters instanceof Object ) {
         hash = iters;
     } else {
-        var save = PRINT;
-        PRINT = nullFunction;  // Shut up `timethese'.
+        var save = print;
+        print = nullFunction;  // Shut up `timethese'.
         try {
             hash = timethese(iters, hash);
         } finally {
-            PRINT = save;
+            print = save;
         }
     }
 
@@ -177,7 +182,7 @@ function cmpthese ( iters, hash )
         for ( var i=1;  i < row.length;  i++ ) {
             buf.push( pad_left(row[i], span[i]) );
         }
-        Out.write( buf.join("  "), "\n" );
+        print( buf.join("  "), "\n" );
     });
     
     return hash;
