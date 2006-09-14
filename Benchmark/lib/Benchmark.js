@@ -1,8 +1,10 @@
 //@esmodpp
-//@version 0.0.1
+//@version 0.1.0
 //@namespace Benchmark
 
 //@require Data.Functional.Array
+//@require StdIO
+//@with-namespace StdIO
 
 
 function Benchmark ( time, iters )
@@ -20,26 +22,6 @@ Benchmark.prototype.toString = function ( )
 {
     return this.valueOf() + " wallclock secs";
 };
-
-
-//@shared WARN  PRINT
-WARN  = undefined;  // These variables are set different functions 
-PRINT = undefined;  // depending on execution environment.
-
-function warn ( /* variable-arguments */ )
-{
-    var buf = [];
-    for ( var i=0;  i < arguments.length;  i++ ) buf[i] = arguments[i];
-    WARN(buf.join(""));
-}
-
-function print ( /* variable-arguments */ )
-{
-    var buf = [];
-    for ( var i=0;  i < arguments.length;  i++ ) buf[i] = arguments[i];
-    PRINT(buf.join(""));
-}
-
 
 
 function nullFunction ( ) { }
@@ -108,7 +90,7 @@ function timeit ( iters, code )
         var t1 = time(function(){
             for ( var i=0;  i < iters;  i++ ) code();
         });
-        if ( t1 < 200 ) warn("too few iterations for a reliable count");
+        if ( t1 < 200 ) Err.write("too few iterations for a reliable count");
         return new Benchmark(t1-t0, iters);
     }
 }
@@ -119,7 +101,7 @@ function timethis ( iters, code, title )
 {
     if ( arguments.length < 3 ) title = "timethis " + iters;
     var r = timeit(iters, code);
-    print(title, ": ", r, "\n");
+    Out.write(title, ": ", r, "\n");
     return r;
 }
 
@@ -195,7 +177,7 @@ function cmpthese ( iters, hash )
         for ( var i=1;  i < row.length;  i++ ) {
             buf.push( pad_left(row[i], span[i]) );
         }
-        print( buf.join("  "), "\n" );
+        Out.write( buf.join("  "), "\n" );
     });
     
     return hash;
