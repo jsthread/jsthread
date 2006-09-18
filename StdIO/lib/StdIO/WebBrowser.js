@@ -153,17 +153,21 @@ function createConsole ( name, left, top, zIndex ) {
         }
     });
     
-    var resizeX, resizeY;
+    var startX, startY, origW, origH;
     setDnD(resize, {
         start: function ( e ) {
-            resizeX = e.clientX;
-            resizeY = e.clientY;
+            startX = e.clientX;
+            startY = e.clientY;
+            origW  = parseInt(console.style.width)  || 0;
+            origH  = parseInt(console.style.height) || 0;
         },
         move: function ( e ) {
-            console.style.width  = parseInt(console.style.width ) + e.clientX - resizeX + "px";
-            console.style.height = parseInt(console.style.height) + e.clientY - resizeY + "px";
-            resizeX = e.clientX;
-            resizeY = e.clientY;
+            var w = origW + e.clientX - startX;
+            w = w <= 0 ? 1 : w;
+            var h = origH + e.clientY - startY;
+            h = h <= 0 ? 1 : h;
+            console.style.width  = w + "px";
+            console.style.height = h + "px";
         }
     });
     
