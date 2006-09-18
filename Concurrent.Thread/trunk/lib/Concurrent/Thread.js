@@ -1,78 +1,37 @@
 //@esmodpp
-
-//@namespace Concurrent.Thread
+//@version 0.1.0
+//@namespace Concurrent
 
 //@require Data.LinkedList
-//@with-namespace Data
-
-//@require Data.Cons
-//@with-namespace Data.Cons
-
 //@require Data.Error
 //@with-namespace Data.Error
 
 
 
-//@export Continuation
-function Continuation ( p, t, c ) {
-    this._procedure  = p;
-    this._this_value = t;
-    this._catch      = c;
-    this._finally    = nil;   // stack consists of cons-list
+var current_thread = null;  // Retains the current thread.
+
+function NoExceptionHandlerException ( e ) {
+    this.content = e;
 }
 
-var proto = Continuation.prototype;
-
-proto.call = function ( r ) {
-    return this._procedure.call(this._this_value, r);
-};
-
-+function(){
-    var name = "[object " + NAMESPACE + ".Continuation]"
-    proto.toString = function ( ) {
-        return name;
-    };
-}();
-
-
-
-//@export ThreadedFunction
-function ThreadedFunction ( f ) {
-    this._func = f;
+function initial_exception_handler ( e ) {
+    throw new NoExceptionHandlerException(e);
 }
-
-var proto = ThreadedFunction.prototype;
-
-proto.start = function ( /* valargs */ ) {
-    var func = this._func;
-    var args = arguments;
-    return new THREAD(function(r){
-        return func(null, args, null);
-    });
-};
-
-+function(){
-    var name = "[object " + NAMESPACE + ".ThreadedFunction]";
-    proto.toString = function ( ) {
-        return name;
-    };
-}();
 
 
 
 //@export Thread
 function Thread ( ) {
-    throw new Error("Thread cannot be instantiated directly via the constructor.");
+    throw new Error("Thread cannot be instantiated directly.");
 }
 
-//@export THREAD
-function THREAD ( c ) {
-    this._continuation = c;
-    this._ret_val      = undefined;
+function THREAD ( t ) {
+    this._tupple       = t;
     this._is_ended     = 0;  // 0:running, -1:throw, 1:return
     this._join_thread  = null;
-    this._joined_list  = new LinkedList();
-    this._timerID      = standBy.call(this, 0);
+    this._joined_list  = new Data.LinkedList();
+    this._timerID      = undefined;
+    standBy.call(this, 0);
 }
 
 var proto = THREAD.prototype = Thread.prototype;
@@ -83,9 +42,6 @@ var proto = THREAD.prototype = Thread.prototype;
         return name;
     };
 }();
-
-
-var current_thread = null;  // Retains the current thread.
 
 
 // Cancel timeout event.
@@ -109,77 +65,79 @@ function standBy ( t ) {
 // Cut "join" link.
 function unjoin ( ) {
     if ( this._join_thread ) {
-        this._join_thread._joined_list.remove(this);
+        var it = this._join_thread._joined_list.head().find(function( that ){
+            return that === this;
+        });
+        it.remove();
         this._join_thread = null;
     }
 }
 
-//@shared TIME_SLICE
-TIME_SLICE = 20;
+
+Thread.TIME_SLICE = 20;
 
 function doNext ( ) {
-    this.timerID = undefined;
+    cancel.call(this);
+    var tupple = this._tupple;
+    this._tupple = null;
     try {
-        var tupple;
-        try {
-            current_thread = this;
-            var limit = (new Date()).valueOf() + TIME_SLICE;
-            do {
-                tupple = this._continuation.call(this._ret_val);
-                this._continuation = tupple.continuation;
-                this._ret_val      = tupple.ret_val;
-            } while ( tupple.continuation  &&  tupple.timeout == undefined  &&  (new Date()).valueOf() < limit );
-        }
-        finally {
-            current_thread = null;
-        }
-        if ( tupple.continuation ) {
-            if ( tupple.timeout < 0 ) { /* Do nothing. */                   }
-            else                      { standBy.call(this, tupple.timeout); }
-        }
-        else {
-            this._is_ended     = 1;
-            this._continuation = null;
-            this._joined_list.forEach(function(it){
-                unjoin.call(it);
-                it._ret_val = tupple.ret_val;
-                standBy.call(it);
-            });
-        }
+        current_thread = this;
+        var limit = (new Date).valueOf() + Thread.TIME_SLICE;
+        do {
+            try {
+                tupple = tupple.continuation.procedure.$Concurrent_Thread_call(
+                             tupple.continuation.this_val, tupple.ret_val
+                         );
+            } catch ( e ) {
+                if ( e instanceof NoExceptionHandlerException ) {
+                    var joined_list   = this._joined_list;
+                    this._joined_list = null;
+                    this._is_ended    = -1;
+                    this._result      = e.content;
+                    if ( !joined_list.isEmpty() ) {
+                        while ( !joined_list.isEmpty() ) {
+                            var it = joined_list.head().value();
+                            it.notify(e);
+                        }
+                    } else if ( !(e instanceof KillException) ) {
+                        throw e;
+                    }
+                } else {
+                    tupple.continuation = tupple.continuation.exception;
+                    tupple.ret_val      = e;
+                }
+            }
+        } while ( tupple
+               && tupple.continuation
+               && tupple.timeout === undefined
+               && (new Date).valueOf() < limit );
+    } finally {
+        current_thread = null;
     }
-    catch ( e ) {
-        if ( e  &&  typeof e == "object" ) e.thread = this;
-        this.notify(e);
+    if ( tupple && tupple.continuation ) {
+        this._tupple = tupple;
+        if ( tupple.timeout < 0 ) { /* Do nothing. */                   }
+        else                      { standBy.call(this, tupple.timeout); }
+    } else {
+        this._is_ended = 1;
+        this._result   = tupple.ret_val;
+        while ( !this._joined_list.isEmpty() ) {
+            var it = this._joined_list.head().value();
+            unjoin.call(it);
+            it._tupple.ret_val = tupple.ret_val;
+            standBy.call(it);
+        }
+        this._joined_list = null;
     }
 }
 
+
 proto.notify = function ( e ) {
-    if ( current_thread == this ) throw e;
+    if ( current_thread === this ) throw e;
     cancel.call(this);
     unjoin.call(this);
-    this._ret_val = e;
-    if ( this._continuation._catch ) {
-        this._continuation = this._continuation._catch;
-        standBy.call(this, 0);
-    }
-    else {
-        this._is_ended = -1;
-        if ( !this._joined_list.isEmpty() ) {
-            this._joined_list.forEach(function(it){
-                it.notify(e);
-            });
-        }
-        else {
-            if ( !(e instanceof KillException) ) {
-                var self = this;
-                setTimeout(function(){
-                    if      ( typeof self.onError   == "function" ) self.onError(e);
-                    else if ( typeof Thread.onError == "function" ) Thread.onError(e);
-                    else                                            throw e;
-                }, 0);
-            }
-        }
-    }
+    this._tupple.continuation = this._tupple.continuation.exception;
+    this._tupple.ret_val = e;
     return e;
 };
 
@@ -187,13 +145,23 @@ proto.kill = function ( e ) {
     return this.notify(new KillException());
 };
 
-proto.join = new ThreadedFunction(
-    function($this_val, $arguments, $continuation){
-        this._joined_list.push(current_thread);
-        current_thread._join_thread = this;
-        return { continuation:$continuation, timeout:-1 };
+proto.join = function ( ) {
+    throw new Error("can't `join' in any non-threaded functions");
+};
+
+proto.join.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
+    if ( current_thread === null ) throw new Error("can't `join' when a non-threaded function is in call-stack");
+    //!TODO: check cyclic-join
+    if ( this_val._is_ended > 0 ) {  // this thread has already ended normally
+        return { continuation:cont, ret_val:this_val._result, timeout:undefined };
+    } else if ( this_val._is_ended < 0 ) {  // this thread has already ended by exception
+        throw this_val._result;
+    } else {
+        this_val._joined_list.add(current_thread);
+        current_thread._join_thread = this_val;
+        return { continuation:cont, timeout:-1 };
     }
-);
+};
 
 
 
@@ -201,26 +169,160 @@ Thread.self = function ( ) {
     return current_thread;
 };
 
-Thread.sleep = new ThreadedFunction(
-    function($this_val, $arguments, $continuation){
-        var t = $arguments[0];
-        if ( !(t > 0) ) t = 0;
-        return { continuation:$continuation, timeout:t };
+
+Thread.sleep = function ( ) {
+    throw new Error("can't `sleep' in any non-threaded functions");
+};
+
+Thread.sleep.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
+    if ( current_thread === null ) throw new Error("can't `sleep' when a non-threaded function is in call-stack");
+    return { continuation: cont,
+             ret_val     : undefined,
+             timeout     : args[0] > 0 ? args[0] : 0 };
+};
+
+
+Thread.stop = function ( ) {
+    throw new Error("can't `stop' in any non-threaded functions");
+};
+
+Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
+    if ( current_thread === null ) throw new Error("can't `stop' when a non-threaded function is in call-stack");
+    return { continuation: cont,
+             ret_val     : undefined,
+             timeout     : -1        };
+};
+
+
+Thread.stop = function ( ) {
+    throw new Error("can't `yield' in any non-threaded functions");
+};
+
+Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
+    if ( current_thread === null ) throw new Error("can't `yield' when a non-threaded function is in call-stack");
+    return { continuation: cont,
+             ret_val     : undefined,
+             timeout     : 0         };
+};
+
+
+var KillException = Thread.KillException = newExceptionClass("thread killed");
+
+
+
+function exec_until_end ( tupple ) {
+    while ( tupple && tupple.continuation ) {
+        try {
+            tupple = tupple.continuation.procedure.$Concurrent_Thread_call(
+                         tupple.continuation.this_val,
+                         tupple.ret_val
+                     );
+        } catch ( e ) {
+            if ( e instanceof NoExceptionHandlerException ) {
+                throw e.content;
+            } else {
+                tupple.continuation = tupple.continuation.exception;
+                tupple.ret_val      = e;
+            }
+        }
     }
-);
+    return tupple ? tupple.ret_val : undefined;
+}
 
-Thread.stop = new ThreadedFunction(
-    function($this_val, $arguments, $continuation){
-        return { continuation:$continuation, timeout:-1 };
+
+Thread.$Concurrent_Thread_makeBase = function ( ) {
+    return function ( ) {  // call as usual function
+        var save = current_thread;
+        try {
+            return exec_until_end(
+                       arguments.callee.$Concurrent_Thread_compiled(
+                           this,
+                           arguments,
+                           {procedure:initial_exception_handler}
+                       )
+                   );
+        } finally {
+            current_thread = save;
+        }
+    };
+};
+
+
+
+// Extends Function object.
+var proto = Function.prototype;
+
+proto.$Concurrent_Thread_apply = proto.apply;
+
+proto.$Concurrent_Thread_call = proto.call;
+
+proto.apply = function ( ) {
+    if ( typeof this.$Concurrent_Thread_compiled == "function" ) {
+        var save = current_thread;
+        try {
+            return exec_until_end(
+                       this.$Concurrent_Thread_compiled(
+                           arguments[0],
+                           arguments[1],
+                           {procedure:initial_exception_handler}
+                       )
+                   );
+        } finally {
+            current_thread = save;
+        }
+    } else {
+        return this.$Concurrent_Thread_apply(arguments[0], arguments[1]);
     }
-);
+};
 
-Thread.yield = new ThreadedFunction(
-    function($this_val, $arguments, $continuation){
-        return { continuation:$continuation, timeout:0 };
+proto.apply.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
+    if ( typeof this_val.$Concurrent_Thread_compiled == "function" ) {
+        return this_val.$Concurrent_Thread_compiled(args[0], args[1], cont);
+    } else {
+        return { continuation: cont,
+                 ret_val     : this_val.$Concurrent_Thread_apply(args[0], args[1]) };
     }
-);
+};
 
 
+proto.call = function ( ) {
+    var args = [];
+    for ( var i=1;  i < arguments.length;  i++ ) args[i-1] = arguments[i]; 
+    if ( typeof this.$Concurrent_Thread_compiled == "function" ) {
+        var save = current_thread;
+        try {
+            return exec_until_end(
+                       this.$Concurrent_Thread_compiled(
+                           arguments[0],
+                           args,
+                           {procedure:initial_exception_handler}
+                       )
+                   );
+        } finally {
+            current_thread = save;
+        }
+    } else {
+        return this.$Concurrent_Thread_apply(arguments[0], args);
+    }
+};
 
-var KillException = newExceptionClass("thread killed");
+proto.call.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
+    var t = args[0];
+    var a = [];
+    for ( var i=1;  i < args.length;  i++ ) a[i-1] = args[i];
+    if ( typeof this_val.$Concurrent_Thread_compiled == "function" ) {
+        return this_val.$Concurrent_Thread_compiled(t, a, cont);
+    } else {
+        return { continuation: cont,
+                 ret_val     : this_val.$Concurrent_Thread_apply(t, a) };
+    }
+};
+
+
+proto.start = function ( this_val, args ) {
+    if ( typeof this.$Concurrent_Thread_compiled != "function" ) throw new Error("this is not compiled function");
+    return new THREAD(
+        this.$Concurrent_Thread_compiled(this_val, args, {procedure:initial_exception_handler})
+    );
+};
+
