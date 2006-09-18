@@ -70,12 +70,12 @@ function createConsole ( name, left, top, zIndex ) {
     
     var console = tbody.appendChild( document.createElement("TR") )
                        .appendChild( document.createElement("TD") )
-                       .appendChild( document.createElement("DIV") );
+                       .appendChild( document.createElement("PRE") );
     console.style.backgroundColor = "#FFFFFF";
     console.style.border          = "solid 1px #EEEEEE";
     console.style.margin          = 0;
     console.style.fontFamily      = "monospace";
-    console.style.whiteSpace      = "normal";
+    console.style.whiteSpace      = "pre";
     console.style.padding         = "0.5em";
     console.style.width           = "480px";
     console.style.height          = "300px";
@@ -99,14 +99,14 @@ function createConsole ( name, left, top, zIndex ) {
     tools = tools.appendChild( document.createElement("TBODY") )
                  .appendChild( document.createElement("TR") );
     
-    if ( navigator.appName.indexOf("Microsoft") < 0 ) {  // IE can't switch display mode.
+    if ( navigator.appName.indexOf("Microsoft") < 0 ) {  // IE6 does not support white-space property.
         var label = tools.appendChild( document.createElement("TD") );
         label.style.verticalAlign = "middle";
         label.style.paddingRight  = "10px";
         label = label.appendChild( document.createElement("LABEL") );
         var wrap  = document.createElement("INPUT");
         wrap.type = "checkbox";
-        wrap.checked = true;
+        wrap.checked = false;
         wrap.onclick = function ( e ) {
             if ( this.checked ) {
                 console.style.whiteSpace = "normal";
@@ -233,25 +233,30 @@ errElement.onmousedown = function ( ) {
 
 // The following code defines StdIO methods.
 
-
-Out.write = function ( /* variable args */ ) {
+function format ( /* variable args */ ) {
     var str = "";
     for ( var i=0;  i < arguments.length;  i++ ) str += arguments[i];
-    str = str.replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/\r\n|\n|\r/g, "<br>");
+    return str.replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/\r\n|\n|\r/g, "<br>")
+              .replace(/[ \xA0]{2}/g, function ( s ) {
+                var r = "";
+                var l = floor(s.length / 2);
+                for ( var i=0;  i < l;  i++ ) r += "\xA0 ";
+                if ( s.length % 2 ) r = "\xA0" + r;
+                return r;
+              });
+}
+
+Out.write = function ( /* variable args */ ) {
+    var str = format.apply(null, arguments);
     outConsole.innerHTML += str;
     dblConsole.innerHTML += str;
 };
 
 Err.write = function ( /* variable args */ ) {
-    var str = "";
-    for ( var i=0;  i < arguments.length;  i++ ) str += arguments[i];
-    str = str.replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/\r\n|\n|\r/g, "<br>");
+    var str = format.apply(null, arguments);
     errConsole.innerHTML += str;
     dblConsole.innerHTML += str;
 };
