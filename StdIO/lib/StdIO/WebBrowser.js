@@ -240,7 +240,7 @@ function format ( /* variable args */ ) {
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")
               .replace(/\r\n|\n|\r/g, "<br>")
-              .replace(/[ \xA0]{2}/g, function ( s ) {
+              .replace(/[ \xA0]{2,}/g, function ( s ) {
                 var r = "";
                 var l = floor(s.length / 2);
                 for ( var i=0;  i < l;  i++ ) r += "\xA0 ";
