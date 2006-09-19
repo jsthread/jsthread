@@ -19,6 +19,10 @@ proto.containsFunctionCall = function ( ) {
     Kit.codeBug("Unimplemented method `containsFunctionCall' of class: " + this.constructor);
 };
 
+proto.hasSideEffect = function ( ) {
+    Kit.codeBug("Unimplemented method `hasSideEffect' of class: " + this.constructor);
+};
+
 proto.hasLvalue = function ( ) {
     return false;
 };
@@ -38,6 +42,10 @@ proto.containsFunctionCall = function ( ) {
     return this.exp.containsFunctionCall();
 };
 
+proto.hasSideEffect = function ( ) {
+    return this.exp.hasSideEffect();
+};
+
 
 //@export BinaryExpression
 function BinaryExpression ( l, r ) {
@@ -54,6 +62,10 @@ proto.containsFunctionCall = function ( ) {
     return this.left.containsFunctionCall() || this.right.containsFunctionCall();
 };
 
+proto.hasSideEffect = function ( ) {
+    return this.left.hasSideEfect() || this.right.hasSideEffect();
+};
+
 
 //@export ThisExpression
 function ThisExpression ( ) {
@@ -68,6 +80,10 @@ proto.toString = function ( ) {
 };
 
 proto.containsFunctionCall = function ( ) {
+    return false;
+};
+
+proto.hasSideEffect = function ( ) {
     return false;
 };
 
@@ -101,6 +117,10 @@ proto.containsFunctionCall = function ( ) {
     return false;
 };
 
+proto.hasSideEffect = function ( ) {
+    return false;
+};
+
 
 //@export Literal
 function Literal ( s ) {
@@ -120,6 +140,10 @@ proto.valueOf = function ( ) {
 };
 
 proto.containsFunctionCall = function ( ) {
+    return false;
+};
+
+proto.hasSideEffect = function ( ) {
     return false;
 };
 
@@ -249,6 +273,13 @@ proto.containsFunctionCall = function ( ) {
     return false;
 };
 
+proto.hasSideEfect = function ( ) {
+    for ( var i=0;  i < this.elems.length;  i++ ) {
+        if ( this.elems[i].hasSideEffect() ) return true;
+    }
+    return false;
+};
+
 
 //@export Elision
 function Elision ( ) { }
@@ -261,6 +292,10 @@ proto.toString = function ( ) {
 };
 
 proto.containsFunctionCall = function ( ) {
+    return false;
+};
+
+proto.hasSideEffect = function ( ) {
     return false;
 };
 
@@ -284,6 +319,13 @@ proto.toString = function ( ) {
 proto.containsFunctionCall = function ( ) {
     for ( var i=0;  i < this.pairs.length;  i++ ) {
         if ( this.pairs[i].exp.containsFunctionCall() ) return true;
+    }
+    return false;
+};
+
+proto.hasSideEffect = function ( ) {
+    for ( var i=0;  i < this.pairs.length;  i++ ) {
+        if ( this.pairs[i].exp.hasSideEffect() ) return true;
     }
     return false;
 };
@@ -312,6 +354,10 @@ proto.containsFunctionCall = function ( ) {
     return false;
 };
 
+proto.hasSideEffect = function ( ) {
+    return false;
+};
+
 
 //@export DotAccessor
 function DotAccessor ( base, prop ) {
@@ -332,6 +378,10 @@ proto.hasLvalue = function ( ) {
 
 proto.containsFunctionCall = function ( ) {
     return this.base.containsFunctionCall();
+};
+
+proto.hasSideEffect = function ( ) {
+    return this.base.hasSideEffect();
 };
 
 
@@ -369,6 +419,10 @@ proto.containsFunctionCall = function ( ) {
     return true;
 };
 
+proto.hasSideEffect = function ( ) {
+    return true;
+};
+
 
 //@export CallExpression
 function CallExpression ( func, args ) {
@@ -387,6 +441,10 @@ proto.containsFunctionCall = function ( ) {
     return true;
 };
 
+proto.hasSideEffect = function ( ) {
+    return true;
+};
+
 
 //@export PostIncExpression
 function PostIncExpression ( e ) {
@@ -398,6 +456,10 @@ proto.constructor = PostIncExpression;
 
 proto.toString = function ( ) {
     return this.exp + "++";
+};
+
+proto.hasSideEffect = function ( ) {
+    return true;
 };
 
 
@@ -413,6 +475,10 @@ proto.toString = function ( ) {
     return this.exp + "--";
 };
 
+proto.hasSideEffect = function ( ) {
+    return true;
+};
+
 
 //@export PreIncExpression
 function PreIncExpression ( e ) {
@@ -424,6 +490,10 @@ proto.constructor = PreIncExpression;
 
 proto.toString = function ( ) {
     return "++" + this.exp;
+};
+
+proto.hasSideEffect = function ( ) {
+    return true;
 };
 
 
@@ -439,6 +509,10 @@ proto.toString = function ( ) {
     return "--" + this.exp;
 };
 
+proto.hasSideEffect = function ( ) {
+    return true;
+};
+
 
 //@export DeleteExpression
 function DeleteExpression ( e ) {
@@ -450,6 +524,10 @@ proto.constructor = DeleteExpression;
 
 proto.toString = function ( ) {
     return "delete " + this.exp;
+};
+
+proto.hasSideEffect = function ( ) {
+    return true;
 };
 
 
@@ -850,6 +928,12 @@ proto.containsFunctionCall = function ( ) {
         || this.fexp.containsFunctionCall();
 };
 
+proto.hasSideEffect = function ( ) {
+    return this.cond.hasSideEffect()
+        || this.texp.hasSideEffect()
+        || this.fexp.hasSideEffect();
+};
+
 
 //@export AssignExpression
 function AssignExpression ( left, right ) {
@@ -859,6 +943,10 @@ function AssignExpression ( left, right ) {
 
 var proto = AssignExpression.prototype = new BinaryExpression();
 proto.constructor = AssignExpression;
+
+proto.hasSideEffect = function ( ) {
+    return true;
+};
 
 
 //@export SimpleAssignExpression
