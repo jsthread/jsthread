@@ -130,7 +130,7 @@ function createConsole ( name, left, top, zIndex ) {
     clear.appendChild( clearButton );
     
     var resize = tools.appendChild( document.createElement("TD") );
-    resize.appendChild( document.createTextNode("┼") );
+    resize.appendChild( document.createTextNode("\u253C") );
     resize.style.fontSize        = "30px";
     resize.style.fontFamily      = "monospace";
     resize.style.backgroundColor = "#EEEEEE";
