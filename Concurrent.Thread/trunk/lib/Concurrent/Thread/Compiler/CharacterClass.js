@@ -1,6 +1,7 @@
 //@esmodpp
 //@version 0.0.0
 //@namespace Concurrent.Thread.Compiler
+//@require   Concurrent.Thread.Compiler
 
 
 //@export isAlpha

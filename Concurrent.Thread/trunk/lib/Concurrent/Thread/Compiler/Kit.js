@@ -8,6 +8,8 @@
 //@version 0.0.0
 
 //@namespace Concurrent.Thread.Compiler.Kit
+//@require   Concurrent.Thread.Compiler
+
 //@require   Data.Error.IllegalStateError
 
 

@@ -1,5 +1,6 @@
 //@esmodpp
 //@namespace Concurrent.Thread.Compiler
+//@require   Concurrent.Thread.Compiler
 
 
 //@export IdentifierSet
