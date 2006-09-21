@@ -311,7 +311,7 @@ proto.constructor = ObjectInitializer;
 proto.toString = function ( ) {
     var buf = [];
     for ( var i=0;  i < this.pairs.length;  i++ ) {
-        buf.push( this.pairs[i].prop + ":" + this.pairs[i].exp );
+        buf.push( String(this.pairs[i].prop) + ":" + String(this.pairs[i].exp) );
     }
     return "{" + buf.join(", ") + "}";
 };
@@ -344,7 +344,7 @@ proto.constructor = FunctionExpression;
 proto.toString = function ( ) {
     var buf = ["function "];
     if ( this.name ) buf.push(this.name);
-    buf.push( "(", this.params.join(", "), ")", "{\n");
+    buf.push( "(", this.params.join(", "), ") {\n");
     for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
     buf.push("}");
     return buf.join("");
@@ -369,7 +369,7 @@ var proto = DotAccessor.prototype = new Expression();
 proto.constructor = DotAccessor;
 
 proto.toString = function ( ) {
-    return this.base + "." + this.prop;
+    return String(this.base) + "." + String(this.prop);
 };
 
 proto.hasLvalue = function ( ) {
@@ -394,7 +394,7 @@ var proto = BracketAccessor.prototype = new BinaryExpression();
 proto.constructor = BracketAccessor;
 
 proto.toString = function ( ) {
-    return this.left + "[" + this.right + "]";
+    return [ this.left, "[", this.right, "]" ].join("");
 };
 
 proto.hasLvalue = function ( ) {
@@ -412,7 +412,7 @@ var proto = NewExpression.prototype = new Expression();
 proto.constructor = NewExpression;
 
 proto.toString = function ( ) {
-    return "new " + this.func + "(" + this.args.join(", ") + ")";
+    return [ "new ", this.func, "(", this.args.join(", "), ")" ].join("");
 };
 
 proto.containsFunctionCall = function ( ) {
@@ -434,7 +434,7 @@ var proto = CallExpression.prototype = new Expression();
 proto.constructor = CallExpression;
 
 proto.toString = function ( ) {
-    return this.func + "(" + this.args.join(", ") + ")";
+    return [ this.func, "(", this.args.join(", "), ")" ].join("");
 };
 
 proto.containsFunctionCall = function ( ) {
@@ -455,7 +455,7 @@ var proto = PostIncExpression.prototype = new UnaryExpression();
 proto.constructor = PostIncExpression;
 
 proto.toString = function ( ) {
-    return this.exp + "++";
+    return String(this.exp) + "++";
 };
 
 proto.hasSideEffect = function ( ) {
@@ -472,7 +472,7 @@ var proto = PostDecExpression.prototype = new UnaryExpression();
 proto.constructor = PostDecExpression;
 
 proto.toString = function ( ) {
-    return this.exp + "--";
+    return String(this.exp) + "--";
 };
 
 proto.hasSideEffect = function ( ) {
@@ -489,7 +489,7 @@ var proto = PreIncExpression.prototype = new UnaryExpression();
 proto.constructor = PreIncExpression;
 
 proto.toString = function ( ) {
-    return "++" + this.exp;
+    return "++" + String(this.exp);
 };
 
 proto.hasSideEffect = function ( ) {
@@ -506,7 +506,7 @@ var proto = PreDecExpression.prototype = new UnaryExpression();
 proto.constructor = PreDecExpression;
 
 proto.toString = function ( ) {
-    return "--" + this.exp;
+    return "--" + String(this.exp);
 };
 
 proto.hasSideEffect = function ( ) {
@@ -523,7 +523,7 @@ var proto = DeleteExpression.prototype = new UnaryExpression();
 proto.constructor = DeleteExpression;
 
 proto.toString = function ( ) {
-    return "delete " + this.exp;
+    return "delete " + String(this.exp);
 };
 
 proto.hasSideEffect = function ( ) {
@@ -540,7 +540,7 @@ var proto = VoidExpression.prototype = new UnaryExpression();
 proto.constructor = VoidExpression;
 
 proto.toString = function ( ) {
-    return "void " + this.exp;
+    return "void " + String(this.exp);
 };
 
 
@@ -553,7 +553,7 @@ var proto = TypeofExpression.prototype = new UnaryExpression();
 proto.constructor = TypeofExpression;
 
 proto.toString = function ( ) {
-    return "typeof " + this.exp;
+    return "typeof " + String(this.exp);
 };
 
 
@@ -566,7 +566,7 @@ var proto = PosExpression.prototype = new UnaryExpression();
 proto.constructor = PosExpression;
 
 proto.toString = function ( ) {
-    return "+ " + this.exp;
+    return "+ " + String(this.exp);
 };
 
 
@@ -579,7 +579,7 @@ var proto = NegExpression.prototype = new UnaryExpression();
 proto.constructor = NegExpression;
 
 proto.toString = function ( ) {
-    return "- " + this.exp;
+    return "- " + String(this.exp);
 };
 
 
@@ -592,7 +592,7 @@ var proto = BitNotExpression.prototype = new UnaryExpression();
 proto.constructor = BitNotExpression;
 
 proto.toString = function ( ) {
-    return "~" + this.exp;
+    return "~" + String(this.exp);
 };
 
 
@@ -605,7 +605,7 @@ var proto = NotExpression.prototype = new UnaryExpression();
 proto.constructor = NotExpression;
 
 proto.toString = function ( ) {
-    return "!" + this.exp;
+    return "!" + String(this.exp);
 };
 
 
@@ -618,7 +618,7 @@ var proto = MulExpression.prototype = new BinaryExpression();
 proto.constructor = MulExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " * " + this.right + ")";
+    return [ "(", this.left, " * ", this.right, ")" ].join("");
 };
 
 
@@ -631,7 +631,7 @@ var proto = DivExpression.prototype = new BinaryExpression();
 proto.constructor = DivExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " / " + this.right + ")";
+    return [ "(", this.left, " / ", this.right, ")" ].join("");
 };
 
 
@@ -644,7 +644,7 @@ var proto = ModExpression.prototype = new BinaryExpression();
 proto.constructor = ModExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " % " + this.right + ")";
+    return [ "(", this.left, " % ", this.right, ")" ].join("");
 };
 
 
@@ -657,7 +657,7 @@ var proto = AddExpression.prototype = new BinaryExpression();
 proto.constructor = AddExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " + " + this.right + ")";
+    return [ "(", this.left, " + ", this.right, ")" ].join("");
 };
 
 
@@ -670,7 +670,7 @@ var proto = SubExpression.prototype = new BinaryExpression();
 proto.constructor = SubExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " - " + this.right + ")";
+    return [ "(", this.left, " - ", this.right, ")" ].join("");
 };
 
 
@@ -683,7 +683,7 @@ var proto = LShiftExpression.prototype = new BinaryExpression();
 proto.constructor = LShiftExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " << " + this.right + ")";
+    return [ "(", this.left, " << ", this.right, ")" ].join("");
 };
 
 
@@ -696,7 +696,7 @@ var proto = RShiftExpression.prototype = new BinaryExpression();
 proto.constructor = RShiftExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " >> " + this.right + ")";
+    return [ "(", this.left, " >> ", this.right, ")" ].join("");
 };
 
 
@@ -709,7 +709,7 @@ var proto = URShiftExpression.prototype = new BinaryExpression();
 proto.constructor = URShiftExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " >>> " + this.right + ")";
+    return [ "(", this.left, " >>> ", this.right, ")" ].join("");
 };
 
 
@@ -722,7 +722,7 @@ var proto = LessThanExpression.prototype = new BinaryExpression();
 proto.constructor = LessThanExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " < " + this.right + ")";
+    return [ "(", this.left, " < ", this.right, ")" ].join("");
 };
 
 
@@ -735,7 +735,7 @@ var proto = GreaterThanExpression.prototype = new BinaryExpression();
 proto.constructor = GreaterThanExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " > " + this.right + ")";
+    return [ "(", this.left, " > ", this.right, ")" ].join("");
 };
 
 
@@ -748,7 +748,7 @@ var proto = LessEqualExpression.prototype = new BinaryExpression();
 proto.constructor = LessEqualExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " <= " + this.right + ")";
+    return [ "(", this.left, " <= ", this.right, ")" ].join("");
 };
 
 
@@ -761,7 +761,7 @@ var proto = GreaterEqualExpression.prototype = new BinaryExpression();
 proto.constructor = GreaterEqualExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " >= " + this.right + ")";
+    return [ "(", this.left, " >= ", this.right, ")" ].join("");
 };
 
 
@@ -774,7 +774,7 @@ var proto = InstanceofExpression.prototype = new BinaryExpression();
 proto.constructor = InstanceofExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " instanceof " + this.right + ")";
+    return [ "(", this.left, " instanceof ", this.right, ")" ].join("");
 };
 
 
@@ -787,7 +787,7 @@ var proto = InExpression.prototype = new BinaryExpression();
 proto.constructor = InExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " in " + this.right + ")";
+    return [ "(", this.left, " in ", this.right, ")" ].join("");
 };
 
 
@@ -800,7 +800,7 @@ var proto = EqualExpression.prototype = new BinaryExpression();
 proto.constructor = EqualExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " == " + this.right + ")";
+    return [ "(", this.left, " == ", this.right, ")" ].join("");
 };
 
 
@@ -813,7 +813,7 @@ var proto = NotEqualExpression.prototype = new BinaryExpression();
 proto.constructor = NotEqualExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " != " + this.right + ")";
+    return [ "(", this.left, " != ", this.right, ")" ].join("");
 };
 
 
@@ -826,7 +826,7 @@ var proto = StrictEqualExpression.prototype = new BinaryExpression();
 proto.constructor = StrictEqualExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " === " + this.right + ")";
+    return [ "(", this.left, " === ", this.right, ")" ].join("");
 };
 
 
@@ -839,7 +839,7 @@ var proto = StrictNotEqualExpression.prototype = new BinaryExpression();
 proto.constructor = StrictNotEqualExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " !== " + this.right + ")";
+    return [ "(", this.left, " !== ", this.right, ")" ].join("");
 };
 
 
@@ -852,7 +852,7 @@ var proto = BitAndExpression.prototype = new BinaryExpression();
 proto.constructor = BitAndExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " & " + this.right + ")";
+    return [ "(", this.left, " & ", this.right, ")" ].join("");
 };
 
 
@@ -865,7 +865,7 @@ var proto = BitXorExpression.prototype = new BinaryExpression();
 proto.constructor = BitXorExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " ^ " + this.right + ")";
+    return [ "(", this.left, " ^ ", this.right, ")" ].join("");
 };
 
 
@@ -878,7 +878,7 @@ var proto = BitOrExpression.prototype = new BinaryExpression();
 proto.constructor = BitOrExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " | " + this.right + ")";
+    return [ "(", this.left, " | ", this.right, ")" ].join("");
 };
 
 
@@ -891,7 +891,7 @@ var proto = AndExpression.prototype = new BinaryExpression();
 proto.constructor = AndExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " && " + this.right + ")";
+    return [ "(", this.left, " && ", this.right, ")" ].join("");
 };
 
 
@@ -904,7 +904,7 @@ var proto = OrExpression.prototype = new BinaryExpression();
 proto.constructor = OrExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " || " + this.right + ")";
+    return [ "(", this.left, " || ", this.right, ")" ].join("");
 };
 
 
@@ -919,7 +919,7 @@ var proto = ConditionalExpression.prototype = new Expression();
 proto.constructor = ConditionalExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.cond + " ? " + this.texp + " : " + this.fexp + ")";
+    return [ "(", this.cond, " ? ", this.texp, " : ", this.fexp, ")" ].join("");
 };
 
 proto.containsFunctionCall = function ( ) {
@@ -958,7 +958,7 @@ var proto = SimpleAssignExpression.prototype = new AssignExpression();
 proto.constructor = SimpleAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " = " + this.right + ")";
+    return [ "(", this.left, " = ", this.right, ")" ].join("");
 };
 
 
@@ -971,7 +971,7 @@ var proto = MulAssignExpression.prototype = new AssignExpression();
 proto.constructor = MulAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " *= " + this.right + ")";
+    return [ "(", this.left, " *= ", this.right, ")" ].join("");
 };
 
 
@@ -984,7 +984,7 @@ var proto = DivAssignExpression.prototype = new AssignExpression();
 proto.constructor = DivAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " /= " + this.right + ")";
+    return [ "(", this.left, " /= ", this.right, ")" ].join("");
 };
 
 
@@ -997,7 +997,7 @@ var proto = ModAssignExpression.prototype = new AssignExpression();
 proto.constructor = ModAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " %= " + this.right + ")";
+    return [ "(",  this.left, " %= ", this.right, ")" ].join("");
 };
 
 
@@ -1010,7 +1010,7 @@ var proto = AddAssignExpression.prototype = new AssignExpression();
 proto.constructor = AddAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " += " + this.right + ")";
+    return [ "(", this.left, " += ", this.right, ")" ].join("");
 };
 
 
@@ -1023,7 +1023,7 @@ var proto = SubAssignExpression.prototype = new AssignExpression();
 proto.constructor = SubAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " -= " + this.right + ")";
+    return [ "(", this.left, " -= ", this.right, ")" ].join("");
 };
 
 
@@ -1036,7 +1036,7 @@ var proto = LShiftAssignExpression.prototype = new AssignExpression();
 proto.constructor = LShiftAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " <<= " + this.right + ")";
+    return [ "(", this.left, " <<= ", this.right, ")" ].join("");
 };
 
 
@@ -1049,7 +1049,7 @@ var proto = RShiftAssignExpression.prototype = new AssignExpression();
 proto.constructor = RShiftAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " >>= " + this.right + ")";
+    return [ "(", this.left, " >>= ", this.right, ")" ].join("");
 };
 
 
@@ -1062,7 +1062,7 @@ var proto = URShiftAssignExpression.prototype = new AssignExpression();
 proto.constructor = URShiftAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " >>>= " + this.right + ")";
+    return [ "(", this.left, " >>>= ", this.right, ")" ].join("");
 };
 
 
@@ -1075,7 +1075,7 @@ var proto = BitAndAssignExpression.prototype = new AssignExpression();
 proto.constructor = BitAndAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " &= " + this.right + ")";
+    return [ "(", this.left, " &= ", this.right, ")" ].join("");
 };
 
 
@@ -1088,7 +1088,7 @@ var proto = BitXorAssignExpression.prototype = new AssignExpression();
 proto.constructor = BitXorAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " ^= " + this.right + ")";
+    return [ "(", this.left, " ^= ", this.right, ")" ].join("");
 };
 
 
@@ -1101,7 +1101,7 @@ var proto = BitOrAssignExpression.prototype = new AssignExpression();
 proto.constructor = BitOrAssignExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + " |= " + this.right + ")";
+    return [ "(", this.left, " |= ", this.right, ")" ].join("");
 };
 
 
@@ -1114,7 +1114,7 @@ var proto = CommaExpression.prototype = new BinaryExpression();
 proto.constructor = CommaExpression;
 
 proto.toString = function ( ) {
-    return "(" + this.left + ", " + this.right + ")";
+    return [ "(", this.left, ", ", this.right, ")" ].join("");
 };
 
 

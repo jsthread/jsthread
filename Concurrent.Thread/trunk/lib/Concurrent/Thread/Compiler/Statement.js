@@ -71,7 +71,7 @@ var proto = ExpStatement.prototype = new Statement();
 proto.constructor = ExpStatement;
 
 proto.toString = function ( ) {
-    return labelsToString.call(this) + this.exp + ";";
+    return labelsToString.call(this) + String(this.exp) + ";";
 };
 
 proto.containsFunctionCall = function ( ) {
@@ -92,7 +92,7 @@ proto.toString = function ( ) {
     var buf = [];
     for ( var i=0;  i < this.decls.length;  i++ ) {
         if ( this.decls[i].exp ) {
-            buf.push( this.decls[i].id + "=" + this.decls[i].exp );
+            buf.push( this.decls[i].id, "=", this.decls[i].exp );
         }
         else {
             buf.push( this.decls[i].id );
@@ -281,8 +281,8 @@ proto.constructor = ForInVarStatement;
 proto.toString = function ( ) {
     return [ labelsToString.call(this),
              "for ( var ",
-             this.decl.exp ? this.decl.id + "=" + this.decl.exp
-                           : this.decl,
+             this.decl.exp ? String(this.decl.id) + "=" + String(this.decl.exp)
+                           : String(this.decl.id),
              " in ",
              this.exp,
              ") ",
@@ -325,8 +325,8 @@ proto.constructor = ForEachVarStatement;
 proto.toString = function ( ) {
     return [ labelsToString.call(this),
              "for each ( var ",
-             this.decl.exp ? this.decl.id + "=" + this.decl.exp
-                           : this.decl,
+             this.decl.exp ? String(this.decl.id) + "=" + String(this.decl.exp)
+                           : String(this.decl.id),
              " in ",
              this.exp,
              ") ",
