@@ -3,6 +3,10 @@
 //@require   Concurrent.Thread.Compiler
 //@require   Concurrent.Thread.Compiler.Kit
 
+//@require Data.Cons
+//@with-namespace Data.Cons
+
+
 
 //@export Expression
 function Expression ( ) {
