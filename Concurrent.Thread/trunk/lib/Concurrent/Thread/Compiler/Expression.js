@@ -365,7 +365,7 @@ function DotAccessor ( base, prop ) {
     this.prop = prop;  // Identifier
 }
 
-var prop = DotAccessor.prototype = new Expression();
+var proto = DotAccessor.prototype = new Expression();
 proto.constructor = DotAccessor;
 
 proto.toString = function ( ) {

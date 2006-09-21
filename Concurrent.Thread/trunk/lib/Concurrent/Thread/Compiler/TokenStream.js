@@ -297,7 +297,7 @@ retry:
         }
 
         // is it a number?
-        if ( isDigit(c)  ||  (c==='.' && isDigit(peekChar())) ) {
+        if ( isDigit(c)  ||  (c==='.' && isDigit(this.peekChar())) ) {
             this.stringBuffer = [];
             var base = 10;
 
