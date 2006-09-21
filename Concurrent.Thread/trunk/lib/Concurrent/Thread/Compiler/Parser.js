@@ -1166,6 +1166,7 @@ proto.argumentList = function ( )
     do {
         args.push( this.assignExpr(false) );
     } while ( this.matchToken(Token.COMMA) );
+    this.mustMatchToken(Token.RP, "msg.no.paren.arg");
     return args;
 };
 
@@ -1222,7 +1223,6 @@ proto.memberExprTail = function ( allowCallSyntax, base )
             if ( !allowCallSyntax ) break tailLoop;
             this.consumeToken();
             base = new CallExpression(base, this.argumentList());
-            this.mustMatchToken(Token.RP, "msg.no.paren.arg");
             break;
 
           default:
