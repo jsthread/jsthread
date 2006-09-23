@@ -715,7 +715,7 @@ proto.statementHelper = function ( labels )
           default:
             exp = this.expr(false);
         }
-        statement = new ReturnExpression(labels, exp, lineno, this.source);
+        statement = new ReturnStatement(labels, exp, lineno, this.source);
         break;
       }
 
