@@ -1,6 +1,6 @@
 //@esmodpp
 //@namespace Concurrent.Thread.Compiler
-//@require   Concurrent.Thread.Compiler
+//@require   Concurrent.Thread
 //@require   Concurrent.Thread.Compiler.Kit
 
 //@require Data.Cons

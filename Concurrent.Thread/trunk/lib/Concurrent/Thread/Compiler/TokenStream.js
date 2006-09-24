@@ -46,7 +46,7 @@
 //@esmodpp
 //@version 0.0.0
 //@namespace Concurrent.Thread.Compiler
-//@require   Concurrent.Thread.Compiler
+//@require   Concurrent.Thread
 //@require   Concurrent.Thread.Compiler.Kit
 //@require   Concurrent.Thread.Compiler.Token
 //@require   Concurrent.Thread.Compiler.CharacterClass
