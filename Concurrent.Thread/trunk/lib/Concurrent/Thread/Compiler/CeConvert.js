@@ -124,10 +124,9 @@ function CeAssign ( pack, assign, top ) {
                 assign.right.left
             )
         ))[Ce](pack, top);
-        (new IfGotoStatement(
+        (new IfThenStatement(
             new NotExpression(assign.left),
-            label.id,
-            undefinedExp
+            label.id
         ))[Ce](pack, top);
         (new ILExpStatement(
             new SimpleAssignExpression(
@@ -146,10 +145,9 @@ function CeAssign ( pack, assign, top ) {
                 assign.right.left
             )
         ))[Ce](pack, top);
-        (new IfGotoStatement(
+        (new IfThenStatement(
             assign.left,
-            label.id,
-            undefinedExp
+            label.id
         ))[Ce](pack, top);
         (new ILExpStatement(
             new SimpleAssignExpression(
@@ -163,10 +161,9 @@ function CeAssign ( pack, assign, top ) {
     else if ( assign.right instanceof ConditionalExpression ) {
         var label1 = pack.createLabel();
         var label2 = pack.createLabel();
-        (new IfGotoStatement(
+        (new IfThenStatement(
             assign.right.cond,
-            label1.id,
-            undefinedExp
+            label1.id
         ))[Ce](pack, top);
         (new ILExpStatement(
             new SimpleAssignExpression(
@@ -200,12 +197,9 @@ GotoStatement.prototype[Ce] = function ( pack, top ) {
 };
 
 
-IfGotoStatement.prototype[Ce] = function ( pack, top ) {
+IfThenStatement.prototype[Ce] = function ( pack, top ) {
     if ( this.condition.containsFunctionCall() ) {
         this.condition = pushOut(pack, this.condition, top++);
-    }
-    if ( this.ret_val.containsFunctionCall() ) {
-        this.ret_val = pushOut(pack, this.ret_val, top++);
     }
     pack.addStatement(this);
 };

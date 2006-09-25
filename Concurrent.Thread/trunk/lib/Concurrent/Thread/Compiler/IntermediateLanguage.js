@@ -65,17 +65,15 @@ GotoStatement.prototype.toString = function ( ) {
 
 
 
-//@export IfGotoStatement
-function IfGotoStatement ( e, c, r ) {
+//@export IfThenStatement
+function IfThenStatement ( e, c ) {
     this.condition    = e;  // Expression
     this.continuation = c;  // Identifier
-    this.ret_val      = r;  // Expression
 }
 
-IfGotoStatement.prototype.toString = function ( ) {
+IfThenStatement.prototype.toString = function ( ) {
     return [ "    if ( ", this.condition, " ) ",
-                 "goto[", this.continuation, "]",
-                     "(", this.ret_val,      ");" ].join("");
+                 "then[", this.continuation, "];" ].join("");
 };
 
 

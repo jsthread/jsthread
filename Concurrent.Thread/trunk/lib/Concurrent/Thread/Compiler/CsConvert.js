@@ -52,7 +52,7 @@ ExpStatement.prototype[Cs] = function ( pack ) {
 
 IfStatement.prototype[Cs] = function ( pack ) {
     var label = pack.createLabel();
-    pack.addStatement( new IfGotoStatement(new NotExpression(this.cond), label.id, undefinedExp) );
+    pack.addStatement( new IfThenStatement(new NotExpression(this.cond), label.id) );
     this.body[Cs](pack);
     pack.addStatement(label);
 };
@@ -60,7 +60,7 @@ IfStatement.prototype[Cs] = function ( pack ) {
 IfElseStatement.prototype[Cs] = function ( pack ) {
     var label1 = pack.createLabel();
     var label2 = pack.createLabel();
-    pack.addStatement( new IfGotoStatement(this.cond, label1.id, undefinedExp) );
+    pack.addStatement( new IfThenStatement(this.cond, label1.id) );
     this.fbody[Cs](pack);
     pack.addStatement( new GotoStatement(label2.id, undefinedExp) );
     pack.addStatement(label1);
@@ -73,14 +73,14 @@ DoWhileStatement.prototype[Cs] = function ( pack ) {
     var label = pack.createLabel();
     pack.addStatement(label);
     this.body[Cs](pack);
-    pack.addStatement( new IfGotoStatement(this.cond, label.id, undefinedExp) );
+    pack.addStatement( new IfThenStatement(this.cond, label.id) );
 };
 
 WhileStatement.prototype[Cs] = function ( pack ) {
     var label1 = pack.createLabel();
     var label2 = pack.createLabel();
     pack.addStatement(label1);
-    pack.addStatement( new IfGotoStatement(new NotExpression(this.cond), label2.id, undefinedExp) );
+    pack.addStatement( new IfThenStatement(new NotExpression(this.cond), label2.id) );
     this.body[Cs](pack);
     pack.addStatement( new GotoStatement(label1.id, undefinedExp) );
     pack.addStatement(label2);
