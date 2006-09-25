@@ -7,6 +7,7 @@
 //@require Concurrent.Thread.Compiler.CfConvert
 //@require Concurrent.Thread.Compiler.CsConvert
 //@require Concurrent.Thread.Compiler.CeConvert
+//@require Concurrent.Thread.Compiler.CzConvert
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
 //@with-namespace Concurrent.Thread.Compiler
 
@@ -29,7 +30,11 @@ function compile ( f ) {
     func = CfConvert(pack, func);
     func = CsConvert(pack, func);
     func = CeConvert(pack, func);
-    return func;
+    func = CzConvert(pack, func);
+    var $Concurrent_Thread_self = f;
+StdIO.Out.writeln(func);
+    eval("f.$Concurrent_Thread_compiled = " + func + ";");
+    return f;
 }
 
 function parseFunction ( f ) {
