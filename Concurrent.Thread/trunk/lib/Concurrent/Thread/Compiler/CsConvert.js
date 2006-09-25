@@ -19,7 +19,7 @@ var undefinedExp = new VoidExpression(new NumberLiteral(0));
 
 //@export CsConvert
 function CsConvert ( pack, func ) {
-    pack.head.car = pack.createLabel();
+    pack.addStatement(pack.createLabel());
     for ( var c=func.cdr;  c !== nil;  c=c.cdr ) c.car[Cs](pack);
     pack.addStatement( new GotoStatement(pack.cont_return, undefinedExp) );
     for ( var c=pack.head;  c.cdr.cdr !== nil;  c=c.cdr ) {
@@ -47,7 +47,7 @@ Block.prototype[Cs] = function ( pack ) {
 
 ExpStatement.prototype[Cs] = function ( pack ) {
     this.labels = [];
-    pack.addStatement(this);
+    pack.addStatement(new ILExpStatement(this.exp));
 };
 
 IfStatement.prototype[Cs] = function ( pack ) {

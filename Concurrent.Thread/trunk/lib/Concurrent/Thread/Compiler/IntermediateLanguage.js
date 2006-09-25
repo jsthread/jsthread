@@ -25,7 +25,18 @@ function Label ( n, e ) {
 }
 
 Label.prototype.toString = function ( ) {
-    return [ this.id, "[", this.exception, "]:" ].join("");
+    return [ "  ", this.id, "[", this.exception, "]:" ].join("");
+};
+
+
+
+//@export ILExpStatement
+function ILExpStatement ( e ) {
+    this.exp = e;
+}
+
+ILExpStatement.prototype.toString = function ( ) {
+    return [ "    ", this.exp, ";" ].join("");
 };
 
 
@@ -36,7 +47,7 @@ function PropsStatement ( e ) {
 }
 
 PropsStatement.prototype.toString = function ( ) {
-    return [ "props( ", this.expression, " );" ].join("");
+    return [ "    props( ", this.expression, " );" ].join("");
 };
 
 
@@ -48,8 +59,8 @@ function GotoStatement ( c, r ) {
 }
 
 GotoStatement.prototype.toString = function ( ) {
-    return [ "goto[", this.continuation, "]",
-                 "(", this.ret_val     , ");" ].join("");
+    return [ "    goto[", this.continuation, "]",
+                     "(", this.ret_val     , ");" ].join("");
 };
 
 
@@ -62,9 +73,9 @@ function IfGotoStatement ( e, c, r ) {
 }
 
 IfGotoStatement.prototype.toString = function ( ) {
-    return [ "if ( ", this.condition, " ) ",
-             "goto[", this.continuation, "]",
-                 "(", this.ret_val,      ");" ].join("");
+    return [ "    if ( ", this.condition, " ) ",
+                 "goto[", this.continuation, "]",
+                     "(", this.ret_val,      ");" ].join("");
 };
 
 
@@ -78,9 +89,9 @@ function CallStatement ( c, t, f, a ) {
 }
 
 CallStatement.prototype.toString = function ( ) {
-    return [ "call[", this.continuation, "]",
-                 "(", this.this_val, ", ", this.function_val, ")",
-                 "(", this.arguments.join(", ")             , ");" ].join("");
+    return [ "    call[", this.continuation, "]",
+                     "(", this.this_val, ", ", this.function_val, ")",
+                     "(", this.arguments.join(", ")             , ");" ].join("");
 };
 
 
@@ -93,9 +104,9 @@ function NewStatement ( c, f, a ) {
 }
 
 NewStatement.prototype.toString = function ( ) {
-    return [ "new[", this.continuation, "]",
-                "(", this.constructor , ")",
-                "(", this.arguments.join(", ") , ");" ].join("");
+    return [ "    new[", this.continuation, "]",
+                    "(", this.constructor , ")",
+                    "(", this.arguments.join(", ") , ");" ].join("");
 };
 
 
@@ -106,6 +117,6 @@ function RecieveStatement ( e ) {
 }
 
 RecieveStatement.prototype.toString = function ( ) {
-    return [ "recieve( ", this.lhs, " );" ].join("");
+    return [ "    recieve( ", this.lhs, " );" ].join("");
 };
 
