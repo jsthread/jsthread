@@ -32,7 +32,6 @@ function compile ( f ) {
     func = CeConvert(pack, func);
     func = CzConvert(pack, func);
     var $Concurrent_Thread_self = f;
-StdIO.Out.writeln(func);
     eval("f.$Concurrent_Thread_compiled = " + func + ";");
     return f;
 }
