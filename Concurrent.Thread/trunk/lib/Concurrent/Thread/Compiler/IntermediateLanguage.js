@@ -82,14 +82,14 @@ IfThenStatement.prototype.toString = function ( ) {
 function CallStatement ( c, t, f, a ) {
     this.continuation = c;  // Label
     this.this_val     = t;  // Expression
-    this.function_val = f;  // Expression
-    this.arguments    = a;  // array of Expression
+    this.func         = f;  // Expression
+    this.args         = a;  // array of Expression
 }
 
 CallStatement.prototype.toString = function ( ) {
     return [ "    call[", this.continuation, "]",
-                     "(", this.this_val, ", ", this.function_val, ")",
-                     "(", this.arguments.join(", ")             , ");" ].join("");
+                     "(", this.this_val, ", ", this.func, ")",
+                     "(", this.args.join(", ")          , ");" ].join("");
 };
 
 
@@ -97,14 +97,14 @@ CallStatement.prototype.toString = function ( ) {
 //@export NewStatement
 function NewStatement ( c, f, a ) {
     this.continuation = c;  // Label
-    this.constructor  = f;  // Expression
-    this.arguments    = a;  // array of Expression
+    this.func         = f;  // Expression
+    this.args         = a;  // array of Expression
 }
 
 NewStatement.prototype.toString = function ( ) {
     return [ "    new[", this.continuation, "]",
-                    "(", this.constructor , ")",
-                    "(", this.arguments.join(", ") , ");" ].join("");
+                    "(", this.func            , ")",
+                    "(", this.args.join(", ") , ");" ].join("");
 };
 
 
