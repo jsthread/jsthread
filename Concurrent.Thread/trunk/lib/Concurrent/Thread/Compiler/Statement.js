@@ -92,7 +92,7 @@ proto.toString = function ( ) {
     var buf = [];
     for ( var i=0;  i < this.decls.length;  i++ ) {
         if ( this.decls[i].exp ) {
-            buf.push( this.decls[i].id, "=", this.decls[i].exp );
+            buf.push( [ this.decls[i].id, "=", this.decls[i].exp ].join("") );
         }
         else {
             buf.push( this.decls[i].id );
