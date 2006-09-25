@@ -1142,17 +1142,17 @@ proto.unaryExpr = function ( )
         switch ( this.peekTokenOrEOL() ) {
           case Token.INC:
             if ( !exp.hasLvalue() ) this.reportError("msg.bad.incr");
-            constructor = PostIncExpression;
-            break;
+            this.consumeToken();
+            return new PostIncExpression(exp);
           case Token.DEC:
             if ( !exp.hasLvalue() ) this.reportError("msg.bad.decr");
-            constructor = PostDecExpression;
-            break;
+            this.consumeToken();
+            return new PostDecExpression(exp);
           default:
             return exp;
         }
-        return new constructor(exp);
     }
+    this.consumeToken();
     var exp = this.unaryExpr();
     if ( needLvalue  &&  !exp.hasLvalue() ) this.reportError(needLvalue);
     return new constructor(exp);
