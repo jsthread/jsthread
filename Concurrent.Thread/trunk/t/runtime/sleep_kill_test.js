@@ -136,8 +136,8 @@ var f = (function(){
 }).call(null);
 
 
-var t1 = f.start(null, [Out, "thread-A", 1000]);
-var t2 = f.start(null, [Err, "thread-B", 2000]);
+var t1 = f.async(null, [Out, "thread-A", 1000]);
+var t2 = f.async(null, [Err, "thread-B", 2000]);
 
 var button = document.createElement("INPUT");
 button.type  = "button";
