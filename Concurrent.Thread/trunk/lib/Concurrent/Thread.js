@@ -165,6 +165,14 @@ proto.join.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 
 
 
+Thread.create = function ( /* variable args */ ) {
+    var f = arguments[0];
+    if ( typeof f != "function" ) throw new TypeError("can't create new thread from non-function value");
+    Array.prototype.splice.call(arguments, 0, 1);
+    return this.compile(f).async(null, arguments);
+};
+
+
 Thread.self = function ( ) {
     return current_thread;
 };
@@ -319,7 +327,7 @@ proto.call.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 };
 
 
-proto.start = function ( this_val, args ) {
+proto.async = function ( this_val, args ) {
     if ( typeof this.$Concurrent_Thread_compiled != "function" ) throw new Error("this is not compiled function");
     return new THREAD(
         this.$Concurrent_Thread_compiled(this_val, args, {procedure:initial_exception_handler})
