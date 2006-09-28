@@ -194,11 +194,11 @@ Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 };
 
 
-Thread.stop = function ( ) {
+Thread.yield = function ( ) {
     throw new Error("can't `yield' in any non-threaded functions");
 };
 
-Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
+Thread.yield.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
     if ( current_thread === null ) throw new Error("can't `yield' when a non-threaded function is in call-stack");
     return { continuation: cont,
              ret_val     : undefined,
