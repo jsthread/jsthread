@@ -85,7 +85,7 @@ function doNext ( ) {
         var limit = (new Date).valueOf() + Thread.TIME_SLICE;
         do {
             try {
-                tupple = tupple.continuation.procedure.$Concurrent_Thread_call(
+                tupple = tupple.continuation.procedure.call(
                              tupple.continuation.this_val, tupple.ret_val
                          );
             } catch ( e ) {
@@ -178,7 +178,7 @@ Thread.self = function ( ) {
 
 
 Thread.sleep = function ( ) {
-    throw new Error("can't `sleep' in any non-threaded functions");
+    throw new Error("can't `sleep' in non-threaded functions");
 };
 
 Thread.sleep.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
@@ -190,7 +190,7 @@ Thread.sleep.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 
 
 Thread.stop = function ( ) {
-    throw new Error("can't `stop' in any non-threaded functions");
+    throw new Error("can't `stop' in non-threaded functions");
 };
 
 Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
@@ -202,7 +202,7 @@ Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 
 
 Thread.yield = function ( ) {
-    throw new Error("can't `yield' in any non-threaded functions");
+    throw new Error("can't `yield' in non-threaded functions");
 };
 
 Thread.yield.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
@@ -217,114 +217,26 @@ var KillException = Thread.KillException = newExceptionClass("thread killed");
 
 
 
-function exec_until_end ( tupple ) {
-    while ( tupple && tupple.continuation ) {
-        try {
-            tupple = tupple.continuation.procedure.$Concurrent_Thread_call(
-                         tupple.continuation.this_val,
-                         tupple.ret_val
-                     );
-        } catch ( e ) {
-            if ( e instanceof NoExceptionHandlerException ) {
-                throw e.content;
-            } else {
-                tupple.continuation = tupple.continuation.exception;
-                tupple.ret_val      = e;
-            }
-        }
-    }
-    return tupple ? tupple.ret_val : undefined;
-}
-
-
-Thread.$Concurrent_Thread_makeBase = function ( ) {
-    return function ( ) {  // call as usual function
-        var save = current_thread;
-        try {
-            return exec_until_end(
-                       arguments.callee.$Concurrent_Thread_compiled(
-                           this,
-                           arguments,
-                           {procedure:initial_exception_handler}
-                       )
-                   );
-        } finally {
-            current_thread = save;
-        }
-    };
-};
-
-
-
 // Extends Function object.
 var proto = Function.prototype;
-
-proto.$Concurrent_Thread_apply = proto.apply;
-
-proto.$Concurrent_Thread_call = proto.call;
-
-proto.apply = function ( ) {
-    if ( typeof this.$Concurrent_Thread_compiled == "function" ) {
-        var save = current_thread;
-        try {
-            return exec_until_end(
-                       this.$Concurrent_Thread_compiled(
-                           arguments[0],
-                           arguments[1],
-                           {procedure:initial_exception_handler}
-                       )
-                   );
-        } finally {
-            current_thread = save;
-        }
-    } else {
-        return this.$Concurrent_Thread_apply(arguments[0], arguments[1]);
-    }
-};
 
 proto.apply.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
     if ( typeof this_val.$Concurrent_Thread_compiled == "function" ) {
         return this_val.$Concurrent_Thread_compiled(args[0], args[1], cont);
     } else {
         return { continuation: cont,
-                 ret_val     : this_val.$Concurrent_Thread_apply(args[0], args[1]) };
-    }
-};
-
-
-proto.call = function ( ) {
-    var args = [];
-    for ( var i=1;  i < arguments.length;  i++ ) args[i-1] = arguments[i]; 
-    if ( typeof this.$Concurrent_Thread_compiled == "function" ) {
-        var save = current_thread;
-        try {
-            return exec_until_end(
-                       this.$Concurrent_Thread_compiled(
-                           arguments[0],
-                           args,
-                           {procedure:initial_exception_handler}
-                       )
-                   );
-        } finally {
-            current_thread = save;
-        }
-    } else {
-        return this.$Concurrent_Thread_apply(arguments[0], args);
+                 ret_val     : this_val.apply(args[0], args[1]) };
     }
 };
 
 proto.call.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
-    var t = args[0];
-    var a = [];
-    for ( var i=1;  i < args.length;  i++ ) a[i-1] = args[i];
     if ( typeof this_val.$Concurrent_Thread_compiled == "function" ) {
-        return this_val.$Concurrent_Thread_compiled(t, a, cont);
+        return this_val.$Concurrent_Thread_compiled(args[0], Array.prototype.slice.call(args, 1, args.length), cont);
     } else {
         return { continuation: cont,
-                 ret_val     : this_val.$Concurrent_Thread_apply(t, a) };
+                 ret_val     : this_val.apply(args[0], Array.prototype.slice.call(args, 1, args.length)) };
     }
 };
-
 
 proto.async = function ( this_val, args ) {
     if ( typeof this.$Concurrent_Thread_compiled != "function" ) throw new Error("this is not compiled function");
