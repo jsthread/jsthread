@@ -146,11 +146,10 @@ proto.kill = function ( e ) {
 };
 
 proto.join = function ( ) {
-    throw new Error("can't `join' in any non-threaded functions");
+    throw new Error("can't `join' in non-compiled functions");
 };
 
 proto.join.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
-    if ( current_thread === null ) throw new Error("can't `join' when a non-threaded function is in call-stack");
     //!TODO: check cyclic-join
     if ( this_val._is_ended > 0 ) {  // this thread has already ended normally
         return { continuation:cont, ret_val:this_val._result, timeout:undefined };
@@ -178,11 +177,10 @@ Thread.self = function ( ) {
 
 
 Thread.sleep = function ( ) {
-    throw new Error("can't `sleep' in non-threaded functions");
+    throw new Error("can't `sleep' in non-compiled functions");
 };
 
 Thread.sleep.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
-    if ( current_thread === null ) throw new Error("can't `sleep' when a non-threaded function is in call-stack");
     return { continuation: cont,
              ret_val     : undefined,
              timeout     : args[0] > 0 ? args[0] : 0 };
@@ -190,11 +188,10 @@ Thread.sleep.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 
 
 Thread.stop = function ( ) {
-    throw new Error("can't `stop' in non-threaded functions");
+    throw new Error("can't `stop' in non-compiled functions");
 };
 
 Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
-    if ( current_thread === null ) throw new Error("can't `stop' when a non-threaded function is in call-stack");
     return { continuation: cont,
              ret_val     : undefined,
              timeout     : -1        };
@@ -202,11 +199,10 @@ Thread.stop.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 
 
 Thread.yield = function ( ) {
-    throw new Error("can't `yield' in non-threaded functions");
+    throw new Error("can't `yield' in non-compiled functions");
 };
 
 Thread.yield.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
-    if ( current_thread === null ) throw new Error("can't `yield' when a non-threaded function is in call-stack");
     return { continuation: cont,
              ret_val     : undefined,
              timeout     : 0         };
@@ -239,7 +235,7 @@ proto.call.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 };
 
 proto.async = function ( this_val, args ) {
-    if ( typeof this.$Concurrent_Thread_compiled != "function" ) throw new Error("this is not compiled function");
+    if ( typeof this.$Concurrent_Thread_compiled != "function" ) throw new Error("this is not a compiled function");
     return new THREAD(
         this.$Concurrent_Thread_compiled(this_val, args, {procedure:initial_exception_handler})
     );
