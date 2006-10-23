@@ -49,7 +49,7 @@ function parseFunction ( f ) {
 
 function TransPack ( ) {
     this.label_cnt = 0;
-    this.stack_max = 0;
+    this.stack_max = -1;
 //    this.cont_break    = null;
 //    this.cont_continue = null;
     this.cont_return   = initialContReturn;
