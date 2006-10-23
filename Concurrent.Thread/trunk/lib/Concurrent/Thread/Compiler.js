@@ -25,15 +25,24 @@ var initialContThrow  = new DotAccessor(initialContReturn, new Identifier("excep
 
 //@export compile
 function compile ( f ) {
+    return eval(prepare(f));
+}
+
+//@export prepare
+function prepare ( f ) {
     var func = parseFunction(f);
     var pack = new TransPack();
     func = CfConvert(pack, func);
     func = CsConvert(pack, func);
     func = CeConvert(pack, func);
     func = CzConvert(pack, func);
-    var $Concurrent_Thread_self = f;
-    eval("f.$Concurrent_Thread_compiled = " + func + ";");
-    return f;
+    return [
+        "(function(){ ",
+        "  var $Concurrent_Thread_self = ", f, ";",
+        "  $Concurrent_Thread_self.$Concurrent_Thread_compiled = ", func, ";",
+        "  return $Concurrent_Thread_self;",
+        "})();"
+    ].join("");
 }
 
 function parseFunction ( f ) {
