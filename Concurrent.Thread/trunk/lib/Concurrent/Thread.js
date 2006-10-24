@@ -138,6 +138,7 @@ proto.notify = function ( e ) {
     unjoin.call(this);
     this._tupple.continuation = this._tupple.continuation.exception;
     this._tupple.ret_val = e;
+    standBy.call(this);
     return e;
 };
 
