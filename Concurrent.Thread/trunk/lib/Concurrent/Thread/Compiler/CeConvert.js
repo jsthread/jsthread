@@ -114,7 +114,7 @@ function CeAssign ( pack, assign, top ) {
     }
     else if ( assign.right instanceof CallExpression ) {
         assign.right[Ce](pack, top);
-        pack.addStatement( new RecieveStatement(lhs) );
+        pack.addStatement( new RecieveStatement(assign.left) );
     }
     else if ( assign.right instanceof AndExpression ) {
         var label = pack.createLabel();
