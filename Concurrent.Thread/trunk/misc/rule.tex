@@ -1,0 +1,446 @@
+\documentclass[a4j]{jsarticle}
+\usepackage{amsfonts}
+\usepackage{fancyvrb}
+
+
+
+%	Curly letters; use in maths mode only; adds an index entry
+%
+%\newcommand{\curly}[1]{{\cal #1}\index{$\protect\cal #1$}}
+
+% Curly letters and brackets
+\newcommand{\lb}{[\![}				% left double bracket
+\newcommand{\rb}{]\!]}				% right double bracket
+\newcommand{\db}[1]{\lb#1\rb}			% enclose args in double bracs
+\newcommand{\den}[2]{{#1}\db{#2}\,}	
+
+
+\newcommand{\defC}[3]{\den{#1}{\sf #2}_{\it #3}}
+\newcommand{\Cs}{\defC{\mathbb{C}_{\sf s}}}
+
+
+\newcommand{\Stack}[1]{\mathbb{S}_{\sf tack}(#1)}
+
+\newcommand{\defB}[3]{{#1}({\sf #2})_{#3}}
+\newcommand{\Bexp}{\defB{\mathbb{B}_{\sf exp}}}
+\newcommand{\Bcond}{\defB{\mathbb{B}_{\sf cond}}}
+\newcommand{\Bcall}{\defB{\mathbb{B}_{\sf call}}}
+\newcommand{\Brecv}{\defB{\mathbb{B}_{\sf recv}}}
+\newcommand{\Bret}{\defB{\mathbb{B}_{\sf ret}}}
+
+\newcommand{\var}[1]{{\it #1}}
+
+\begin{document}
+
+
+
+\section{Code Translation}
+
+\subsection{Expression Statement}
+
+\subsubsection{Primary Expressions}
+
+\begin{eqnarray*}
+	\Cs{ \var{v}; }{(l, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, \var{v} }{(l, n, x)}  \\
+	\Cs{ true;    }{(l, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, true    }{(l, n, x)}  \\
+	\Cs{ false;   }{(l, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, false   }{(l, n, x)}  \\
+	\Cs{ null;    }{(l, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, null    }{(l, n, x)}  \\
+	...\\
+	\Cs{ ( \var{e} ); }{(l, n, b, c, r, x, s)}   &  =  &   \Cs{ \var{e}; }{(l, n, b, c, r, x, s)}  \\
+\end{eqnarray*}
+
+
+
+\subsubsection{Member Expressions}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e}.\var{p}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e}; }{(l, t, b, c, r, x, s)}              $  \\
+	   &  $ \Bexp{ \Stack{\var{s}}, \Stack{\var{s}}.\var{p} }{(t, n, x)}    $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}]; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l, t_1, b, c, r, x, s)}                 $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, t_2, b, c, r, x, s')}              $  \\
+	   &  $ \Bexp{ \Stack{\var{s}}, \Stack{\var{s}}[\Stack{\var{s'}}] }{(t_2, n, x)}    $
+\end{tabular}
+
+
+\subsubsection{Function Call}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}.\var{p} ( \var{e_2}, \var{e_3}, ... \var{e_m} ); }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l  , t_1, b, c, r, x, s)}      $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, t_2, b, c, r, x, s_1)}    $  \\
+	   &  $ \Cs{ \var{e_3}; }{(t_2, t_3, b, c, r, x, s_2)}    $  \\
+	   &  ...  \\
+	   &  $ \Cs{ \var{e_m}; }{(t_{m-1}, t_m, b, c, r, x, s_{m-1})}    $  \\
+	   &  $ \Bcall{ \Stack{\var{s}}, \Stack{\var{s}}.\var{p}, \Stack{\var{s_1}}, \Stack{\var{s_2}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
+	   &  $ \Brecv{ \Stack{\var{s}} }{(t_{m+1}, n, x)}    $  \\
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}] ( \var{e_3}, \var{e_4}, ... \var{e_m} ); }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l  , t_1, b, c, r, x, s)}      $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, t_2, b, c, r, x, s_1)}    $  \\
+	   &  $ \Cs{ \var{e_3}; }{(t_2, t_3, b, c, r, x, s_2)}    $  \\
+	   &  $ \Cs{ \var{e_4}; }{(t_3, t_4, b, c, r, x, s_3)}    $  \\
+	   &  ...  \\
+	   &  $ \Cs{ \var{e_m}; }{(t_{m-1}, t_m, b, c, r, x, s_{m-1})}    $  \\
+	   &  $ \Bcall{ \Stack{\var{s}}, \Stack{\var{s}}[\var{s_1}], \Stack{\var{s_2}}, \Stack{\var{s_3}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
+	   &  $ \Brecv{ \Stack{\var{s}} }{(t_{m+1}, n, x)}    $  \\
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1} ( \var{e_2}, \var{e_3}, ... \var{e_m} ); }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l  , t_1, b, c, r, x, s)}      $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, t_2, b, c, r, x, s_1)}    $  \\
+	   &  $ \Cs{ \var{e_3}; }{(t_2, t_3, b, c, r, x, s_2)}    $  \\
+	   &  ...  \\
+	   &  $ \Cs{ \var{e_m}; }{(t_{m-1}, t_m, b, c, r, x, s_{m-1})}    $  \\
+	   &  $ \Bcall{ null, \Stack{\var{s}}, \Stack{\var{s_1}}, \Stack{\var{s_2}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
+	   &  $ \Brecv{ \Stack{\var{s}} }{(t_{m+1}, n, x)}    $  \\
+\end{tabular}
+
+
+\subsubsection{Assignment}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{v} = \var{e}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e}; }{(l, t, b, c, r, x, s)} $  \\
+	    &  $ \Bexp{ \var{v}, \Stack{\var{s}} }{(t, n, x)}      $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}.\var{p} = \var{e_2}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , t_1, b, c, r, x, s)}                    $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, t_2, b, c, r, x, s')}                   $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}.\var{p}, \Stack{\var{s'}} }{(t_2, n, x)} $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}] = \var{e_3}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , t_1, b, c, r, x, s)}                                $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, t_2, b, c, r, x, s_1)}                              $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, t_3, b, c, r, x, s_2)}                              $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}[\Stack{\var{s_1}}], \Stack{\var{s_2}} }{(t_3, n, x)} $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{v} += \var{e}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e}; }{(l, t, b, c, r, x, s)} $  \\
+	    &  $ \Bexp{ \var{v}, \var{v}+\Stack{\var{s}} }{(t, n, x)}      $
+\end{tabular}
+
+\vspace{1em}
+
+...etc
+
+
+\subsubsection{Special Forms}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ \&\&\ \var{e_2}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, t_1, b, c, r, x, s)}        $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2} }{(t_1, n, x)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, n, b, c, r, x, s)}        $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ ||\ \var{e_2}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, t_1, b, c, r, x, s)}        $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{n} }{(t_1, t_2, x)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, n, b, c, r, x, s)}        $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ ?\ \var{e_2}\ :\ \var{e_3}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, t_1, b, c, r, x, s)}          $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2} }{(t_1, t_3, x)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, n, b, c, r, x, s)}          $  \\
+	    &  $ \Cs{ \var{e_3}; }{(t_3, n, b, c, r, x, s)}          $
+\end{tabular}
+
+
+\subsubsection{Other Binary Operators}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ op\ \var{e_2}; }{(l, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , t_1, b, c, r, x, s)}                $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, t_2, b, c, r, x, s')}               $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}\ op\ \Stack{\var{s'}} }{(t_2, n, x)} $
+\end{tabular}
+
+
+
+\subsection{If Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ if\ (\ \var{e}\ )\ \var{s_1} }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, t_1, b, c, x, s)}          $ \\
+   &  $ \Bcond{ \Stack{s}, \var{t_2} }{(t_1, n, x)} $ \\
+   &  $ \Cs{ \var{s_1} }{(t_2, n, b, c, r, x, s)}        $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ if\ (\ \var{e}\ )\ \var{s_1}\ else\ \var{s_2} }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, t_1, b, c, x, s)}         $ \\
+   &  $ \Bcond{ \Stack{s}, \var{t_2} }{(t_1, t_3, x)} $ \\
+   &  $ \Cs{ \var{s_1} }{(t_2, n, b, c, r, x, s)}     $ \\
+   &  $ \Cs{ \var{s_2} }{(t_3, n, b, c, r, x, s)}     $
+\end{tabular}
+
+
+
+\subsection{Iteration Statements}
+
+\subsubsection{Do-While Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ do\ \var{s_1}\ while\ (\ \var{e}\ ); }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{s_1} }{(l, t_1, n, t_1, r, x, s)}  $ \\
+   &  $ \Cs{ \var{e}; }{(t_1, t_2, b, c, r, x, s)} $ \\
+   &  $ \Bcond{ \Stack{\var{s}}, l }{(t_2, n, x)}  $
+\end{tabular}
+
+
+\subsubsection{While Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ while\ (\ \var{e}\ )\ \var{s_1} }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, t_1, b, c, r, x, s)}    $ \\
+   &  $ \Bcond{ \Stack{\var{s}}, t_2 }{(t_1, n, x)} $ \\
+   &  $ \Cs{ \var{s_1} }{(t_2, l, n, l, x, s)}        $
+\end{tabular}
+
+
+
+\subsection{Break Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ break; }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bcond{ true, \var{b} }{(l, b, x)}    $
+\end{tabular}
+
+
+
+\subsection{Continue Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ continue; }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bcond{ true, \var{c} }{(l, c, x)}    $
+\end{tabular}
+
+
+
+\subsection{Return Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ return\ \var{e}; }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, t_1, b, c, r, x, s)} $ \\
+   &  $ \Bret{ \Stack{\var{s}} }{(t_1, r, x)}    $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ return; }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bret{ undefined }{(l, r, x)}    $
+\end{tabular}
+
+
+
+\subsection{Throw Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ throw \var{e}; }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, t, b, c, r, x, s)} $ \\
+   &  $ \Bret{ \Stack{\var{s}} }{(t, x, x)}    $
+\end{tabular}
+
+
+
+\subsection{Try Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ try\ \var{s_1}\ catch\ (\ \var{v}\ )\ \var{s_2} }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{s_1} }{(l, n, b, c, r, t, s)} $ \\
+   &  $ \Brecv{ \var{v} }{(t_1, t_2, b, c, r, x, s)} $ \\
+   &  $ \Cs{ \var{s_2} }{(t_2, n, b, c, r, x, s)} $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ try\ \var{s_1}\ finally\ \var{s_2} }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{s_1} }{(l, t_{normal}, t_{break}, t_{continue}, t_{return}, t_{throw}, s)} $ \\
+   &  $ \Cs{ \var{s_2} }{(t_{normal}  , n, b, c, r, x, s)} $  \\
+   &  $ \Cs{ \var{s_2} }{(t_{break}   , b, b, c, r, x, s)} $  \\
+   &  $ \Cs{ \var{s_2} }{(t_{continue}, c, b, c, r, x, s)} $  \\
+   &  $ \Cs{ \var{s_2} }{(t_{return}  , r, b, c, r, x, s)} $  \\
+   &  $ \Cs{ \var{s_2} }{(t_{throw}   , x, b, c, r, x, s)} $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ try\ \var{s_1}\ catch\ (\ \var{v}\ )\ \var{s_2}\ finally\ \var{s_3} }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ try\ \{\ try\ \var{s_1}\ catch\ (\ \var{v}\ )\ \var{s_2}\ \}\ finally\ \var{s_3} }{(l, n, b, c, r, x, s)} $ \\
+\end{tabular}
+
+
+
+
+\section{Code Generation}
+
+$  \Stack{ s }  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+$stack_\var[s]
+\end{Verbatim}
+
+
+$  \Bexp{ \var{v}, \var{e} }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( ) {
+      \var[v] = \var[e];
+      return { continuation: \var[n] };
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+$  \Bcond{ \var{e}, \var{t} }{(l, f, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( ) {
+      if ( \var[e] ) {
+          return { continuation: \var[t] };
+      } else {
+          return { continuation: \var[f] };
+      }
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+$  \Bret{ \var{v} }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( ) {
+        return {
+            continuation: \var[n],
+            ret_val     : \var[v]
+        };
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+$  \Bcall{ \var{t}, \var{f}, \var{a_1}, \var{a_2}, ... }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\!|]
+var \var!l| = {
+    procedure: function ( ) {
+        if ( \var!f| is native function ) {
+            return {
+                continuation: \var!n|,
+                ret_val     : \var!f|.apply(\var!t|, [\var!$a_1$|, \var!$a_2$|, ...])
+            };
+        } else {
+            return \var!f|(\var!t|, [\var!$a_1$|, \var!$a_2$|, ...], \var!n|);
+        }
+    },
+    exception: \var!x|
+};
+\end{Verbatim}
+
+
+$  \Brecv{ \var{v} }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( $ret_val ) {
+        \var[v] = $ret_val;
+        return {
+            continuation: \var[n]
+        };
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+
+\end{document}
+
