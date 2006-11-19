@@ -329,7 +329,7 @@
 \multicolumn{2}{l}{
 	$ \Cs{ try\ \var{s_1}\ catch\ (\ \var{v}\ )\ \var{s_2} }{(l, n, b, c, r, x, s)} $
 }  \\
-=  &  $ \Cs{ \var{s_1} }{(l, n, b, c, r, t, s)} $ \\
+=  &  $ \Cs{ \var{s_1} }{(l, n, b, c, r, t_1, s)} $ \\
    &  $ \Brecv{ \var{v} }{(t_1, t_2, b, c, r, x, s)} $ \\
    &  $ \Cs{ \var{s_2} }{(t_2, n, b, c, r, x, s)} $
 \end{tabular}
@@ -341,11 +341,18 @@
 	$ \Cs{ try\ \var{s_1}\ finally\ \var{s_2} }{(l, n, b, c, r, x, s)} $
 }  \\
 =  &  $ \Cs{ \var{s_1} }{(l, t_{normal}, t_{break}, t_{continue}, t_{return}, t_{throw}, s)} $ \\
+
    &  $ \Cs{ \var{s_2} }{(t_{normal}  , n, b, c, r, x, s)} $  \\
    &  $ \Cs{ \var{s_2} }{(t_{break}   , b, b, c, r, x, s)} $  \\
    &  $ \Cs{ \var{s_2} }{(t_{continue}, c, b, c, r, x, s)} $  \\
-   &  $ \Cs{ \var{s_2} }{(t_{return}  , r, b, c, r, x, s)} $  \\
-   &  $ \Cs{ \var{s_2} }{(t_{throw}   , x, b, c, r, x, s)} $
+
+   &  $ \Brecv{ \Stack{s} }{(t_{return}, t_{return1}, x)}             $  \\
+   &  $ \Cs{ \var{s_2} } {(t_{return1}, t_{return2}, b, c, r, x, s')} $  \\
+   &  $ \Bret{ \Stack{s} }{(t_{return2}, r, x)}                       $  \\
+
+   &  $ \Brecv{ \Stack{s} }{(t_{throw}, t_{throw1}, x)}           $  \\
+   &  $ \Cs{ \var{s_2} }{(t_{throw1}, t_{throw2}, b, c, r, x, s')} $  \\
+   &  $ \Bret{ \Stack{s} }{(t_{throw2}, x, x)}                   $
 \end{tabular}
 
 \vspace{1em}
