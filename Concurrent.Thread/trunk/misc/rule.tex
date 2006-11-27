@@ -159,7 +159,7 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 	   &  $ \Cs{ \var{e_4}; }{(t_3, m, t_4, b, c, r, x, s_3)}    $  \\
 	   &  ...  \\
 	   &  $ \Cs{ \var{e_m}; }{(t_{m-1}, m, t_m, b, c, r, x, s_{m-1})}    $  \\
-	   &  $ \Bcall{ \Stack{\var{s}}, \Stack{\var{s}}[\var{s_1}], \Stack{\var{s_2}}, \Stack{\var{s_3}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
+	   &  $ \Bcall{ \Stack{\var{s}}, \Stack{\var{s}}[\Stack{\var{s_1}}], \Stack{\var{s_2}}, \Stack{\var{s_3}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
 	   &  $ \Brecv{ \Stack{\var{s}} }{(t_{m+1}, n, x)}    $  \\
 \end{tabular}
 
@@ -216,15 +216,37 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 
 \begin{tabular}{ll}
 	\multicolumn{2}{l}{
-		$ \Cs{ \var{v} += \var{e}; }{(l, m, n, b, c, r, x, s)} $
+		$ \Cs{ \var{v}\ op=\ \var{e}; }{(l, m, n, b, c, r, x, s)} $
 	}  \\
 	=   &  $ \Cs{ \var{e}; }{(l, m, t, b, c, r, x, s)} $  \\
-	    &  $ \Bexp{ \var{v}, \var{v}+\Stack{\var{s}} }{(t, n, x)}      $
+	    &  $ \Bexp{ \var{v}, \var{v}\ op\ \Stack{\var{s}} }{(t, n, x)}      $
 \end{tabular}
 
 \vspace{1em}
 
-...etc
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}.\var{p}\ op=\ \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, m, t, b, c, r, x, s)}                 $  \\
+	    &  $ \Cs{ \Stack{\var{s}}.\var{p}; }{(l, m, t, b, c, r, x, s_1)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(l, m, t, b, c, r, x, s_2)}               $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}.\var{p}, \Stack{\var{s_1}}\ op\ \Stack{\var{s_2}} }{(t, n, x)}      $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}]\ op=\ \var{e_3}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}                                                    $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s_1)}                                                  $  \\
+	    &  $ \Cs{ \Stack{\var{s}}[ \Stack{\var{s_1}} ]; }{(t_2, m, t_3, b, c, r, x, s_2)}                       $  \\
+	    &  $ \Cs{ \var{e_3}; }{(t_2, m, t_3, b, c, r, x, s_3)}                                                  $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}[\Stack{\var{s_1}}], \Stack{\var{s_2}}\ op\ \Stack{\var{s_3}} }{(t_3, n, x)} $
+\end{tabular}
+
 
 
 \subsubsection{Special Forms}
