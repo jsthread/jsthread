@@ -9,6 +9,14 @@ var slice = Array.prototype.slice;
 //@export arrayize
 function arrayize ( o ) {
     if ( !o ) return [];
-    return slice.call(o, 0);
+    try {
+        return slice.call(o, 0);
+    } catch ( e ) {
+        var r = [];
+        for ( var i=0;  i < o.length;  i++ ) {
+            r[i] = o[i];
+        }
+        return r;
+    }
 }
 
