@@ -61,7 +61,7 @@ function pushOutReference ( pack, exp, top ) {
             return {exp:exp, stack:1};
         }
     }
-    else if ( exp instanceof BracketAccesor ) {
+    else if ( exp instanceof BracketAccessor ) {
         var inc = 0;
         if ( !(   exp.left instanceof Literal
                || exp.left instanceof ThisExpression

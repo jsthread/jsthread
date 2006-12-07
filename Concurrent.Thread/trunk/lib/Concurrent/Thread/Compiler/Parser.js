@@ -655,8 +655,8 @@ proto.statementHelper = function ( labels )
             this.reportError("msg.bad.throw.eol");
         }
 
-        var lineno = ts.getLineno();
-        statement = new ThrowStatement(labels, expr(false), lineno, this.source);
+        var lineno = this.ts.getLineno();
+        statement = new ThrowStatement(labels, this.expr(false), lineno, this.source);
         break;
       }
 
