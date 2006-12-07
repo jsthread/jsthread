@@ -237,6 +237,7 @@ proto.call.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 
 proto.async = function ( this_val, args ) {
     if ( typeof this.$Concurrent_Thread_compiled != "function" ) throw new Error("this is not a compiled function");
+    if ( args === void 0 ) args = [];  // IE6 does not allow null or undefined-value as the second argument of Function.prototype.apply. That does not conform to ECMA262-3!
     return new THREAD(
         this.$Concurrent_Thread_compiled(this_val, args, {procedure:initial_exception_handler})
     );
