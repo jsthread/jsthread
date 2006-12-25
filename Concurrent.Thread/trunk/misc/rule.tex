@@ -37,6 +37,9 @@
 \newcommand{\Benum}{\defB{\mathbb{B}_{\sf enum}}}
 
 \newcommand{\var}[1]{{\it #1}}
+\newcommand{\sub}[2]{{\(#1_{#2}\)}}
+
+
 
 \begin{document}
 
@@ -604,13 +607,13 @@ $  \Bcall{ \var{t}, \var{f}, \var{a_1}, \var{a_2}, ... }{(l, n, x)}  =  $
 \begin{Verbatim}[frame=single, commandchars=\\!|]
 var \var!l| = {
     procedure: function ( ) {
-        if ( \var!f| is native function ) {
+        if ( \(\lb\) \var!f| is native function \(\rb\) ) {
             return {
                 continuation: \var!n|,
-                ret_val     : \var!f|.apply(\var!t|, [\var!$a_1$|, \var!$a_2$|, ...])
+                ret_val     : \var!f|.apply(\var!t|, [\var!\sub!a|!1||, \var!\sub!a|!2||, ...])
             };
         } else {
-            return \var!f|(\var!t|, [\var!$a_1$|, \var!$a_2$|, ...], \var!n|);
+            return \var!f|(\var!t|, [\var!\sub!a|!1||, \var!\sub!a|!2||, ...], \var!n|);
         }
     },
     exception: \var!x|
