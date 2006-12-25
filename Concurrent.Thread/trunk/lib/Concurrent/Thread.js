@@ -10,13 +10,31 @@
 
 var current_thread = null;  // Retains the current thread.
 
+
+function NoContinuationException ( r ) {
+    this.ret_val = r;
+}
+
+function initial_continuation_procedure ( ret_val ) {
+    throw new NoContinuationException(ret_val);
+}
+
 function NoExceptionHandlerException ( e ) {
-    this.content = e;
+    this.thrown = e;
 }
 
 function initial_exception_handler ( e ) {
     throw new NoExceptionHandlerException(e);
 }
+
+var initial_continuation = {
+    this_val : null,
+    procedure: initial_continuation_procedure,
+    exception: {
+        this_val : null,
+        procedure: initial_exception_handler
+    }
+};
 
 
 
@@ -26,7 +44,7 @@ function Thread ( ) {
 }
 
 function THREAD ( t ) {
-    this._tupple       = t;
+    this._triplet      = t;  // {continuation:{...}, timeout:int|undefined, ret_val:any}
     this._is_ended     = 0;  // 0:running, -1:throw, 1:return
     this._join_thread  = null;
     this._joined_list  = new Data.LinkedList();
@@ -58,7 +76,8 @@ function standBy ( t ) {
     var self = this;
     this._timerID = setTimeout(
         function(){ doNext.call(self); },
-        Number(t) || 0
+        Number(t) || 2  // some version of IE occationally fails to 
+                        // context-switch with timeout interval less than 2.
     );
 }
 
@@ -78,57 +97,54 @@ Thread.TIME_SLICE = 20;
 
 function doNext ( ) {
     cancel.call(this);
-    var tupple = this._tupple;
-    this._tupple = null;
+    var triplet = this._triplet;
+    this._triplet = null;
     try {
         current_thread = this;
         var limit = (new Date).valueOf() + Thread.TIME_SLICE;
         do {
             try {
-                tupple = tupple.continuation.procedure.call(
-                             tupple.continuation.this_val, tupple.ret_val
+                triplet = triplet.continuation.procedure.call(
+                              triplet.continuation.this_val, triplet.ret_val
                          );
             } catch ( e ) {
-                if ( e instanceof NoExceptionHandlerException ) {
+                if ( e instanceof NoContinuationException ) {
+                    this._is_ended = 1;
+                    this._result   = e.ret_val;
+                    while ( !this._joined_list.isEmpty() ) {
+                        var it = this._joined_list.head().value();
+                        unjoin.call(it);
+                        it._triplet.ret_val = e.ret_val;
+                        standBy.call(it);
+                    }
+                    this._joined_list = null;
+                    return;
+                } else if ( e instanceof NoExceptionHandlerException ) {
+                    e = e.thrown;
                     var joined_list   = this._joined_list;
                     this._joined_list = null;
                     this._is_ended    = -1;
-                    this._result      = e.content;
+                    this._result      = e;
                     if ( !joined_list.isEmpty() ) {
                         while ( !joined_list.isEmpty() ) {
-                            var it = joined_list.head().value();
-                            it.notify(e);
+                            joined_list.head().value().notify(e);  // "notify" implies "unjoin".
                         }
                     } else if ( !(e instanceof KillException) ) {
                         throw e;
                     }
+                    return;
                 } else {
-                    tupple.continuation = tupple.continuation.exception;
-                    tupple.ret_val      = e;
+                    triplet.continuation = triplet.continuation.exception;
+                    triplet.ret_val      = e;
                 }
             }
-        } while ( tupple
-               && tupple.continuation
-               && tupple.timeout === undefined
-               && (new Date).valueOf() < limit );
+        } while ( triplet.timeout === undefined && (new Date).valueOf() < limit );
     } finally {
         current_thread = null;
     }
-    if ( tupple && tupple.continuation ) {
-        this._tupple = tupple;
-        if ( tupple.timeout < 0 ) { /* Do nothing. */                   }
-        else                      { standBy.call(this, tupple.timeout); }
-    } else {
-        this._is_ended = 1;
-        this._result   = tupple.ret_val;
-        while ( !this._joined_list.isEmpty() ) {
-            var it = this._joined_list.head().value();
-            unjoin.call(it);
-            it._tupple.ret_val = tupple.ret_val;
-            standBy.call(it);
-        }
-        this._joined_list = null;
-    }
+    this._triplet = triplet;
+    if ( triplet.timeout < 0 ) { /* Do nothing. */                   }
+    else                       { standBy.call(this, triplet.timeout); }
 }
 
 
@@ -136,8 +152,8 @@ proto.notify = function ( e ) {
     if ( current_thread === this ) throw e;
     cancel.call(this);
     unjoin.call(this);
-    this._tupple.continuation = this._tupple.continuation.exception;
-    this._tupple.ret_val = e;
+    this._triplet.continuation = this._triplet.continuation.exception;
+    this._triplet.ret_val = e;
     standBy.call(this);
     return e;
 };
@@ -239,7 +255,11 @@ proto.async = function ( this_val, args ) {
     if ( typeof this.$Concurrent_Thread_compiled != "function" ) throw new Error("this is not a compiled function");
     if ( args === void 0 ) args = [];  // IE6 does not allow null or undefined-value as the second argument of Function.prototype.apply. That does not conform to ECMA262-3!
     return new THREAD(
-        this.$Concurrent_Thread_compiled(this_val, args, {procedure:initial_exception_handler})
+        this.$Concurrent_Thread_compiled(
+            this_val,
+            args,
+            initial_continuation
+        )
     );
 };
 
