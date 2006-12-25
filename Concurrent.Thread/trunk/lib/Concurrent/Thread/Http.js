@@ -76,7 +76,7 @@ get.$Concurrent_Thread_compiled = function (
                         };
                     },
                     this_val : null,
-                    exception: null
+                    exception: $Concurrent_Thread_continuation.exception
                 }
             }
         };
