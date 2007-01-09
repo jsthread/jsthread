@@ -526,8 +526,8 @@ proto.toString = function ( ) {
 //@export TryCatchListStatement
 function TryCatchListStatement ( labels, tryBlock, catchList, lineno, source ) {
     Statement.call(this, labels, lineno, source);
-    this.tryBlock  = tryBlock;   // Block
-    this.catchList = catchList;  // cons-list of CatchGuard
+    this.tryBlock = tryBlock;   // Block
+    this.cdr      = catchList;  // cons-list of CatchGuard
 }
 
 var proto = TryCatchListStatement.prototype = new Statement();
@@ -536,7 +536,7 @@ proto.constructor = TryCatchListStatement;
 proto.toString = function ( ) {
     var buf = [ labelsToString.call(this),
                 "try ", this.tryBlock, "\n" ];
-    for ( var c=this.catchList;  c !== nil;  c=c.cdr ) buf.push(c.car);
+    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car);
     return buf.join("");
 };
 
@@ -545,7 +545,7 @@ proto.toString = function ( ) {
 function TryCatchListFinallyStatement ( labels, tryBlock, catchList, finallyBlock, lineno, source ) {
     Statement.call(this, labels, lineno, source);
     this.tryBlock     = tryBlock;      // Block
-    this.catchList    = catchList;     // cons-list of CatchGuard
+    this.cdr          = catchList;     // cons-list of CatchGuard
     this.finallyBlock = finallyBlock;  // Block
 }
 
@@ -555,7 +555,7 @@ proto.constructor = TryCatchListFinallyStatement;
 proto.toString = function ( ) {
     var buf = [ labelsToString.call(this),
                 "try ", this.tryBlock, "\n" ];
-    for ( var c=this.catchList;  c !== nil;  c=c.cdr ) buf.push(c.car);
+    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car);
     buf.push("finally ", this.finallyBlock);
     return buf.join("");
 };
