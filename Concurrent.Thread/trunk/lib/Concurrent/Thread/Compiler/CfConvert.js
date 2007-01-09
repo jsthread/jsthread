@@ -95,7 +95,7 @@ ForVarStatement.prototype[Cf] = function ( pack ) {
     } else {
         init = init.exp;
     }
-    return new ForStatement(this.labels, init, this.cond, this.loop, this.body[Cf](pack), this.lineno, this.source);
+    return new ForStatement(this.labels, init, this.cond, this.incr, this.body[Cf](pack), this.lineno, this.source);
 };
 
 

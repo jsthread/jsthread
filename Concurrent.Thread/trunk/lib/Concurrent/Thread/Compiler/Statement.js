@@ -201,11 +201,11 @@ proto.toString = function ( ) {
 
 
 //@export ForStatement
-function ForStatement ( labels, init, cond, loop, body, lineno, source ) {
+function ForStatement ( labels, init, cond, incr, body, lineno, source ) {
     Statement.call(this, labels, lineno, source);
     this.init = init;  // Expression or null
     this.cond = cond;  // Expression or null
-    this.loop = loop;  // Expression or null
+    this.incr = incr;  // Expression or null
     this.body = body;  // Statement
 }
 
@@ -217,7 +217,7 @@ proto.toString = function ( ) {
              "for (",
              this.init ? this.init : "", "; ",
              this.cond ? this.cond : "", "; ",
-             this.loop ? this.loop : "",
+             this.incr ? this.incr : "",
              ") ",
              this.body
            ].join("");
@@ -225,11 +225,11 @@ proto.toString = function ( ) {
 
 
 //@export ForVarStatement
-function ForVarStatement ( labels, decls, cond, loop, body, lineno, source ) {
+function ForVarStatement ( labels, decls, cond, incr, body, lineno, source ) {
     Statement.call(this, labels, lineno, source);
     this.decls = decls;  // array of {id: Identifier,  exp: Expression or null}
     this.cond  = cond;   // Expression or null
-    this.loop  = loop;   // Expression or null
+    this.incr  = incr;   // Expression or null
     this.body  = body;   // Statement
 }
 
@@ -241,7 +241,7 @@ proto.toString = function ( ) {
              "for (",
              new VarStatement([], decls), " ",
              this.cond ? this.cond : "", "; ",
-             this.loop ? this.loop : "",
+             this.incr ? this.incr : "",
              ") ",
              this.body
            ].join("");
