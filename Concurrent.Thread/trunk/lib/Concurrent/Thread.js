@@ -150,6 +150,7 @@ function doNext ( ) {
 
 proto.notify = function ( e ) {
     if ( current_thread === this ) throw e;
+    if ( this._is_ended ) throw new NotAliveError();
     cancel.call(this);
     unjoin.call(this);
     this._triplet.continuation = this._triplet.continuation.exception;
@@ -158,8 +159,8 @@ proto.notify = function ( e ) {
     return e;
 };
 
-proto.kill = function ( e ) {
-    return this.notify(new KillException());
+proto.kill = function ( s ) {
+    return this.notify( arguments.length ? new KillException(s) : new KillException() );
 };
 
 proto.join = function ( ) {
@@ -226,7 +227,11 @@ Thread.yield.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 };
 
 
-var KillException = Thread.KillException = newExceptionClass("thread killed");
+var KillException = Thread.KillException = newExceptionClass("Concurrent.Thread.KillException");
+KillException.prototype.message = "thread killed";
+
+var NotAliveError = Thread.NotAliveError = newErrorClass("Concurrent.Thread.NotAliveError");
+NotAliveError.prototype.message = "thread not alive";
 
 
 
