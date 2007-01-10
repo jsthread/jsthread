@@ -4,6 +4,7 @@
 
 //@require Concurrent.Thread
 //@require Concurrent.Thread.Compiler.Parser
+//@require Concurrent.Thread.Compiler.CssConvert
 //@require Concurrent.Thread.Compiler.CfConvert
 //@require Concurrent.Thread.Compiler.CsConvert
 //@require Concurrent.Thread.Compiler.CeConvert
