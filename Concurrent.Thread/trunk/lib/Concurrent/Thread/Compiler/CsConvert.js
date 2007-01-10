@@ -11,7 +11,7 @@
 
 
 
-var Cs = "$Concurrent_Thread_Compiler_CsConvert";
+var Cs = "Concurrent.Thread.Compiler.CsConvert";
 
 var undefinedExp = new VoidExpression(new NumberLiteral(0));
 
@@ -97,4 +97,24 @@ ThrowStatement.prototype[Cs] = function ( pack ) {
     pack.addStatement( new GotoStatement(pack.cont_throw, this.exp) );
 };
 
-
+TryCatchStatement.prototype[Cs] = function ( pack ) {
+    var label1 = pack.createLabel();
+    var label2 = pack.createLabel();
+    var label3 = pack.createLabel();
+    label2.exception = label1.id;
+    pack.addStatement(new GotoStatement(label2.id, undefinedExp));
+    pack.addStatement(label1);
+    pack.addStatement(new RecieveStatement(this.variable));
+    this.catchBlock[Cs](pack);
+    pack.addStatement(new GotoStatement(label3.id, undefinedExp));
+    pack.addStatement(label2);
+    var store_cont = pack.cont_throw;
+    pack.cont_throw = label1.id;
+    try {
+        this.tryBlock[Cs](pack);
+    } finally {
+        pack.cont_throw = store_cont;
+    }
+    pack.addStatement(new GotoStatement(label3.id, undefinedExp));
+    pack.addStatement(label3);
+};

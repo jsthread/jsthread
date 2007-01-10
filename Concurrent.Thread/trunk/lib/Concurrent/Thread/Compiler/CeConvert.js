@@ -205,6 +205,15 @@ IfThenStatement.prototype[Ce] = function ( pack, top ) {
 };
 
 
+RecieveStatement.prototype[Ce] = function ( pack, top ) {
+    if ( this.lhs.containsFunctionCall() ) {
+        this.lhs = pushOutReference(pack, this.lhs, top).exp;
+    }
+    pack.addStatement(this);
+};
+
+
+
 UnaryExpression.prototype[Ce] = function ( pack, top ) {
     this.exp = pushOut(pack, this.exp, top);
 };
