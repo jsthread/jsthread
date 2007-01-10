@@ -635,7 +635,7 @@ proto.statementHelper = function ( labels )
         var finallyBlock = null;
         if ( this.matchToken(Token.FINALLY) ) {
             // Rhino also allows any kind of statement here.
-            finallyBlock = statement();
+            finallyBlock = this.statement();
             if ( !(finallyBlock instanceof Block) ) {
                 this.addWarning("msg.no.brace.finallyblock");
                 finallyBlock = new Block([], new ConsCell(finallyBlock, nil), finallyBlock.lineno, finallyBlock.source);
