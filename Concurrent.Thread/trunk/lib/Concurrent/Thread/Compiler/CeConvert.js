@@ -84,6 +84,7 @@ function pushOutReference ( pack, exp, top ) {
 
 
 Label.prototype[Ce] = function ( pack, top ) {
+    pack.cont_throw = this.exception;
     pack.addStatement(this);
 };
 
