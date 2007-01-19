@@ -1248,6 +1248,7 @@ proto.primaryExpr = function ( )
         elemLoop: for (;;) {
             switch ( this.peekToken() ) {
               case Token.RB:
+                this.consumeToken();
                 break elemLoop;
               case Token.COMMA:
                 while ( this.matchToken(Token.COMMA) ) {
