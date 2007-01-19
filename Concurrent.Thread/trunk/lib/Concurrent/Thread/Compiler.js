@@ -32,6 +32,9 @@ function compile ( f ) {
 //@export prepare
 function prepare ( f ) {
     var func = parseFunction(f);
+    var name = func.name;
+    func.name = null;
+    f = func.toString();
     func = CssConvert(func);
     var pack = new TransPack();
     func = CfConvert(pack, func);
