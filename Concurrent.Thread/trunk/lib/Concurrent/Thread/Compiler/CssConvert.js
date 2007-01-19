@@ -115,6 +115,7 @@ BreakStatement.prototype[Css] = function ( ) {
 };
 
 ReturnStatement.prototype[Css] = function ( ) {
+    if ( !this.exp ) return this;
     return new ReturnStatement(this.labels, this.exp[Css](), this.lineno, this.source);
 };
 
