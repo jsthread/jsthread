@@ -259,7 +259,7 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 		$ \Cs{ \var{e_1}\ \&\&\ \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
 	}  \\
 	=   &  $ \Cs{ \var{e_1}; }{(l, m, t_1, b, c, r, x, s)}        $  \\
-	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2} }{(t_1, n, x)} $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2}, \var{n} }{(t_1, x, x)} $  \\
 	    &  $ \Cs{ \var{e_2}; }{(t_2, m, n, b, c, r, x, s)}        $
 \end{tabular}
 
@@ -270,7 +270,7 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 		$ \Cs{ \var{e_1}\ ||\ \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
 	}  \\
 	=   &  $ \Cs{ \var{e_1}; }{(l, m, t_1, b, c, r, x, s)}        $  \\
-	    &  $ \Bcond{ \Stack{\var{s}}, \var{n} }{(t_1, t_2, x)} $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{n}, \var{t_2} }{(t_1, x, x)} $  \\
 	    &  $ \Cs{ \var{e_2}; }{(t_2, m, n, b, c, r, x, s)}        $
 \end{tabular}
 
@@ -281,7 +281,7 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 		$ \Cs{ \var{e_1}\ ?\ \var{e_2}\ :\ \var{e_3}; }{(l, m, n, b, c, r, x, s)} $
 	}  \\
 	=   &  $ \Cs{ \var{e_1}; }{(l, m, t_1, b, c, r, x, s)}          $  \\
-	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2} }{(t_1, t_3, x)} $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2}, \var{t_3} }{(t_1, x, x)} $  \\
 	    &  $ \Cs{ \var{e_2}; }{(t_2, m, n, b, c, r, x, s)}          $  \\
 	    &  $ \Cs{ \var{e_3}; }{(t_3, m, n, b, c, r, x, s)}          $
 \end{tabular}
@@ -307,7 +307,7 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 	$ \Cs{ if\ (\ \var{e}\ )\ \var{s_1} }{(l, m, n, b, c, r, x, s)} $
 }  \\
 =  &  $ \Cs{ \var{e}; }{(l, m, t_1, b, c, x, s)}          $ \\
-   &  $ \Bcond{ \Stack{s}, \var{t_2} }{(t_1, n, x)} $ \\
+   &  $ \Bcond{ \Stack{s}, \var{t_2}, \var{n} }{(t_1, x, x)} $ \\
    &  $ \Cs{ \var{s_1} }{(t_2, \set{}, n, b, c, r, x, s)}        $
 \end{tabular}
 
@@ -318,7 +318,7 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 	$ \Cs{ if\ (\ \var{e}\ )\ \var{s_1}\ else\ \var{s_2} }{(l, m, n, b, c, r, x, s)} $
 }  \\
 =  &  $ \Cs{ \var{e}; }{(l, m, t_1, b, c, x, s)}         $ \\
-   &  $ \Bcond{ \Stack{s}, \var{t_2} }{(t_1, t_3, x)} $ \\
+   &  $ \Bcond{ \Stack{s}, \var{t_2}, \var{t_3} }{(t_1, x, x)} $ \\
    &  $ \Cs{ \var{s_1} }{(t_2, m, n, b, c, r, x, s)}     $ \\
    &  $ \Cs{ \var{s_2} }{(t_3, m, n, b, c, r, x, s)}     $
 \end{tabular}
@@ -335,7 +335,7 @@ $\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{
 }  \\
 =  &  $ \Cs{ \var{s_1} }{(l, \set{}, t_1, b', c', r, x, s)}  $ \\
    &  $ \Cs{ \var{e}; }{(t_1, \set{}, t_2, \map{}, \map{}, r, x, s)} $ \\
-   &  $ \Bcond{ \Stack{\var{s}}, l }{(t_2, n, x)}  $
+   &  $ \Bcond{ \Stack{\var{s}}, \var{l}, \var{n} }{(t_2, x, x)}  $
 \end{tabular}
 
 where
@@ -355,7 +355,7 @@ $  c' = c \map{l_1:t_1, l_2:t_1, ... l_k:t_1} \map{"":t_1}  $
 	$ \Cs{ while\ (\ \var{e}\ )\ \var{s_1} }{(l, m, n, b, c, r, x, s)} $
 }  \\
 =  &  $ \Cs{ \var{e}; }{(l, \set{}, t_1, \map{}, \map{}, r, x, s)}  $ \\
-   &  $ \Bcond{ \Stack{\var{s}}, t_2 }{(t_1, n, x)}                 $ \\
+   &  $ \Bcond{ \Stack{\var{s}}, t_2, \var{n} }{(t_1, x, x)}                 $ \\
    &  $ \Cs{ \var{s_1} }{(t_2, \set{}, l, b', c', r, x, s)}            $
 \end{tabular}
 
@@ -377,7 +377,7 @@ $  c' = c \map{l_1:l, l_2:l, ... l_k:l} \map{"":l}  $
 }  \\
 =  &  $ \Cs{ \var{e_1}; }{(l  , \set{}, t_1, \map{}, \map{}, r, x, s)}  $ \\
    &  $ \Cs{ \var{e_2}; }{(t_1, \set{}, t_2, \map{}, \map{}, r, x, s)}  $ \\
-   &  $ \Bcond{ \Stack{\var{s}}, t_3 }{(t_2, n, x)}                     $ \\
+   &  $ \Bcond{ \Stack{\var{s}}, t_3, \var{n} }{(t_2, x, x)}                     $ \\
    &  $ \Cs{ \var{s_1} }{(t_3, \set{}, t_4, b', c', r, x, s)}           $ \\
    &  $ \Cs{ \var{e_3} }{(t_4, \map{}, t_1, \map{}, \map{}, r, x, s)}   $
 \end{tabular}
@@ -401,7 +401,7 @@ $  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_4}  $
 =  &  $ \Cs{ \var{e}; }{(l  , \set{}, t_1, \map{}, \map{}, r, x, s)}          $ \\
    &  $ \Benum{ \Stack{\var{s}}, \Stack{\var{s}} }{(t_1, t_2, x)}             $ \\
    &  $ \Bexp{ \Stack{\var{s'}}, 0 }{(t_2, t_3, x)}                           $ \\
-   &  $ \Bcond{ \Stack{\var{s'}} < \Stack{\var{s}}.length, t_4 }{(t_3, n, x)} $ \\
+   &  $ \Bcond{ \Stack{\var{s'}} < \Stack{\var{s}}.length, t_4, \var{n} }{(t_3, x, x)} $ \\
    &  $ \Cs{ \var{s_1} }{(t_4, \set{}, t_5, b', c', r, x, s'')}               $ \\
    &  $ \Bexp{ \Stack{\var{s'}}, \Stack{\var{s'}}+1 }{(t_5, t_3, x)}          $
 \end{tabular}
@@ -422,7 +422,7 @@ $  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_3}  $
 \multicolumn{2}{l}{
 	$ \Cs{ break; }{(l, m, n, b, c, r, x, s)} $
 }  \\
-=  &  $ \Bcond{ true, \var{b}\map{""} }{(l, n, x)}    $
+=  &  $ \Bcond{ true, \var{b}\map{""}, \var{x} }{(l, x, x)}    $
 \end{tabular}
 
 \vspace{1em}
@@ -431,7 +431,7 @@ $  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_3}  $
 \multicolumn{2}{l}{
 	$ \Cs{ break\ \var{label}; }{(l, m, n, b, c, r, x, s)} $
 }  \\
-=  &  $ \Bcond{ true, \var{b}\map{\var{label}} }{(l, n, x)}    $
+=  &  $ \Bcond{ true, \var{b}\map{\var{label}}, \var{x} }{(l, x, x)}    $
 \end{tabular}
 
 
@@ -442,7 +442,7 @@ $  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_3}  $
 \multicolumn{2}{l}{
 	$ \Cs{ continue; }{(l, m, n, b, c, r, x, s)} $
 }  \\
-=  &  $ \Bcond{ true, \var{c}\map{""} }{(l, n, x)}    $
+=  &  $ \Bcond{ true, \var{c}\map{""}, \var{x} }{(l, x, x)}    $
 \end{tabular}
 
 \vspace{1em}
@@ -451,7 +451,7 @@ $  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_3}  $
 \multicolumn{2}{l}{
 	$ \Cs{ continue\ \var{label}; }{(l, m, n, b, c, r, x, s)} $
 }  \\
-=  &  $ \Bcond{ true, \var{c}\map{\var{label}} }{(l, n, x)}    $
+=  &  $ \Bcond{ true, \var{c}\map{\var{label}}, \var{x} }{(l, x, x)}    $
 \end{tabular}
 
 
@@ -510,7 +510,7 @@ $  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_3}  $
 
    &  $ \Brecv{ \Stack{s'} }{(t_1, t_2, x)}                   $  \\
    &  $ \Cs{ \var{s_2} }{(t_2, \set{}, t_3, b, c, r, x, s'')} $  \\
-   &  $ \Bcond{true, \Stack{s'}}{(t_3, \Stack{s'}, x)}        $  \\
+   &  $ \Bcond{true, \Stack{s'}, \var{x}}{(t_3, x, x)}        $  \\
 
    &  $ \Bret{ \var{n} }{(n', t_1, x)} $  \\
    
@@ -574,7 +574,7 @@ var \var[l] = {
 \end{Verbatim}
 
 
-$  \Bcond{ \var{e}, \var{t} }{(l, f, x)}  =  $
+$  \Bcond{ \var{e}, \var{t}, \var{f} }{(l, \_, x)}  =  $
 \begin{Verbatim}[frame=single, commandchars=\\\[\]]
 var \var[l] = {
     procedure: function ( ) {
