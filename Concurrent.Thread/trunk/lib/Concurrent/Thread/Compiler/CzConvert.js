@@ -100,6 +100,7 @@ function var_declaration ( vars ) {
     });
  */
     vars = vars.toArray();
+    if ( vars.length == 0 ) return new EmptyStatement([]);
     for ( var i=0;  i < vars.length;  i++ ) {
         decls.push({ id:vars[i], exp:null });
     }
