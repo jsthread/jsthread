@@ -118,7 +118,7 @@ proto.constructor = Iterator;
 proto.value = function ( ) {
     mustBeUnchanged(this._parent, this);
     if ( this.isTail() )
-        throw new NosuchElementError("there's no value on the tail");
+        throw new NoSuchElementError("there's no value on the tail");
     return this._elements[this._index];
 };
 
@@ -133,7 +133,7 @@ proto.isTail = function ( ) {
 proto.next = function ( ) {
     mustBeUnchanged(this._parent, this);
     if ( this.isTail() )
-        throw new NosuchElementError("there's no element after the tail");
+        throw new NoSuchElementError("there's no element after the tail");
     return new Iterator(this._parent, this._state_no, this._elements, this._index+1);
 };
 
