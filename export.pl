@@ -21,9 +21,9 @@ while ( <$from/*> ) {
     next unless -d $_;
     print "$_...";
     if ( $opts{svn} ) {
-        system "svn", "export", "--force", "$_/lib", "$to";
+        system "svn", "export", "--force", "$_/trunk/lib", "$to";
     } else {
-        eval{ dircopy "$_/lib", "$to" }  or print($@), next;
+        eval{ dircopy "$_/trunk/lib", "$to" }  or print($@), next;
         print "exported.\n";
     }
 }
