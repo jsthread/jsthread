@@ -1,5 +1,5 @@
 //@esmodpp
-//@require Test.SImple
+//@require Test.Simple
 //@with-namespace Test.Simple
 
 //@require Data.Functional.Array
