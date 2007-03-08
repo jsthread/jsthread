@@ -129,6 +129,6 @@ proto.some = function ( f ) {
 
 
 //@export EmptyEnumerationError
-var EmptyEnumerationError = newErrorClass("EmptyEnumerationError");
+var EmptyEnumerationError = newErrorClass(NAMESPACE + ".EmptyEnumerationError");
 EmptyEnumerationError.prototype.message = "empty enumeration";
 
