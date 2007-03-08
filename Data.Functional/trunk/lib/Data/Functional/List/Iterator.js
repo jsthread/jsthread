@@ -1,8 +1,8 @@
 //@esmodpp
-//@version 0.4.0
+//@version 0.5.0
 //@namespace Data.Functional.List
 
-//@require Data.Functional.List.list 0.4.0
+//@require Data.Functional.List.list 0.5.0
 
 //@require        Data.Iterator.BidirectionalIterator
 //@with-namespace Data.Iterator

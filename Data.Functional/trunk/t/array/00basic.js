@@ -5,7 +5,7 @@
 //@require Data.Functional.ArrayForceForEach
 
 
-test(37, function(){
+test(36, function(){
 
     var a = [];
     for ( var i=0;  i < 5;  i++ ) a[i] = Math.random();
@@ -24,7 +24,6 @@ test(37, function(){
     var r = c.forEach(function(it){
         return d.push(it);
     });
-    ok( r === 5                  , "forEach-return");
     ok( d.length === 5           , "forEach");
     ok( d[0] === a[0]            , "  0" );
     ok( d[1] === a[1]            , "  1" );

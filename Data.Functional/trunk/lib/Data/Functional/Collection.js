@@ -1,8 +1,10 @@
 //@esmodpp
-//@version 0.4.0
+//@version 0.5.0
 //@namespace Data.Functional
 
-//@require Data.Functional.Enumerable 0.4.0
+//@require Data.Functional.Enumerable 0.5.0
+//@require Data.Functional.Loop       0.5.0
+//@with-namespace Data.Functional.Loop
 
 //@require Data.Error.NotImplementedError
 //@with-namespace Data.Error
@@ -95,12 +97,28 @@ proto.copy = function ( ) {
 };
 
 
-proto.filter = function ( f ) {
+proto.map = function ( f ) {
     var c = this.emptyCopy();
-    this.forEach(function( it ){
-        if ( f.call(this, it) ) c.add(it);
+    f = wrap_for_map(this, f, function ( ) {
+        c.add.apply(c, arguments);
     });
+    for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
+        try {
+            f(it.value());
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return a;
+            else                                   throw e;
+        }
+    }
     return c;
+};
+
+
+proto.filter = function ( f ) {
+    return this.map(function( it ){
+        if ( f.call(this, it) ) return it;
+        else                    ignore();
+    });
 };
 
 
@@ -109,32 +127,6 @@ proto.grep = function ( re ) {
     return this.filter(function(it){
         return String(it).match(re);
     });
-};
-
-
-proto.map = function ( f ) {
-    var c = this.emptyCopy();
-    for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
-        try {
-            c.add( f.call(this, it.value()) );
-        }
-        catch ( e ) {
-            if ( e instanceof DiscontinueException ) {
-                for ( var i=0;  i < e.args.length;  i++ ) c.add(e.args[i]);
-                return c;
-            }
-            else if ( e instanceof IgnoreException ) {
-                // Do nothing.
-            }
-            else if ( e instanceof ReturnListException ) {
-                for ( var i=0;  i < e.args.length;  i++ ) c.add(e.args[i]);
-            }
-            else {
-                throw e;
-            }
-        }
-    }
-    return c;
 };
 
 

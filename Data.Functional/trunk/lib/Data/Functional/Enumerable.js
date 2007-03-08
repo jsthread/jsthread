@@ -1,10 +1,9 @@
 //@esmodpp
-//@version 0.4.0
+//@version 0.5.0
 //@namespace Data.Functional
 
-//@require Data.Functional.Discontinue 0.4.0
-//@require Data.Functional.Ignore      0.4.0
-//@require Data.Functional.ReturnList  0.4.0
+//@require Data.Functional.Loop 0.5.0
+//@with-namespace Data.Functional.Loop
 
 //@require Data.Error.NotImplementedError
 //@with-namespace Data.Error
@@ -37,47 +36,26 @@ proto.iterator = function ( ) {
 
 proto.forEach = function ( f ) {
     var ret_val;
+    f = wrap_for_forEach(this, f);
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         try {
-            ret_val = f.call(this, it.value());
-        }
-        catch ( e ) {
-            if ( e instanceof DiscontinueException ) {
-                return e.args[e.args.length-1];
-            }
-            else if ( e instanceof IgnoreException ) {
-                // Do nothing.
-            }
-            else if ( e instanceof ReturnListException ) {
-                ret_val = e.args[e.args.length-1];
-            }
-            else {
-                throw e;
-            }
+            f(it.value());
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return;
+            else                                   throw e;
         }
     }
-    return ret_val;
 };
 
 
 proto.fold = function ( f, s ) {
+    f = wrap_for_fold(this, f, s);
     for ( var it=this.iterator();  !it.isTail();  it=it.next() ) {
         try {
-            s = f.call(this, s, it.value());
-        }
-        catch ( e ) {
-            if ( e instanceof DiscontinueException ) {
-                return e.args[e.args.length-1];
-            }
-            else if ( e instanceof IgnoreException ) {
-                // Do nothing.
-            }
-            else if ( e instanceof ReturnListException ) {
-                s = e.args[e.args.length-1];
-            }
-            else {
-                throw e;
-            }
+            s = f(it.value());
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return e.result;
+            else                                   throw e;
         }
     }
     return s;
@@ -89,23 +67,13 @@ proto.fold1 = function ( f ) {
     if ( it.isTail() ) throw new EmptyEnumerationError();
     var s = it.value();
     it = it.next();
+    f = wrap_for_fold(this, f, s);
     for ( ;  !it.isTail();  it=it.next() ) {
         try {
-            s = f.call(this, s, it.value());
-        }
-        catch ( e ) {
-            if ( e instanceof DiscontinueException ) {
-                return e.args[e.args.length-1];
-            }
-            else if ( e instanceof IgnoreException ) {
-                // Do nothing.
-            }
-            else if ( e instanceof ReturnListException ) {
-                s = e.args[e.args.length-1];
-            }
-            else {
-                throw e;
-            }
+            s = f(it.value());
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return e.result;
+            else                                   throw e;
         }
     }
     return s;

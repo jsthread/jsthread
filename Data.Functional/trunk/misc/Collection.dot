@@ -58,16 +58,14 @@ digraph Collection {
         copy    -> emptyCopy
         copy    -> forEach
         copy    -> add
-        filter  -> emptyCopy
-        filter  -> forEach
-        filter  -> add
-        grep    -> filter
         map     -> emptyCopy
         map     -> isTail
         map     -> next
         map     -> value
         map     -> iterator
         map     -> add
+        filter  -> map
+        grep    -> filter
     }
     
 }

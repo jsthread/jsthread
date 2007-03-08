@@ -2,13 +2,12 @@
 // Require Data.Functional.List instead.
 
 //@esmodpp
-//@version 0.4.0
+//@version 0.5.0
 //@namespace Data.Functional
 
-//@require Data.Functional.Collection 0.4.0
-
-//@require Data.Error.NotImplementedError
-//@with-namespace Data.Error
+//@require Data.Functional.Collection 0.5.0
+//@require Data.Functional.Loop       0.5.0
+//@with-namespace Data.Functional.Loop
 
 //@require Math.ToInteger
 //@with-namespace Math
@@ -214,7 +213,7 @@ proto.slice = function ( start, end ) {
     if ( !(    start instanceof List.Iterator
             &&   end instanceof List.Iterator
             && start.isBoundTo(this) && end.isBoundTo(this)
-            && start.constructor === end.constructor ) )  // one can be reverse-iterator even though the other is iterator.
+            && start.constructor === end.constructor ) )  // one might be reverse-iterator even though the other is iterator.
     {
         try {
             start = this.head(start);
@@ -269,23 +268,13 @@ proto.foldl = proto.fold;
 proto.foldl1 = proto.fold1;
 
 proto.foldr = function ( f, s ) {
+    var g = wrap_for_fold(this, function (x,y){return f(y,x);}, s);
     for ( var it=this.reverseHead();  !it.isTail();  it=it.next() ) {
         try {
-            s = f.call(this, it.value(), s);
-        }
-        catch ( e ) {
-            if ( e instanceof DiscontinueException ) {
-                return e.args[e.args.length-1];
-            }
-            else if ( e instanceof IgnoreException ) {
-                // Do nothing.
-            }
-            else if ( e instanceof ReturnListException ) {
-                s = e.args[e.args.length-1];
-            }
-            else {
-                throw e;
-            }
+            s = g(it.value());
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return e.result;
+            else                                   throw e;
         }
     }
     return s;
@@ -296,23 +285,13 @@ proto.foldr1 = function ( f ) {
     if ( it.isTail() ) return new EmptyEnumerationError();
     var s = it.value();
     it = it.next();
+    var g = wrap_for_fold(this, function (x,y){return f(y,x);}, s);
     for ( ;  !it.isTail();  it=it.next() ) {
         try {
-            s = f.call(this, it.value(), s);
-        }
-        catch ( e ) {
-            if ( e instanceof DiscontinueException ) {
-                return e.args[e.args.length-1];
-            }
-            else if ( e instanceof IgnoreException ) {
-                // Do nothing.
-            }
-            else if ( e instanceof ReturnListException ) {
-                s = e.args[e.args.length-1];
-            }
-            else {
-                throw e;
-            }
+            s = g(it.value());
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return e.result;
+            else                                   throw e;
         }
     }
     return s;

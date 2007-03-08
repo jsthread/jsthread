@@ -6,7 +6,7 @@
 //@with-namespace Data.Functional
 
 
-test(34, function(){
+test(33, function(){
 
     var a = [];
     for ( var i=0;  i < 5;  i++ ) a.push(Math.random());
@@ -23,15 +23,14 @@ test(34, function(){
     
     var d = new MinimalList();
     var r = ml.forEach(function(it){
-        return d.push(it);
+        d.push(it);
     });
-    ok( r === 5                  , "forEach-return");
     ok( d.size() === 5           , "forEach");
-    ok( d.get(0) === ml.get(0)            , "  0" );
-    ok( d.get(1) === ml.get(1)            , "  1" );
-    ok( d.get(2) === ml.get(2)            , "  2" );
-    ok( d.get(3) === ml.get(3)            , "  3" );
-    ok( d.get(4) === ml.get(4)            , "  4" );
+    ok( d.get(0) === ml.get(0)   , "  0: " + d.get(0) + " == " + ml.get(0) );
+    ok( d.get(1) === ml.get(1)   , "  1: " + d.get(1) + " == " + ml.get(1) );
+    ok( d.get(2) === ml.get(2)   , "  2: " + d.get(2) + " == " + ml.get(2) );
+    ok( d.get(3) === ml.get(3)   , "  3: " + d.get(3) + " == " + ml.get(3) );
+    ok( d.get(4) === ml.get(4)   , "  4: " + d.get(4) + " == " + ml.get(4) );
     
     
     var sum = d.get(0) + d.get(1) + d.get(2) + d.get(3) + d.get(4);
