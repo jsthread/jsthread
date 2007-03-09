@@ -282,7 +282,7 @@ proto.foldr = function ( f, s ) {
 
 proto.foldr1 = function ( f ) {
     var it = this.reverseHead();
-    if ( it.isTail() ) return new EmptyEnumerationError();
+    if ( it.isTail() ) throw new EmptyEnumerationError();
     var s = it.value();
     it = it.next();
     var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
