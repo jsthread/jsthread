@@ -6,7 +6,7 @@
 //@with-namespace Data.Functional
 
 
-test(8, function(){
+test(10, function(){
     
     var ml = new MinimalList(0, 1, 2, 3, 4, 5);
     
@@ -29,5 +29,8 @@ test(8, function(){
     
     ml.foldr(check_this("foldr"), 0);
     ml.foldr1(check_this("foldr1"));
+    
+    ml.all(check_this("all"));
+    ml.any(check_this("any"));
     
 });

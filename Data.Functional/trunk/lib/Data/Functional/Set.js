@@ -40,7 +40,7 @@ proto.containsAll = function ( /* variable args */ ) {
             if ( !this.contains.apply(this, e) ) return false;
         } else if ( e instanceof Collection ) {
             var self = this;
-            if ( !e.every(function(it){ return self.contains(it); }) ) return false;
+            if ( !e.all(function(it){ return self.contains(it); }) ) return false;
         } else {
             if ( !this.contains(e) ) return false;
         }

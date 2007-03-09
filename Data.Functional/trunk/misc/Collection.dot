@@ -39,8 +39,10 @@ digraph Collection {
         fold1   -> isTail
         fold1   -> next
         fold1   -> value
-        every   -> fold
-        some    -> fold
+        and     -> fold
+        or      -> fold
+        all     -> fold
+        any     -> fold
         /* <-- From Enumerable */
         
         add      [ style=filled, color=lightgray ]

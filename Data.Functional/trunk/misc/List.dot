@@ -58,8 +58,10 @@ digraph List {
         fold1   -> isTail
         fold1   -> next
         fold1   -> value
-        every   -> fold
-        some    -> fold
+        and     -> fold
+        or      -> fold
+        all     -> fold
+        any     -> fold
         /* <-- From Enumerable */
         
         /* From Collection --> */
