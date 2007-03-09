@@ -59,9 +59,7 @@ digraph Set {
         copy    -> emptyCopy
         copy    -> forEach
         copy    -> add
-        filter  -> emptyCopy
-        filter  -> forEach
-        filter  -> add
+        filter  -> map
         grep    -> filter
         map     -> emptyCopy
         map     -> isTail
