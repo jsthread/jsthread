@@ -111,6 +111,7 @@ function wrap_for_map ( t, f, a ) {
         } catch ( e ) {
             if ( e instanceof DiscontinueException ) {
                 a.apply(null, e.args);
+                throw new EndOfLoopException();
             } else if ( e instanceof IgnoreException ) {
                 // Do nothing.
             } else if ( e instanceof ReturnListException ) {

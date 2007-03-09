@@ -106,7 +106,7 @@ proto.map = function ( f ) {
         try {
             f(it.value());
         } catch ( e ) {
-            if ( e instanceof EndOfLoopException ) return a;
+            if ( e instanceof EndOfLoopException ) return c;
             else                                   throw e;
         }
     }

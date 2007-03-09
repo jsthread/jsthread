@@ -268,7 +268,7 @@ proto.foldl = proto.fold;
 proto.foldl1 = proto.fold1;
 
 proto.foldr = function ( f, s ) {
-    var g = wrap_for_fold(this, function (x,y){return f(y,x);}, s);
+    var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
     for ( var it=this.reverseHead();  !it.isTail();  it=it.next() ) {
         try {
             s = g(it.value());
@@ -285,7 +285,7 @@ proto.foldr1 = function ( f ) {
     if ( it.isTail() ) return new EmptyEnumerationError();
     var s = it.value();
     it = it.next();
-    var g = wrap_for_fold(this, function (x,y){return f(y,x);}, s);
+    var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
     for ( ;  !it.isTail();  it=it.next() ) {
         try {
             s = g(it.value());
