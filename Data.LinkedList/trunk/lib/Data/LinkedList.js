@@ -1,9 +1,12 @@
 //@esmodpp
-//@version 0.3.0
+//@version 0.3.1
 //@namespace Data
 
-//@require Data.Functional.List
+//@require Data.Functional.List 0.5.0
 //@with-namespace Data.Functional
+
+//@require Data.Functional.Loop 0.5.0
+//@with-namespace Data.Functional.Loop
 
 //@require Data.Iterator.NoSuchElementError
 //@with-namespace Data.Iterator
@@ -130,6 +133,108 @@ proto.toArray = function ( ) {
     var a = [];
     for ( var c=this._next;  c !== this;  c=c._next ) a.push(c._value);
     return a;
+};
+
+
+proto.forEach = function ( f ) {
+    f = wrap_for_forEach(this, f);
+    for ( var c=this._next;  c !== this;  c=c._next ) {
+        try {
+            f(c._value);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return;
+            } else {
+                throw e;
+            }
+        }
+    }
+}
+
+proto.fold  =
+proto.foldl = function ( f, s ) {
+    f = wrap_for_fold(this, f, s);
+    for ( var c=this._next;  c !== this;  c=c._next ) {
+        try {
+            s = f(c._value);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.fold1  =
+proto.foldl1 = function ( f ) {
+    if ( this.isEmpty() ) throw new EmptyListError();
+    var s = this._next._value;
+    f = wrap_for_fold(this, f, s);
+    for ( var c=this._next._next;  c !== this;  c=c._next ) {
+        try {
+            s = f(c._value);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.foldr = function ( f, s ) {
+    var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
+    for ( var c=this._prev;  c !== this;  c=c._prev ) {
+        try {
+            s = f(c._value);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.foldr1 = function ( f ) {
+    if ( this.isEmpty() ) throw new EmptyListError();
+    var s = this._prev._value;
+    var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
+    for ( var c=this._prev._prev;  c !== this;  c=c._prev ) {
+        try {
+            s = g(c._value);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.map = function ( f ) {
+    var l = new LinkedList();
+    f = wrap_for_map(this, f, function(){
+        l.add.apply(l, arguments);
+    });
+    for ( var c=this._next;  c !== this;  c=c._next ) {
+        try {
+            f(c._value);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return l;
+            else                                   throw e;
+        }
+    }
+    return l;
 };
 
 
