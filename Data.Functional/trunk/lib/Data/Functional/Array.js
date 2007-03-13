@@ -1,8 +1,11 @@
 //@esmodpp
-//@version 0.4.0
+//@version 0.5.0
 
-//@require Data.Functional.List 0.4.0
+//@require Data.Functional.List 0.5.0
 //@with-namespace Data.Functional
+
+//@require Data.Functional.Loop 0.5.0
+//@with-namespace Data.Functional.Loop
 
 //@require Data.Error.IllegalStateError
 //@with-namespace Data.Error
@@ -115,13 +118,114 @@ proto.size = function ( ) {
     return this.length;
 };
 
-proto.copy = function ( ) {
+proto.copy    =
+proto.toArray = function ( ) {
     var a = [];
     for ( var i=0;  i < this.length;  i++ ) a[i] = this[i];
     return a;
 };
 
-proto.toArray = proto.copy;
+
+proto.forEach = function ( f ) {
+    f = wrap_for_forEach(this, f);
+    for ( var i=0;  i < this.length;  i++ ) {
+        try {
+            f(this[i]);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return;
+            } else {
+                throw e;
+            }
+        }
+    }
+};
+
+proto.fold  =
+proto.foldl = function ( f, s ) {
+    f = wrap_for_fold(this, f, s);
+    for ( var i=0;  i < this.length;  i++ ) {
+        try {
+            s = f(this[i]);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.fold1  =
+proto.foldl1 = function ( f ) {
+    if ( this.length == 0 ) throw new EmptyListError();
+    var s = this[0];
+    f = wrap_for_fold(this, f, s);
+    for ( var i=1;  i < this.length;  i++ ) {
+        try {
+            s = f(this[i]);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.foldr = function ( f, s ) {
+    var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
+    for ( var i=this.length-1;  i >= 0;  i-- ) {
+        try {
+            s = f(this[i]);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.foldr1 = function ( f ) {
+    if ( this.length == 0 ) throw new EmptyListError();
+    var s = this[this.length-1];
+    var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
+    for ( var i=this.length-2;  i >= 0;  i-- ) {
+        try {
+            s = g(this[i]);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) {
+                return e.result;
+            } else {
+                throw e;
+            }
+        }
+    }
+    return s;
+};
+
+proto.map = function ( f ) {
+    var a = [];
+    f = wrap_for_map(this, f, function(){
+        a.push.apply(a, arguments);
+    });
+    for ( var i=0;  i < this.length;  i++ ) {
+        try {
+            f(this[i]);
+        } catch ( e ) {
+            if ( e instanceof EndOfLoopException ) return a;
+            else                                   throw e;
+        }
+    }
+    return a;
+};
 
 
 // Re-define concat and slice
@@ -151,6 +255,7 @@ proto.slice = function ( start, end ) {
         return original_slice.apply(this, arguments);
     }
 };
+
 
 
 function Iterator ( a, n ) {

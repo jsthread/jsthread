@@ -2,7 +2,7 @@
 //@require        Test.Simple
 //@with-namespace Test.Simple
 
-//@require Data.Functional.ArrayForceForEach
+//@require Data.Functional.Array
 
 
 test(36, function(){
