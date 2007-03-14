@@ -62,7 +62,6 @@
 
 //@require Data.Cons
 //@with-namespace Data.Cons
-var ConsCell = Data.Cons.Cell;
 
 
 
@@ -290,8 +289,8 @@ proto.parse = function ( sourceString, lineno, source )
 
 proto.statements = function ( )
 {
-    var head = new ConsCell(nil, nil);
-    var cell = head;
+    var head, cell;
+    cell = head = cons(null, nil());
     bodyLoop: for (;;) {
         var n;
         switch ( this.peekToken() ) {
@@ -307,7 +306,7 @@ proto.statements = function ( )
             n = this.statement();
             break;
         }
-        cell = cell.cdr = new ConsCell(n, nil);
+        cell = cell.cdr = cons(n, cell.cdr);
     }
     return head.cdr;
 };
@@ -434,7 +433,7 @@ proto.statementHelper = function ( labels )
         var exp = this.expr(false);
         this.mustMatchToken(Token.RP, "msg.no.paren.after.switch");
         this.mustMatchToken(Token.LC, "msg.no.brace.switch");
-        var switchStatement = new SwitchStatement(labels, exp, nil, lineno, this.source);
+        var switchStatement = new SwitchStatement(labels, exp, nil(), lineno, this.source);
         var clauses = switchStatement;
         this.nestingOfSwitch++;
         try {
@@ -462,7 +461,7 @@ proto.statementHelper = function ( labels )
                 var c = caseExpression
                           ?  new CaseClause(caseExpression, this.statementsInSwitch, lineno, this.source)
                           :  new DefaultClause(this.statementsInSwitch, lineno, this.source);
-                clauses = clauses.cdr = new ConsCell(c, nil);
+                clauses = clauses.cdr = cons(c, clauses.cdr);
             }
         } finally {
             this.nestingOfSwitch--;
@@ -597,11 +596,11 @@ proto.statementHelper = function ( labels )
         var tryBlock = this.statement();
         if ( !(tryBlock instanceof Block) ) {
             this.addWarning("msg.no.brace.tryblock");
-            tryBlock = new Block([], new ConsCell(tryBlock, nil), tryBlock.lineno, tryBlock.source);
+            tryBlock = new Block([], cons(tryBlock, nil()), tryBlock.lineno, tryBlock.source);
         }
 
         var catchList;
-        var cell = catchList = new ConsCell(nil, nil);
+        var cell = catchList = cons(null, nil());
         var sawDefaultCatch = false;
         var peek = this.peekToken();
         if ( peek === Token.CATCH ) {
@@ -625,7 +624,7 @@ proto.statementHelper = function ( labels )
                 this.mustMatchToken(Token.RC, "msg.no.brace.after.body");
 
                 var clause = new CatchGuard(variable, cond, block, line, this.source);
-                cell = cell.cdr = new ConsCell(clause, nil);
+                cell = cell.cdr = cons(clause, cell.cdr);
             }
         } else if ( peek !== Token.FINALLY ) {
             this.mustMatchToken(Token.FINALLY, "msg.try.no.catchfinally");
@@ -638,7 +637,7 @@ proto.statementHelper = function ( labels )
             finallyBlock = this.statement();
             if ( !(finallyBlock instanceof Block) ) {
                 this.addWarning("msg.no.brace.finallyblock");
-                finallyBlock = new Block([], new ConsCell(finallyBlock, nil), finallyBlock.lineno, finallyBlock.source);
+                finallyBlock = new Block([], cons(finallyBlock, nil()), finallyBlock.lineno, finallyBlock.source);
             }
         }
 
@@ -825,7 +824,7 @@ proto.matchJumpLabelName = function ( token )
 proto.statementsInSwitch = function ( )
 {
     var head, cell;
-    head = cell = new ConsCell(nil, nil);
+    head = cell = cons(null, nil());
     clauseLoop: for (;;) {
         switch ( this.peekToken() ) {
           case Token.ERROR:
@@ -840,7 +839,7 @@ proto.statementsInSwitch = function ( )
             if ( tt === Token.COLON ) break clauseLoop;
             // fall thru
           default:
-            cell = cell.cdr = new ConsCell(this.statement(), nil);
+            cell = cell.cdr = cons(this.statement(), cell.cdr);
         }
     }
     return head.cdr;

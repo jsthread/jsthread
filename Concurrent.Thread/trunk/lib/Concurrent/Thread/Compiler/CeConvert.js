@@ -7,7 +7,7 @@
 //@require Concurrent.Thread.Compiler.Expression
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
 
-//@require Data.Cons
+//@require Data.Cons 0.2.0
 //@with-namespace Data.Cons
 
 
@@ -17,11 +17,11 @@ var Ce = "$Concurrent_Thread_Compiler_CeConvert";
 
 //@export CeConvert
 function CeConvert ( pack, func ) {
-    for ( var c=func.cdr;  c !== nil;  c=c.cdr ) {
+    for ( var c=func.cdr;  !c.isNil();  c=c.cdr ) {
         c.car[Ce](pack, 0);
     }
     func.cdr = pack.head;
-    pack.head = pack.tail = nil;
+    pack.head = pack.tail = nil();
     return func;
 }
 

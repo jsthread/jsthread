@@ -5,7 +5,7 @@
 //@require Concurrent.Thread
 //@require Concurrent.Thread.Compiler.Statement
 
-//@require Data.Cons
+//@require Data.Cons 0.2.0
 //@with-namespace Data.Cons
 
 
@@ -18,16 +18,16 @@ function CfConvert ( pack, func ) {
     for ( var i=0;  i < func.params.length;  i++ ) {
         pack.registerVar(func.params[i]);
     }
-    for ( var c=func.cdr;  c !== nil;  c=c.cdr ) {
+    for ( var c=func.cdr;  !c.isNil();  c=c.cdr ) {
         c.car = c.car[Cf](pack);
     }
-    if ( pack.head === nil ) {
+    if ( pack.head.isNil() ) {
         pack.head = func.cdr;
     } else {
         pack.tail.cdr = func.cdr;
     }
     func.cdr = pack.head;
-    pack.head = pack.tail = nil;
+    pack.head = pack.tail = nil();
     return func;
 }
 
@@ -39,7 +39,7 @@ Statement.prototype[Cf] = function ( pack ) {
 
 
 Block.prototype[Cf] = function ( pack ) {
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) {
+    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
         c.car = c.car[Cf](pack);
     }
     return this;

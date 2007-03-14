@@ -3,7 +3,7 @@
 //@require   Concurrent.Thread
 //@require   Concurrent.Thread.Compiler.Kit
 
-//@require Data.Cons
+//@require Data.Cons.List 0.2.0
 //@with-namespace Data.Cons
 
 
@@ -55,7 +55,9 @@ proto.constructor = Block;
 
 proto.toString = function ( ) {
     var buf = [labelsToString.call(this), "{"];
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car);
+    this.cdr.forEach(function( it ){
+        buf.push(it);
+    });
     buf.push("}");
     return buf.join("\n");
 };
@@ -414,7 +416,9 @@ proto.constructor = SwitchStatement;
 
 proto.toString = function ( ) {
     var buf = [ "switch ( ", this.exp, ") {\n"];
-    for ( var c=this.clauses;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    this.clauses.forEach(function( it ){
+        buf.push(it, "\n");
+    });
     buf.push("}");
     return buf.join("");
 };
@@ -430,7 +434,9 @@ function CaseClause ( exp, statements, lineno, source ) {
 
 CaseClause.prototype.toString = function ( ) {
     var buf = ["case ", this.exp, ":\n"];
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    this.cdr.forEach(function( it ){
+        buf.push(it, "\n");
+    });
     return buf.join("");
 };
 
@@ -444,7 +450,9 @@ function DefaultClause ( statements, lineno, source ) {
 
 DefaultClause.prototype.toString = function ( ) {
     var buf = ["default:\n"];
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    this.cdr.forEach(function( it ){
+        buf.push(it, "\n");
+    });
     return buf.join("");
 };
 
@@ -536,7 +544,9 @@ proto.constructor = TryCatchListStatement;
 proto.toString = function ( ) {
     var buf = [ labelsToString.call(this),
                 "try ", this.tryBlock, "\n" ];
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car);
+    this.cdr.forEach(function( it ){
+        buf.push(it);
+    });
     return buf.join("");
 };
 
@@ -555,7 +565,9 @@ proto.constructor = TryCatchListFinallyStatement;
 proto.toString = function ( ) {
     var buf = [ labelsToString.call(this),
                 "try ", this.tryBlock, "\n" ];
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car);
+    this.cdr.forEach(function( it ){
+        buf.push(it);
+    });
     buf.push("finally ", this.finallyBlock);
     return buf.join("");
 };
@@ -592,7 +604,9 @@ proto.constructor = FunctionDeclaration;
 proto.toString = function ( ) {
     var buf = [ "function ", this.name,
                 " (", this.params.join(", "), ") {\n" ];
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    this.cdr.forEach(function( it ){
+        buf.push(it, "\n");
+    });
     buf.push("}");
     return buf.join("");
 };

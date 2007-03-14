@@ -12,7 +12,7 @@
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
 //@with-namespace Concurrent.Thread.Compiler
 
-//@require Data.Cons
+//@require Data.Cons 0.2.0
 //@with-namespace Data.Cons
 
 
@@ -69,7 +69,7 @@ function TransPack ( ) {
     this.cont_return   = initialContReturn;
     this.cont_throw    = initialContThrow;
     this.vars = new IdentifierSet();
-    this.head = this.tail = nil;
+    this.head = this.tail = nil();
 }
 
 var proto = TransPack.prototype;
@@ -92,10 +92,10 @@ proto.createStackVar = function ( n ) {
 };
 
 proto.addStatement = function ( s ) {
-    if ( this.tail === nil ) {
-        this.head = this.tail = cons(s, nil);
+    if ( this.tail.isNil() ) {
+        this.head = this.tail = cons(s, this.tail);
     } else {
-        this.tail = this.tail.cdr = cons(s, nil);
+        this.tail = this.tail.cdr = cons(s, this.tail.cdr);
     }
 };
 

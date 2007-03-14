@@ -3,7 +3,7 @@
 //@require   Concurrent.Thread
 //@require   Concurrent.Thread.Compiler.Kit
 
-//@require Data.Cons
+//@require Data.Cons.List 0.2.0
 //@with-namespace Data.Cons
 
 
@@ -349,7 +349,9 @@ proto.toString = function ( ) {
     var buf = ["function "];
     if ( this.name ) buf.push(this.name);
     buf.push( "(", this.params.join(", "), ") {\n");
-    for ( var c=this.cdr;  c !== nil;  c=c.cdr ) buf.push(c.car, "\n");
+    this.cdr.forEach(function( it ){
+        buf.push(it, "\n");
+    });
     buf.push("}");
     return buf.join("");
 };

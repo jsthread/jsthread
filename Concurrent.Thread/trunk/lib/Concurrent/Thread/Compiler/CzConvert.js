@@ -4,7 +4,7 @@
 //@require Concurrent.Thread
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
 
-//@require Data.Cons
+//@require Data.Cons 0.2.0
 //@with-namespace Data.Cons
 
 
@@ -24,21 +24,21 @@ var name_prototype = new Identifier("prototype");
 var name_apply     = new Identifier("apply");
 
 var name_null_function = new Identifier(PREFIX+"null_function");
-var null_function = new FunctionDeclaration([], name_null_function, [], nil);
+var null_function = new FunctionDeclaration([], name_null_function, [], nil());
 
 
 
 //@export CzConvert
 function CzConvert ( pack, func ) {
-    pack.head = pack.tail = nil;
+    pack.head = pack.tail = nil();
     var head = func.cdr;
     do{
         var block = head;
-        for ( var c=head;  !(c.cdr === nil || c.cdr.car instanceof Label);  c=c.cdr );
+        for ( var c=head;  !(c.cdr.isNil() || c.cdr.car instanceof Label);  c=c.cdr );
         head  = c.cdr;
-        c.cdr = nil;
+        c.cdr = nil();
         pack.addStatement( block_to_continuation(block) );
-    } while ( head !== nil );
+    } while ( !head.isNil() );
     var body = inner_function(func.params, pack.vars, pack.head);
     return new FunctionExpression(
                null,
@@ -50,7 +50,7 @@ function CzConvert ( pack, func ) {
                            [var_this, var_args]
                        )
                    ),
-                   nil
+                   nil()
                )
            );
 }
@@ -62,7 +62,7 @@ var name_exception = new Identifier("exception");
 
 function block_to_continuation ( block ) {
     var label = block.car;
-    for ( var c=block.cdr;  c !== nil;  c=c.cdr ) {
+    for ( var c=block.cdr;  !c.isNil();  c=c.cdr ) {
         c.car = c.car[Cz]();
     }
     block = cons( make_assign(name_arguments, var_args), block.cdr );
@@ -87,8 +87,8 @@ function inner_function ( params, vars, blocks ) {
              cons( make_assign(var_args, name_arguments),
              cons( make_assign(arguments_callee, var_self),
                    blocks  ) ) ) );
-    for ( var c=blocks;  c.cdr !== nil;  c=c.cdr );
-    c.cdr = cons( make_return(label0), nil );
+    for ( var c=blocks;  !c.cdr.isNil();  c=c.cdr );
+    c.cdr = cons( make_return(label0), nil() );
     return new FunctionExpression(null, params, blocks);
 }
 
@@ -216,7 +216,7 @@ NewStatement.prototype[Cz] = function ( ) {
                           ]
                       )
                   ),
-                  nil
+                  nil()
             ))
         ),
         make_return(

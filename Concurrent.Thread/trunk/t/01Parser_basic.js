@@ -5,6 +5,7 @@
 //@require        Concurrent.Thread.Compiler.Parser
 //@with-namespace Concurrent.Thread.Compiler
 
+//@require Data.Cons 0.2.0
 //@with-namespace Data.Cons
 
 
@@ -22,7 +23,7 @@ test(19, function(){
     ok( s.car.tbody.cdr.car.exp instanceof CallExpression               , "CallExpression" );
     ok( s.car.tbody.cdr.car.exp.func instanceof Identifier);
     ok( s.car.tbody.cdr.car.exp.args.length == 0 );
-    ok( s.car.tbody.cdr.cdr === nil );
+    ok( s.car.tbody.cdr.cdr.isNil() );
 
     ok( s.car.fbody instanceof Block                                    , "fbody");
     ok( s.car.fbody.cdr.car instanceof VarStatement                     , "VarStatement" );
@@ -34,6 +35,6 @@ test(19, function(){
     ok( s.car.fbody.cdr.car.decls[1].id == "y" );
     ok( s.car.fbody.cdr.car.decls[1].exp instanceof NumberLiteral );
     ok( s.car.fbody.cdr.car.decls[1].exp == 10 );
-    ok( s.car.fbody.cdr.cdr === nil );
+    ok( s.car.fbody.cdr.cdr.isNil() );
 
 });
