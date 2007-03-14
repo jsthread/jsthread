@@ -224,17 +224,22 @@ proto.slice = function ( start, end ) {
                 throw e;
             }
         }
-        try {
-            end = this.head(end);
-        } catch ( e ) {
-            if ( e instanceof RangeError ) {
-                end = end < 0 ? this.head() : this.tail();
-            } else {
-                throw e;
+        if ( end === undefined ) {
+            end = this.tail();
+        } else {
+            try {
+                end = this.head(end);
+            } catch ( e ) {
+                if ( e instanceof RangeError ) {
+                    end = end < 0 ? this.head() : this.tail();
+                } else {
+                    throw e;
+                }
             }
         }
     }
     var l = this.emptyCopy();
+    if ( start.compareTo(end) >= 0 ) return l;
     while ( !start.equals(end) ) {
         l.add(start.value());
         start = start.next();
