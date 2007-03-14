@@ -13,9 +13,9 @@ test(8, function(){
     ok( c.car === car(c) );
     ok( c.cdr === cdr(c) );
     
-    ok( String(nil) === "nil" );
-    ok( nil !== "nil" );
-    ok( c != nil );
+    ok( String(nil()) === "nil" );
+    ok( nil() !== "nil" );
+    ok( c != nil() );
     
     var d = cons("head", c);
     ok( String(d) === "(head . (car . cdr))");
