@@ -160,7 +160,7 @@ proto.foldl = function ( f, s ) {
 
 proto.fold1  =
 proto.foldl1 = function ( f ) {
-    if ( this.length == 0 ) throw new EmptyListError();
+    if ( this.length == 0 ) throw new EmptyEnumerationError();
     var s = this[0];
     f = wrap_for_fold(this, f, s);
     for ( var i=1;  i < this.length;  i++ ) {
@@ -194,7 +194,7 @@ proto.foldr = function ( f, s ) {
 };
 
 proto.foldr1 = function ( f ) {
-    if ( this.length == 0 ) throw new EmptyListError();
+    if ( this.length == 0 ) throw new EmptyEnumerationError();
     var s = this[this.length-1];
     var g = wrap_for_fold(this, function(x,y){return f.call(this,y,x);}, s);
     for ( var i=this.length-2;  i >= 0;  i-- ) {
