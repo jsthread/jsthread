@@ -289,16 +289,21 @@ function format ( /* variable args */ ) {
               });
 }
 
+function display ( el, str ) {
+    el.innerHTML += str;
+    el.scrollTop = el.scrollHeight - el.clientHeight;
+}
+
 Out.write = function ( /* variable args */ ) {
     var str = format.apply(null, arguments);
-    outConsole.innerHTML += str;
-    dblConsole.innerHTML += str;
+    display(outConsole, str);
+    display(dblConsole, str);
 };
 
 Err.write = function ( /* variable args */ ) {
     var str = format.apply(null, arguments);
-    errConsole.innerHTML += str;
-    dblConsole.innerHTML += str;
+    display(errConsole, str);
+    display(dblConsole, str);
 };
 
 
