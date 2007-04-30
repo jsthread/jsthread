@@ -291,7 +291,9 @@ function format ( /* variable args */ ) {
 
 function display ( el, str ) {
     el.innerHTML += str;
-    el.scrollTop = el.scrollHeight - el.clientHeight;
+    setTimeout(function(){  // delay scrolling
+        el.scrollTop = el.scrollHeight - el.clientHeight;
+    }, 0);
 }
 
 Out.write = function ( /* variable args */ ) {
