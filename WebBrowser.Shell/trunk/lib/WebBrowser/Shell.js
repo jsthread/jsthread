@@ -59,7 +59,7 @@ History.search = function ( code ) {
 History.register = function ( code ) {
     var i = this.search(code);
     if ( i >= 0 ) return i;
-    return this.push(code);
+    return this.push(code) - 1;
 };
 
 
@@ -85,9 +85,11 @@ function history_forward ( ) {
 
 function exec ( ) {
     var code = textarea.value;
+    var i = History.search(code);
+    if ( i >= 0 ) History.splice(i, 1);
     History.register(code);
     try {
-        StdIO.Out.writeln("> " + eval(code));
+        StdIO.Out.writeln("> " + ($_ = eval(code)));
     } catch ( e ) {
         StdIO.Err.writeln("Exception thrown: [" + e.name + "] " + e.message);
         if ( e.stack ) StdIO.Err.writeln(e.stack);
