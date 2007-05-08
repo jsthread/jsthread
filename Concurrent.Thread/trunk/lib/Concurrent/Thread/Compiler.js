@@ -76,18 +76,19 @@ function prepare ( f ) {
     func = CfConvert(pack, func);
     func = CsConvert(pack, func);
     func = CeConvert(pack, func);
+    convFunc(func);
     func = CzConvert(pack, func);
     return [
         "(function(){ ",
         "  var $Concurrent_Thread_self = ", f, ";",
         "  $Concurrent_Thread_self.$Concurrent_Thread_compiled = ", func, ";",
         "  return $Concurrent_Thread_self;",
-        "})();"
+        "})()"
     ].join("");
 }
 
 function parseFunction ( f ) {
-    if ( typeof f != "function" ) throw new TypeError();
+    if ( typeof f != "function" ) throw new TypeError("parseFunction: argument must be function");
     var parser = new Parser();
     var stmts = parser.parse("(" + f + ");");
     if ( !(stmts.car instanceof ExpStatement) ) throw new Error("not exp-statement!");
@@ -135,3 +136,92 @@ proto.addStatement = function ( s ) {
     }
 };
 
+
+// Conversion of FunctionExpression (very dirty implementation!!)
+var CF = "$Concurrent_Thread_Compiler_ConvFunc";
+
+function convFunc ( func ) {
+    for ( var c=func.cdr;  !c.isNil();  c=c.cdr ) {
+        c.car[CF]();
+    }
+}
+
+function convFuncExp ( e ) {
+    if ( e instanceof FunctionExpression ) {
+        return prepare(eval("1, " + e.toString()));  // "1, " is necessary for IE. Umm...
+    } else {
+        e[CF]();
+        return e;
+    }
+}
+
+Label.prototype[CF] = function ( ) { };
+
+ILExpStatement.prototype[CF] = function ( ) {
+    this.exp = convFuncExp(this.exp);
+};
+
+PropsStatement.prototype[CF]  = function ( ) {
+    this.expression = convFuncExp(this.expression);
+};
+
+GotoStatement.prototype[CF]  = function ( ) {
+    this.ret_val = convFuncExp(this.ret_val);
+};
+
+IfThenStatement.prototype[CF]  = function ( ) {
+    this.condition = convFuncExp(this.condition);
+};
+
+CallStatement.prototype[CF]  = function ( ) {
+    this.this_val = convFuncExp(this.this_val);
+    this.func     = convFuncExp(this.func);
+    for ( var i=0;  i < this.args.length;  i++ ) {
+        this.args[i] = convFuncExp(this.args[i]);
+    }
+};
+
+NewStatement.prototype[CF] = function ( ) {
+    this.func     = convFuncExp(this.func);
+    for ( var i=0;  i < this.args.length;  i++ ) {
+        this.args[i] = convFuncExp(this.args[i]);
+    }
+};
+
+RecieveStatement.prototype[CF]  = function ( ) {
+    this.lhs = convFuncExp(this.lhs);
+};
+
+
+Expression.prototype[CF] = function ( ) { };
+
+UnaryExpression.prototype[CF] = function ( ) {
+    this.exp = convFuncExp(this.exp);
+};
+
+BinaryExpression.prototype[CF] = function ( ) {
+    this.left  = convFuncExp(this.left);
+    this.right = convFuncExp(this.right);
+};
+
+ArrayInitializer.prototype[CF] = function ( ) {
+    for ( var i=0;  i < this.elems.length;  i++ ) {
+        this.elems[i] = convFuncExp(this.elems[i]);
+    }
+};
+
+ObjectInitializer.prototype[CF] = function ( ) {
+    for ( var i=0;  i < this.pairs.length;  i++ ) {
+        this.pairs[i].exp = convFuncExp(this.pairs.exp[i]);
+    }
+};
+
+DotAccessor.prototype[CF] = function ( ) {
+    this.base = convFuncExp(this.base);
+};
+
+ConditionalExpression.prototype[CF] = function ( ) {
+    this.cond = convFuncExp(this.cond);
+    this.texp = convFuncExp(this.texp);
+    this.fexp = convFuncExp(this.fexp);
+};
