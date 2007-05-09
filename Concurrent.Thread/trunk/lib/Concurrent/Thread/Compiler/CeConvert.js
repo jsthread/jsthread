@@ -53,10 +53,10 @@ var Ce = "$Concurrent_Thread_Compiler_CeConvert";
 
 //@export CeConvert
 function CeConvert ( pack, func ) {
-    for ( var c=func.cdr;  !c.isNil();  c=c.cdr ) {
+    for ( var c=func.body;  !c.isNil();  c=c.cdr ) {
         c.car[Ce](pack, 0);
     }
-    func.cdr = pack.head;
+    func.body = pack.head;
     pack.head = pack.tail = nil();
     return func;
 }

@@ -81,9 +81,9 @@ proto.toString = function ( ) {
 
 
 //@export Block
-function Block ( labels, statements, lineno, source ) {
+function Block ( labels, body, lineno, source ) {
     Statement.call(this, labels, lineno, source);
-    this.cdr = statements;  // cons-list of Statement
+    this.body = body;  // cons-list of Statement
 }
 
 var proto = Block.prototype = new Statement();
@@ -91,7 +91,7 @@ proto.constructor = Block;
 
 proto.toString = function ( ) {
     var buf = [labelsToString.call(this), "{"];
-    this.cdr.forEach(function( it ){
+    this.body.forEach(function( it ){
         buf.push(it);
     });
     buf.push("}");
@@ -443,8 +443,8 @@ proto.toString = function ( ) {
 //@export SwitchStatement
 function SwitchStatement ( labels, exp, clauses, lineno, source ) {
     Statement.call(this, labels, lineno, source);
-    this.exp = exp;      // Expression
-    this.cdr = clauses;  // cons-list of (CaseClause or DefaultClause)
+    this.exp     = exp;      // Expression
+    this.clauses = clauses;  // cons-list of (CaseClause or DefaultClause)
 }
 
 var proto = SwitchStatement.prototype = new Statement();
@@ -461,16 +461,16 @@ proto.toString = function ( ) {
 
 
 //@export CaseClause
-function CaseClause ( exp, statements, lineno, source ) {
-    this.exp    = exp;         // Expression
-    this.cdr    = statements;  // cons-list of Statement
-    this.lineno = lineno;      // Number (optional)
-    this.source = source;      // String (optional)
+function CaseClause ( exp, body, lineno, source ) {
+    this.exp    = exp;     // Expression
+    this.body   = body;    // cons-list of Statement
+    this.lineno = lineno;  // Number (optional)
+    this.source = source;  // String (optional)
 }
 
 CaseClause.prototype.toString = function ( ) {
     var buf = ["case ", this.exp, ":\n"];
-    this.cdr.forEach(function( it ){
+    this.body.forEach(function( it ){
         buf.push(it, "\n");
     });
     return buf.join("");
@@ -478,10 +478,10 @@ CaseClause.prototype.toString = function ( ) {
 
 
 //@export DefaultClause
-function DefaultClause ( statements, lineno, source ) {
-    this.cdr    = statements;  // cons-list of Statement
-    this.lineno = lineno;      // Number (optional)
-    this.source = source;      // String (optional)
+function DefaultClause ( body, lineno, source ) {
+    this.body   = body;    // cons-list of Statement
+    this.lineno = lineno;  // Number (optional)
+    this.source = source;  // String (optional)
 }
 
 DefaultClause.prototype.toString = function ( ) {
@@ -570,8 +570,8 @@ proto.toString = function ( ) {
 //@export TryCatchListStatement
 function TryCatchListStatement ( labels, tryBlock, catchList, lineno, source ) {
     Statement.call(this, labels, lineno, source);
-    this.tryBlock = tryBlock;   // Block
-    this.cdr      = catchList;  // cons-list of CatchGuard
+    this.tryBlock  = tryBlock;   // Block
+    this.catchList = catchList;  // cons-list of CatchGuard
 }
 
 var proto = TryCatchListStatement.prototype = new Statement();
@@ -580,7 +580,7 @@ proto.constructor = TryCatchListStatement;
 proto.toString = function ( ) {
     var buf = [ labelsToString.call(this),
                 "try ", this.tryBlock, "\n" ];
-    this.cdr.forEach(function( it ){
+    this.catchList.forEach(function( it ){
         buf.push(it);
     });
     return buf.join("");
@@ -591,7 +591,7 @@ proto.toString = function ( ) {
 function TryCatchListFinallyStatement ( labels, tryBlock, catchList, finallyBlock, lineno, source ) {
     Statement.call(this, labels, lineno, source);
     this.tryBlock     = tryBlock;      // Block
-    this.cdr          = catchList;     // cons-list of CatchGuard
+    this.catchList    = catchList;     // cons-list of CatchGuard
     this.finallyBlock = finallyBlock;  // Block
 }
 
@@ -601,7 +601,7 @@ proto.constructor = TryCatchListFinallyStatement;
 proto.toString = function ( ) {
     var buf = [ labelsToString.call(this),
                 "try ", this.tryBlock, "\n" ];
-    this.cdr.forEach(function( it ){
+    this.catchList.forEach(function( it ){
         buf.push(it);
     });
     buf.push("finally ", this.finallyBlock);
@@ -631,7 +631,7 @@ function FunctionDeclaration ( labels, name, params, body, lineno, source ) {
     Statement.call(this, labels, lineno, source);
     this.name   = name;    // Identifier
     this.params = params;  // array of Identifier
-    this.cdr    = body;    // cons-list of Statement
+    this.body   = body;    // cons-list of Statement
 }
 
 var proto = FunctionDeclaration.prototype = new Statement();
@@ -640,7 +640,7 @@ proto.constructor = FunctionDeclaration;
 proto.toString = function ( ) {
     var buf = [ "function ", this.name,
                 " (", this.params.join(", "), ") {\n" ];
-    this.cdr.forEach(function( it ){
+    this.body.forEach(function( it ){
         buf.push(it, "\n");
     });
     buf.push("}");

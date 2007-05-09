@@ -40,7 +40,7 @@
 //@require Concurrent.Thread
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
 
-//@require Data.Cons 0.2.0
+//@require Data.Cons.List
 //@with-namespace Data.Cons
 
 
@@ -67,7 +67,7 @@ var null_function = new FunctionDeclaration([], name_null_function, [], nil());
 //@export CzConvert
 function CzConvert ( pack, func ) {
     pack.head = pack.tail = nil();
-    var head = func.cdr;
+    var head = func.body;
     do{
         var block = head;
         for ( var c=head;  !(c.cdr.isNil() || c.cdr.car instanceof Label);  c=c.cdr );
@@ -122,9 +122,9 @@ function inner_function ( params, vars, blocks ) {
              cons( null_function,
              cons( make_assign(var_args, name_arguments),
              cons( make_assign(arguments_callee, var_self),
-                   blocks  ) ) ) );
-    for ( var c=blocks;  !c.cdr.isNil();  c=c.cdr );
-    c.cdr = cons( make_return(label0), nil() );
+                   blocks ) ) ) );
+    for ( var last=blocks.cdr.cdr.cdr;  !last.cdr.isNil();  last=last.cdr );
+    last.cdr = cons(make_return(label0), last.cdr);
     return new FunctionExpression(null, params, blocks);
 }
 

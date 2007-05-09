@@ -65,12 +65,11 @@ EmptyStatement.prototype[Css] = function ( ) {
 };
 
 Block.prototype[Css] = function ( ) {
-    var block = new Block(this.labels, nil(), this.lineno, this.source);
-    var last  = block;
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    var head = last = cons(null, nil());
+    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
         last = last.cdr = cons(c.car[Css](), last.cdr);
     }
-    return block;
+    return new Block(this.labels, head.cdr, this.lineno, this.source);
 };
 
 ExpStatement.prototype[Css] = function ( ) {
@@ -161,30 +160,27 @@ WithStatement.prototype[Css] = function ( ) {
 };
 
 SwitchStatement.prototype[Css] = function ( ) {
-    var stmt = new SwitchStatement(this.labels, this.exp[Css](), nil(), this.lineno, this.source);
-    var last = stmt;
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    var head = last = cons(null, nil());
+    for ( var c=this.clauses;  !c.isNil();  c=c.cdr ) {
         last = last.cdr = cons(c.car[Css](), last.cdr);
     }
-    return stmt;
+    return new SwitchStatement(this.labels, this.exp[Css](), head.cdr, this.lineno, this.source);
 };
 
 CaseClause.prototype[Css] = function ( ) {
-    var clause = new CaseClause(this.exp[Css](), nil(), this.lineno, this.source);
-    var last = clause;
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    var head = last = cons(null, nil());
+    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
         last = last.cdr = cons(c.car[Css](), last.cdr);
     }
-    return clause;
+    return new CaseClause(this.exp[Css](), head.cdr, this.lineno, this.source);
 };
 
 DefaultClause.prototype[Css] = function ( ) {
-    var clause = new DefaultClause(nil(), this.lineno, this.source);
-    var last = clause;
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    var head = last = cons(null, nil());
+    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
         last = last.cdr = cons(c.car[Css](), last.cdr);
     }
-    return clause;
+    return new DefaultClause(head.cdr, this.lineno, this.source);
 };
 
 ThrowStatement.prototype[Css] = function ( ) {
@@ -204,53 +200,59 @@ TryCatchFinallyStatement.prototype[Css] = function ( ) {
 };
 
 TryCatchListStatement.prototype[Css] = function ( ) {
-    if ( this.cdr.isNil() ) {  // no more catch-guard
+    if ( this.catchList.isNil() ) {  // no more catch-guard
         var block = this.tryBlock[Css]();
         block.labels = this.labels;
         return block;
-    } else if ( this.cdr.car.cond ) {  // one or more qualified catch-guard
-        var guard = this.cdr.car;
-        var catchBlock = new IfElseStatement(
-            [],
-            guard.cond[Css](),
-            guard.block[Css](),
-            (new TryCatchListStatement(
-                [],
-                new Block([], cons(new ThrowStatement([], guard.variable), nil())),
-                this.cdr.cdr,
-                this.cdr.cdr.lineno, this.cdr.cdr.source
-            ))[Css](),
-            guard.lineno, guard.source
-        );
+    } else if ( this.catchList.car.cond ) {  // one or more qualified catch-guard
+        var guard = this.catchList.car;
         return new TryCatchStatement(
             this.labels,
             this.tryBlock[Css](),
             guard.variable,
-            new Block([], cons(catchBlock, nil()))
+            new Block([], list(
+                new IfElseStatement(
+                    [],
+                    guard.cond[Css](),
+                    guard.block[Css](),
+                    (new TryCatchListStatement(
+                        [],
+                        new Block([], list(new ThrowStatement([], guard.variable))),
+                        this.catchList.cdr,
+                        this.catchList.cdr.lineno, this.cdr.cdr.source
+                    ))[Css](),
+                    guard.lineno, guard.source
+                )
+            ))
         );
     } else {  // (only one) default catch-guard
-        var guard = this.cdr.car;
+        var guard = this.catchList.car;
         return new TryCatchStatement(this.labels, this.tryBlock[Css](), guard.variable, guard.block[Css](), this.lineno, this.source);
     }
 };
 
 TryCatchListFinallyStatement.prototype[Css] = function ( ) {
-    var tryBlock = (new TryCatchListStatement([], this.tryBlock, this.cdr, this.lineno, this.source))[Css]();
     return new TryFinallyStatement(
         this.labels,
-        new Block([], cons(tryBlock, nil()), this.lineno, this.source),
+        new Block([], list(
+            (new TryCatchListStatement([],
+                this.tryBlock,
+                this.catchList,
+                this.lineno,
+                this.source
+            ))[Css]()
+        ), this.lineno, this.source),
         this.finallyBlock[Css](),
         this.lineno, this.source
     );
 };
 
 FunctionDeclaration.prototype[Css] = function ( ) {
-    var func = new FunctionDeclaration(this.labels, this.name, this.param, nil(), this.lineno, this.source);
-    var last = func;
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    var head = last = cons(null, nil());
+    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
         last = last.cdr = cons(c.car[Css](), last.cdr);
     }
-    return func;
+    return new FunctionDeclaration(this.labels, this.name, this.params, head.cdr, this.lineno, this.source);
 };
 
 
@@ -289,12 +291,11 @@ ObjectInitializer.prototype[Css] = function ( ) {
 };
 
 FunctionExpression.prototype[Css] = function ( ) {
-    var func = new FunctionExpression(this.name, this.params, nil());
-    var last = func;
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    var head = last = cons(null, nil());
+    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
         last = last.cdr = cons(c.car[Css](), last.cdr);
     }
-    return func;
+    return new FunctionExpression(this.name, this.params, head.cdr);
 };
 
 DotAccessor.prototype[Css] = function ( ) {

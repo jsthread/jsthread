@@ -51,18 +51,15 @@ var Cf = "$Concurrent_Thread_Compiler_CfConvert";
 
 //@export CfConvert
 function CfConvert ( pack, func ) {
-    for ( var i=0;  i < func.params.length;  i++ ) {
-        pack.registerVar(func.params[i]);
-    }
-    for ( var c=func.cdr;  !c.isNil();  c=c.cdr ) {
+    for ( var c=func.body;  !c.isNil();  c=c.cdr ) {
         c.car = c.car[Cf](pack);
     }
     if ( pack.head.isNil() ) {
-        pack.head = func.cdr;
+        pack.head = func.body;
     } else {
-        pack.tail.cdr = func.cdr;
+        pack.tail.cdr = func.body;
     }
-    func.cdr = pack.head;
+    func.body = pack.head;
     pack.head = pack.tail = nil();
     return func;
 }
@@ -75,7 +72,7 @@ Statement.prototype[Cf] = function ( pack ) {
 
 
 Block.prototype[Cf] = function ( pack ) {
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
         c.car = c.car[Cf](pack);
     }
     return this;
@@ -191,7 +188,7 @@ FunctionDeclaration.prototype[Cf] = function ( pack ) {
         [],
         new SimpleAssignExpression(
             this.name,
-            new FunctionExpression(null, this.params, this.cdr)
+            new FunctionExpression(null, this.params, this.body)
         ),
         this.lineno,
         this.source

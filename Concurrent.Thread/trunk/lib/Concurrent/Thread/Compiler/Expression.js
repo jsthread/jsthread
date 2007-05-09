@@ -375,7 +375,7 @@ proto.hasSideEffect = function ( ) {
 function FunctionExpression ( name, params, body ) {
     this.name   = name;    // Identifier or null
     this.params = params;  // array of Identifier
-    this.cdr    = body;    // cons-list of Statement
+    this.body   = body;    // cons-list of Statement
 }
 
 var proto = FunctionExpression.prototype = new Expression();
@@ -385,7 +385,7 @@ proto.toString = function ( ) {
     var buf = ["function "];
     if ( this.name ) buf.push(this.name);
     buf.push( "(", this.params.join(", "), ") {\n");
-    this.cdr.forEach(function( it ){
+    this.body.forEach(function( it ){
         buf.push(it, "\n");
     });
     buf.push("}");

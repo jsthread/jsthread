@@ -439,7 +439,7 @@ proto.statementHelper = function ( labels )
         this.mustMatchToken(Token.RP, "msg.no.paren.after.switch");
         this.mustMatchToken(Token.LC, "msg.no.brace.switch");
         var switchStatement = new SwitchStatement(labels, exp, nil(), lineno, this.source);
-        var clauses = switchStatement;
+        var clauses = cons(nil(), nil());
         this.nestingOfSwitch++;
         try {
             var hasDefault = false;
@@ -471,6 +471,7 @@ proto.statementHelper = function ( labels )
         } finally {
             this.nestingOfSwitch--;
         }
+        switchStatement.clauses = clauses.cdr;
         return switchStatement;
       }
 

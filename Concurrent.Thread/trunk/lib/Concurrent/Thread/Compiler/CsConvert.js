@@ -56,7 +56,7 @@ var undefinedExp = new VoidExpression(new NumberLiteral(0));
 //@export CsConvert
 function CsConvert ( pack, func ) {
     pack.addStatement(pack.createLabel());
-    for ( var c=func.cdr;  !c.isNil();  c=c.cdr ) c.car[Cs](pack);
+    for ( var c=func.body;  !c.isNil();  c=c.cdr ) c.car[Cs](pack);
     pack.addStatement( new GotoStatement(pack.cont_return, undefinedExp) );
     for ( var c=pack.head;  !c.cdr.cdr.isNil();  c=c.cdr ) {
         if ( !(c.car instanceof GotoStatement || c.car instanceof CallStatement)
@@ -65,7 +65,7 @@ function CsConvert ( pack, func ) {
             c.cdr = cons( new GotoStatement(c.cdr.car.id, undefinedExp), c.cdr);
         }
     }
-    func.cdr = pack.head;
+    func.body = pack.head;
     pack.head = pack.tail = nil();
     return func;
 }
@@ -76,7 +76,7 @@ EmptyStatement.prototype[Cs] = function ( pack ) {
 };
 
 Block.prototype[Cs] = function ( pack ) {
-    for ( var c=this.cdr;  !c.isNil();  c=c.cdr ) {
+    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
         c.car[Cs](pack);
     }
 };

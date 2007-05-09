@@ -141,7 +141,7 @@ proto.addStatement = function ( s ) {
 var CF = "$Concurrent_Thread_Compiler_ConvFunc";
 
 function convFunc ( func ) {
-    for ( var c=func.cdr;  !c.isNil();  c=c.cdr ) {
+    for ( var c=func.body;  !c.isNil();  c=c.cdr ) {
         c.car[CF]();
     }
 }
