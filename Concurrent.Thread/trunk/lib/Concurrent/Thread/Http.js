@@ -67,54 +67,115 @@ try {
 }
 
 
-
-//@export get
-function get ( url ) {
-	throw new Error();
+//@export send
+function send ( method, url, body, headers ) {
+    throw new Error(NAMESPACE + ".send is unusable in non-compiled function");
 }
 
-get.$Concurrent_Thread_compiled = function (
-    $Concurrent_Thread_this,
-    $Concurrent_Thread_arguments,
-    $Concurrent_Thread_continuation
-) {
+var LoadedException = {};
+
+send.$Concurrent_Thread_compiled = function ( $this, $args, $cont ) {
+    var method=$args[0], url=$args[1], body=$args[2], headers=$args[3];
+    if ( !headers || !(headers instanceof Array) ) headers = [];
     var req = createXMLHttpRequest();
-    req.open("GET", $Concurrent_Thread_arguments[0], true);
+    req.open(method, url, true);
+    for ( var i=0;  i < headers.length;  i+=2 ) {
+        req.setRequestHeader(headers[i], headers[i+1]);
+    }
     var self = Concurrent.Thread.self();
     var loaded    = false;
     var cache_hit = true;
     req.onreadystatechange = function ( ) {
         if ( req.readyState == 4 ) {
             loaded = true;
-            if ( !cache_hit ) self.notify();
+            if ( !cache_hit ) self.notify(LoadedException);
         }
     };
-    req.send(null);  // "send" method occasionally causes "onload" event here.
+    req.send(body);  // Firefox occasionally causes "onload" event here. Maybe, it occurs in case of cache-hit.
     cache_hit = false;
     if ( loaded ) {
         return {
-            continuation: $Concurrent_Thread_continuation,
+            continuation: $cont,
             ret_val     : req,
             timeout     : undefined
         };
     } else {
+        var ex_handler = {
+            procedure: function ( e ) {
+                if ( e === LoadedException ) {
+                    return {
+                        continuation: $cont,
+                        ret_val     : req,
+                        timeout     : undefined
+                    };
+                } else {
+                    try{ req.abort(); }catch(e){}  // IE less than 7 does not support "abort".
+                    return {
+                        continuation: $cont,
+                        ret_val     : req,
+                        timeout     : undefined
+                    };
+                }
+            },
+            this_val : null
+        };
+        ex_handler.exception = ex_handler;  // Cyclic reference assures to abort request.
         return {
             timeout     : -1,
             continuation: {
-                procedure: function ( ) { },
+                procedure: null,
                 this_val : null,
-                exception: {
-                    procedure: function ( ) {
-                        return {
-                            continuation: $Concurrent_Thread_continuation,
-                            ret_val     : req,
-                            timeout     : undefined
-                        };
-                    },
-                    this_val : null,
-                    exception: $Concurrent_Thread_continuation.exception
-                }
+                exception: ex_handler
             }
         };
     }
+};
+
+
+//@export get
+function get ( url, headers ) {
+    throw new Error(NAMESPACE + ".get is unusable in non-compiled function");
+}
+
+get.$Concurrent_Thread_compiled = function ($this, $args, $cont) {
+    return send.$Concurrent_Thread_compiled(
+        null,
+        ["GET", $args[0], $args[1], null],
+        $cont
+    );
+}
+
+
+//@export post
+function post ( url, body, headers ) {
+    throw new Error(NAMESPACE + ".post is unusable in non-compiled function");
+}
+
+post.$Concurrent_Thread_compiled = function ( $this, $args, $cont ) {
+    var url=$args[0], body=$args[1], headers=$args[2];
+    if ( typeof body == "object" ) {
+        var vals = [];
+        for ( var i in body ) {
+            if ( body.hasOwnProperty(i) ) {
+                vals.push( encodeURIComponent(i) + "=" + encodeURIComponent(body[i]) );
+            }
+        }
+        body = vals.join("&");
+    }
+    if ( !headers || !(headers instanceof Array) ) headers = [];
+    var content_type_exists = false;
+    for ( var i=0;  i < this.length;  i+=2 ) {
+        if ( String(headers[i]).match(/^Content-type$/i) ) {
+            content_type_exists = true;
+            break;
+        }
+    }
+    if ( !content_type_exists ) {
+        headers.push("Content-type", "application/x-www-form-urlencoded");
+    }
+    return send.$Concurrent_Thread_compiled(
+        null,
+        ["POST", url, body, headers],
+        $cont
+    );
 };
