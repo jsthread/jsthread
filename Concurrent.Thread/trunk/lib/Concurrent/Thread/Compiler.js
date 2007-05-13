@@ -79,8 +79,9 @@ function prepare ( f ) {
     convFunc(func);
     func = CzConvert(pack, func);
     return [
-        "(function(){ ",
+        "(function(){",
         "  var $Concurrent_Thread_self = ", f, ";",
+        name  ?  "var " + name + " = " + "$Concurrent_Thread_self;"  :  "",
         "  $Concurrent_Thread_self.$Concurrent_Thread_compiled = ", func, ";",
         "  return $Concurrent_Thread_self;",
         "})()"
@@ -212,7 +213,7 @@ ArrayInitializer.prototype[CF] = function ( ) {
 
 ObjectInitializer.prototype[CF] = function ( ) {
     for ( var i=0;  i < this.pairs.length;  i++ ) {
-        this.pairs[i].exp = convFuncExp(this.pairs.exp[i]);
+        this.pairs[i].exp = convFuncExp(this.pairs[i].exp);
     }
 };
 

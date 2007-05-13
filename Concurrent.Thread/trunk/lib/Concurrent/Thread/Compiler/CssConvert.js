@@ -285,7 +285,7 @@ ArrayInitializer.prototype[Css] = function ( ) {
 ObjectInitializer.prototype[Css] = function ( ) {
     var pairs = [];
     for ( var i=0;  i < this.pairs.length;  i++ ) {
-        pairs[i] = {prop:this.pairs[i].id, exp:this.pairs[i].exp[Css]()};
+        pairs[i] = {prop:this.pairs[i].prop, exp:this.pairs[i].exp[Css]()};
     }
     return new ObjectInitializer(pairs);
 };
