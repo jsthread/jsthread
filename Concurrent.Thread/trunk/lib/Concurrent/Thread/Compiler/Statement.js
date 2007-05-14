@@ -486,7 +486,7 @@ function DefaultClause ( body, lineno, source ) {
 
 DefaultClause.prototype.toString = function ( ) {
     var buf = ["default:\n"];
-    this.cdr.forEach(function( it ){
+    this.body.forEach(function( it ){
         buf.push(it, "\n");
     });
     return buf.join("");
