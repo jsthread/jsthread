@@ -464,8 +464,8 @@ proto.statementHelper = function ( labels )
                     break switchLoop;
                 }
                 var c = caseExpression
-                          ?  new CaseClause(caseExpression, this.statementsInSwitch, lineno, this.source)
-                          :  new DefaultClause(this.statementsInSwitch, lineno, this.source);
+                          ?  new CaseClause(caseExpression, this.statementsInSwitch(), lineno, this.source)
+                          :  new DefaultClause(this.statementsInSwitch(), lineno, this.source);
                 clauses = clauses.cdr = cons(c, clauses.cdr);
             }
         } finally {
@@ -670,7 +670,7 @@ proto.statementHelper = function ( labels )
         var lineno = this.ts.getLineno();
         var target = this.matchJumpLabelName(Token.BREAK);
         if ( target == null ) {
-            if ( !this.nestingOfLoop || !this.nestingOfSwitch ) this.reportError("msg.bad.break");
+            if ( !this.nestingOfLoop && !this.nestingOfSwitch ) this.reportError("msg.bad.break");
         }
         statement = new BreakStatement(labels, target, lineno, this.source);
         break;
