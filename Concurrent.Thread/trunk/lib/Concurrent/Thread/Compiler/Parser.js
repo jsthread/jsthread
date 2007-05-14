@@ -440,6 +440,7 @@ proto.statementHelper = function ( labels )
         this.mustMatchToken(Token.LC, "msg.no.brace.switch");
         var switchStatement = new SwitchStatement(labels, exp, nil(), lineno, this.source);
         var clauses = cons(nil(), nil());
+        var last = clauses;
         this.nestingOfSwitch++;
         try {
             var hasDefault = false;
@@ -466,7 +467,7 @@ proto.statementHelper = function ( labels )
                 var c = caseExpression
                           ?  new CaseClause(caseExpression, this.statementsInSwitch(), lineno, this.source)
                           :  new DefaultClause(this.statementsInSwitch(), lineno, this.source);
-                clauses = clauses.cdr = cons(c, clauses.cdr);
+                last = last.cdr = cons(c, last.cdr);
             }
         } finally {
             this.nestingOfSwitch--;
