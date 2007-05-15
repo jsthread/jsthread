@@ -62,7 +62,7 @@ proto.constructor = IdentifierSet;
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-proto.contains = function ( id ) {
+proto.contains = function ( /* variable arguments */ ) {
     for ( var i=0;  i < arguments.length;  i++ ) {
         var id = arguments[i];
         if ( !(id instanceof Identifier) ) throw new TypeError("arguments[" + i + "] is not of type Identifier");
