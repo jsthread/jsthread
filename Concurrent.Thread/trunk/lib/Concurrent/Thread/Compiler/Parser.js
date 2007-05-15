@@ -345,7 +345,7 @@ proto.parameterList = function ( )
     do {
         this.mustMatchToken(Token.NAME, "msg.no.parm");
         var p = new Identifier(this.ts.getString());
-        if ( exists.has(p) ) this.addWarning("msg.dup.parms", s);
+        if ( exists.contains(p) ) this.addWarning("msg.dup.parms", s);
         params.push(p);
         exists.add(p);
     } while ( this.matchToken(Token.COMMA) );
@@ -755,7 +755,7 @@ proto.statementHelper = function ( labels )
         } catch ( e ) {
             if ( e instanceof LabelException ) {
                 // Label found!
-                if ( this.allLabelSet.has(e.label) ) this.reportError("msg.dup.label");
+                if ( this.allLabelSet.contains(e.label) ) this.reportError("msg.dup.label");
                 this.allLabelSet.add(e.label);
                 labels.push(e.label);
                 try {
@@ -813,12 +813,12 @@ proto.matchJumpLabelName = function ( token )
     this.consumeToken();
     switch ( token ) {
       case Token.CONTINUE:
-        if ( !this.loopLabelSet.has(label) ) {
+        if ( !this.loopLabelSet.contains(label) ) {
             this.reportError("msg.undef.label");
         }
         break;
       case Token.BREAK:
-        if ( !this.labelSet.has(label) ) {
+        if ( !this.allLabelSet.contains(label) ) {
             this.reportError("msg.undef.label");
         }
         break;

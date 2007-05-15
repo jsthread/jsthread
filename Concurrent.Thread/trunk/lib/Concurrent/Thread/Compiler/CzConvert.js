@@ -130,16 +130,9 @@ function inner_function ( params, vars, blocks ) {
 
 function var_declaration ( vars ) {
     var decls = [];
-/*  // IdentifierSet is not a subclass of Data.Functional.Set yet!
     vars.forEach(function( it ){
         decls.push({ id:it, exp:null });
     });
- */
-    vars = vars.toArray();
-    if ( vars.length == 0 ) return new EmptyStatement([]);
-    for ( var i=0;  i < vars.length;  i++ ) {
-        decls.push({ id:vars[i], exp:null });
-    }
     return new VarStatement([], decls);
 }
 

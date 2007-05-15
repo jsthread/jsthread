@@ -38,44 +38,105 @@
 //@namespace Concurrent.Thread.Compiler
 //@require   Concurrent.Thread
 
+//@require Data.Functional.Set
+//@with-namespace Data.Functional
+//@require Data.Iterator.Iterator
+//@require Data.Iterator.NoSuchElementError
+//@with-namespace Data.Iterator
+//@require Data.Error.IllegalStateError
+//@with-namespace Data.Error
+
+
+
+var MIN_INT = Math.pow(-2, 53);
 
 //@export IdentifierSet
-function IdentifierSet ( )
-{
-    this.set = {};
+function IdentifierSet ( ) {
+    this._set      = {};
+    this._state_no = MIN_INT;
 }
 
-var proto = IdentifierSet.prototype;
+var proto = IdentifierSet.prototype = new Set();
+proto.constructor = IdentifierSet;
 
 
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
-proto.has = function ( id )
-{
+proto.contains = function ( id ) {
+    if ( !(id instanceof Identifier) ) throw new TypeError("argument is not of type Identifier");
     // Because "hasOwnProperty" itself can be used as identifier,
-    // we need to avoid "this.set.hasOwnProperty".
-    return hasOwnProperty.call(this.set, id.valueOf());
+    // we need to avoid "this._set.hasOwnProperty".
+    return hasOwnProperty.call(this._set, id.valueOf());
 };
 
 
-proto.add = function ( id )
-{
-    this.set[id.valueOf()] = id;
+proto.add = function ( id ) {
+    if ( !(id instanceof Identifier) ) throw new TypeError("argument is not of type Identifier");
+    var p = id.valueOf();
+    if ( this._set[p] === id ) {
+        return false;
+    } else {
+        this._set[p] = id;
+        this._state_no++;
+        return true;
+    }
 };
 
 
-proto.remove = function ( id )
-{
-    delete this.set[id.valueOf()];
+proto.remove = function ( id ) {
+    if ( !(id instanceof Identifier) ) throw new TypeError("argument is not of type Identifier");
+    var p = id.valueOf();
+    if ( hasOwnProperty.call(this._set, p) ) {
+        delete this._set[p];
+        this._state_no++;
+        return true;
+    } else {
+        return false;
+    }
 };
 
 
-proto.toArray = function ( )
-{
+proto.toArray = function ( ) {
     var arr = [];
-    for ( var i in this.set ) {
-        if ( hasOwnProperty.call(this.set, i) ) arr.push(this.set[i]);
+    for ( var i in this._set ) {
+        if ( hasOwnProperty.call(this._set, i) ) arr.push(this._set[i]);
     }
     return arr;
 };
 
+
+proto.iterator = function ( ) {
+    return new IdIterator(this, this.toArray(), 0);
+};
+
+
+
+function IdIterator ( parent, elems, index ) {
+    this._parent = parent;
+    this._elems  = elems;
+    this._index  = index;
+    this._state_no = parent._state_no;
+}
+
+var proto = IdIterator.prototype = new Iterator();
+proto.constructor = IdIterator;
+
+proto.isBoundTo = function ( o ) {
+    return this._parent === o;
+};
+
+proto.isTail = function ( ) {
+    if ( this._state_no !== this._parent._state_no ) throw new IllegalStateError("parent IdentifierSet object's state has been changed");
+    return this._index >= this._elems.length;
+};
+
+proto.next = function ( ) {
+    if ( this._state_no !== this._parent._state_no ) throw new IllegalStateError("parent IdentifierSet object's state has been changed");
+    if ( this.isTail() ) throw new NoSuchElementError("no more element after the tail");
+    return new IdIterator(this._parent, this._elems, this._index+1);
+};
+
+proto.value = function ( ) {
+    if ( this._state_no !== this._parent._state_no ) throw new IllegalStateError("parent IdentifierSet object's state has been changed");
+    return this._elems[this._index];
+};
