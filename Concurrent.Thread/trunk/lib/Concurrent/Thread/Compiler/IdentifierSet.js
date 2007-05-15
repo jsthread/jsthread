@@ -63,36 +63,46 @@ proto.constructor = IdentifierSet;
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 proto.contains = function ( id ) {
-    if ( !(id instanceof Identifier) ) throw new TypeError("argument is not of type Identifier");
-    // Because "hasOwnProperty" itself can be used as identifier,
-    // we need to avoid "this._set.hasOwnProperty".
-    return hasOwnProperty.call(this._set, id.valueOf());
+    for ( var i=0;  i < arguments.length;  i++ ) {
+        var id = arguments[i];
+        if ( !(id instanceof Identifier) ) throw new TypeError("arguments[" + i + "] is not of type Identifier");
+        // Because "hasOwnProperty" itself can be used as identifier,
+        // we need to avoid "this._set.hasOwnProperty".
+        if ( !hasOwnProperty.call(this._set, id.valueOf()) ) return false;
+    }
+    return true;
 };
 
 
-proto.add = function ( id ) {
-    if ( !(id instanceof Identifier) ) throw new TypeError("argument is not of type Identifier");
-    var p = id.valueOf();
-    if ( this._set[p] === id ) {
-        return false;
-    } else {
-        this._set[p] = id;
-        this._state_no++;
-        return true;
+proto.add = function ( /* variable arguments */ ) {
+    var changed = false;
+    for ( var i=0;  i < arguments.length;  i++ ) {
+        var id = arguments[i];
+        if ( !(id instanceof Identifier) ) throw new TypeError("arguments[" + i + "] is not of type Identifier");
+        var p = id.valueOf();
+        if ( this._set[p] !== id ) {
+            this._set[p] = id;
+            this._state_no++;
+            changed = true;
+        }
     }
+    return changed;
 };
 
 
-proto.remove = function ( id ) {
-    if ( !(id instanceof Identifier) ) throw new TypeError("argument is not of type Identifier");
-    var p = id.valueOf();
-    if ( hasOwnProperty.call(this._set, p) ) {
-        delete this._set[p];
-        this._state_no++;
-        return true;
-    } else {
-        return false;
+proto.remove = function ( /* variable arguments */ ) {
+    var changed = false;
+    for ( var i=0;  i < arguments.length;  i++ ) {
+        var id = arguments[i];
+        if ( !(id instanceof Identifier) ) throw new TypeError("argument is not of type Identifier");
+        var p = id.valueOf();
+        if ( hasOwnProperty.call(this._set, p) ) {
+            delete this._set[p];
+            this._state_no++;
+            changed = true;
+        }
     }
+    return changed;
 };
 
 
