@@ -19,22 +19,22 @@ test(19, function(){
     ok( s.car instanceof IfElseStatement                                , s.car );
 
     ok( s.car.tbody instanceof Block                                    , "tbody" );
-    ok( s.car.tbody.cdr.car instanceof ExpStatement );
-    ok( s.car.tbody.cdr.car.exp instanceof CallExpression               , "CallExpression" );
-    ok( s.car.tbody.cdr.car.exp.func instanceof Identifier);
-    ok( s.car.tbody.cdr.car.exp.args.length == 0 );
-    ok( s.car.tbody.cdr.cdr.isNil() );
+    ok( s.car.tbody.body.car instanceof ExpStatement );
+    ok( s.car.tbody.body.car.exp instanceof CallExpression               , "CallExpression" );
+    ok( s.car.tbody.body.car.exp.func instanceof Identifier);
+    ok( s.car.tbody.body.car.exp.args.length == 0 );
+    ok( s.car.tbody.body.cdr.isNil() );
 
     ok( s.car.fbody instanceof Block                                    , "fbody");
-    ok( s.car.fbody.cdr.car instanceof VarStatement                     , "VarStatement" );
-    ok( s.car.fbody.cdr.car.decls.length == 2 );
-    ok( s.car.fbody.cdr.car.decls[0].id instanceof Identifier           , "x");
-    ok( s.car.fbody.cdr.car.decls[0].id == "x" );
-    ok( s.car.fbody.cdr.car.decls[0].exp === null );
-    ok( s.car.fbody.cdr.car.decls[1].id instanceof Identifier           , "y");
-    ok( s.car.fbody.cdr.car.decls[1].id == "y" );
-    ok( s.car.fbody.cdr.car.decls[1].exp instanceof NumberLiteral );
-    ok( s.car.fbody.cdr.car.decls[1].exp == 10 );
-    ok( s.car.fbody.cdr.cdr.isNil() );
+    ok( s.car.fbody.body.car instanceof VarStatement                     , "VarStatement" );
+    ok( s.car.fbody.body.car.decls.length == 2 );
+    ok( s.car.fbody.body.car.decls[0].id instanceof Identifier           , "x");
+    ok( s.car.fbody.body.car.decls[0].id == "x" );
+    ok( s.car.fbody.body.car.decls[0].exp === null );
+    ok( s.car.fbody.body.car.decls[1].id instanceof Identifier           , "y");
+    ok( s.car.fbody.body.car.decls[1].id == "y" );
+    ok( s.car.fbody.body.car.decls[1].exp instanceof NumberLiteral );
+    ok( s.car.fbody.body.car.decls[1].exp == 10 );
+    ok( s.car.fbody.body.cdr.isNil() );
 
 });
