@@ -277,7 +277,7 @@ proto.constructor = ForVarStatement;
 proto.toString = function ( ) {
     return [ labelsToString.call(this),
              "for (",
-             new VarStatement([], decls), " ",
+             (this.decls.length ? new VarStatement([], this.decls) : ";"), " ",
              this.cond ? this.cond : "", "; ",
              this.incr ? this.incr : "",
              ") ",
