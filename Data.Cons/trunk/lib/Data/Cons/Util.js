@@ -42,6 +42,7 @@
 //@with-namespace Data.Cons
 
 //@require Data.Error.IllegalStateError
+//@with-namespace Data.Error
 
 
 
