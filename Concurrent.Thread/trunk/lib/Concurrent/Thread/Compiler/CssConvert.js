@@ -104,7 +104,15 @@ WhileStatement.prototype[Css] = function ( ) {
 };
 
 ForStatement.prototype[Css] = function ( ) {
-    return new ForStatement(this.labels, this.init[Css](), this.cond[Css](), this.incr[Css](), this.body[Css](), this.lineno, this.source);
+    return new ForStatement(
+        this.labels,
+        this.init ? this.init[Css]() : null,
+        this.cond ? this.cond[Css]() : null,
+        this.incr ? this.incr[Css]() : null,
+        this.body[Css](),
+        this.lineno,
+        this.source
+    );
 };
 
 ForVarStatement.prototype[Css] = function ( ) {
@@ -115,7 +123,15 @@ ForVarStatement.prototype[Css] = function ( ) {
             exp: this.decls[i].exp ? this.decls[i].exp[Css]() : null
         };
     }
-    return new ForVarStatement(this.labels, decls, this.cond[Css](), this.incr[Css](), this.body[Css](), this.lineno, this.source);
+    return new ForVarStatement(
+        this.labels,
+        decls,
+        this.cond ? this.cond[Css]() : null,
+        this.incr ? this.incr[Css]() : null,
+        this.body[Css](),
+        this.lineno,
+        this.source
+    );
 };
 
 ForInStatement.prototype[Css] = function ( ) {
