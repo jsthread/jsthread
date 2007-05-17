@@ -382,13 +382,13 @@ var proto = FunctionExpression.prototype = new Expression();
 proto.constructor = FunctionExpression;
 
 proto.toString = function ( ) {
-    var buf = ["function "];
+    var buf = ["(function "];
     if ( this.name ) buf.push(this.name);
     buf.push( "(", this.params.join(", "), ") {\n");
     this.body.forEach(function( it ){
         buf.push(it, "\n");
     });
-    buf.push("}");
+    buf.push("})");
     return buf.join("");
 };
 
