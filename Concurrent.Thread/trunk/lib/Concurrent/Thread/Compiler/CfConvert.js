@@ -35,165 +35,201 @@
  * ***** END LICENSE BLOCK ***** */
 
 //@esmodpp
-//@version 0.0.0
 //@namespace Concurrent.Thread.Compiler
 
 //@require Concurrent.Thread
+//@require Concurrent.Thread.Compiler.Expression
 //@require Concurrent.Thread.Compiler.Statement
+//@require Concurrent.Thread.Compiler.IntermediateLanguage
+//@with-namespace Concurrent.Thread
+var IL = Concurrent.Thread.Compiler.IntermediateLanguage;
 
-//@require Data.Cons 0.2.0
+//@require Data.Error
+//@with-namespace Data.Error
+
+//@require Data.Cons.List
+//@require Data.Cons.Util
 //@with-namespace Data.Cons
+//@with-namespace Data.Cons.Util
+//@require Data.Functional.Array
 
 
 
-var Cf = "$Concurrent_Thread_Compiler_CfConvert";
-
+var Cf = "$Concurrent_Thread_Compiler_Cf";
 
 //@export CfConvert
-function CfConvert ( pack, func ) {
-    for ( var c=func.body;  !c.isNil();  c=c.cdr ) {
-        c.car = c.car[Cf](pack);
-    }
-    if ( pack.head.isNil() ) {
-        pack.head = func.body;
-    } else {
-        pack.tail.cdr = func.body;
-    }
-    func.body = pack.head;
-    pack.head = pack.tail = nil();
-    return func;
+function CfConvert ( func ) {
+    var cache = new IdentifierMap();
+    var start = CfTarget(func.start, cache);
+    var cache2 = new IdentifierMap();
+    cache.values().forEach(function( it ){
+        cache2.put(new Identifier(it.id), it);
+    });
+    var body  = cons(null, nil());
+    append = adder(body);
+    cacheToList(cache2).forEach(function( it ){
+        return append(cache2.get(it));
+    });
+    return new IL.Function(func.name, func.params, func.vars, body.cdr, start);
 }
 
 
+function cacheToList ( cache ) {
+    // Resolves exception-dependency and sort blocks in valid order.
+    var blocks = [];
+    var depends = new IdentifierMap();
+    cache.values().forEach(function( it ){
+        blocks.push(it);
+        depends.put(
+            new Identifier(it.id),
+            it.exception instanceof IL.Block ? new Identifier(it.exception.id) : undefined
+        );
+    });
+    return check_cyclic(depends);
+}
 
-Statement.prototype[Cf] = function ( pack ) {
-    return this;
-};
 
+//@export CyclicExceptionHandlerError
+var CyclicExceptionHandlerError = newErrorClass(NAMESPACE + ".CyclicExceptionHandlerError");
 
-Block.prototype[Cf] = function ( pack ) {
-    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
-        c.car = c.car[Cf](pack);
-    }
-    return this;
-};
-
-
-VarStatement.prototype[Cf] = function ( pack ) {
-    var assigns = [];
-    for ( var i=0;  i < this.decls.length;  i++ ) {
-        pack.registerVar(this.decls[i].id);
-        if ( this.decls[i].exp ) {
-            assigns.push( new SimpleAssignExpression(this.decls[i].id, this.decls[i].exp) );
+function check_cyclic ( depends ) {
+    var ok = {};
+    function traverse ( id, path ) {
+        if ( ok[id] ) return "OK";
+        var next = depends.get(id);
+        if ( !next ) {
+            ok[id] = true;
+            path.push(id);
+            return "OK";
         }
+        path.forEach(function( it ){
+            if ( it.valueOf() == id.valueOf() ) {
+                throw new CyclicExceptionHandlerError("cyclic exception handler: " + path.concat([id]).join(" -> "));
+            }
+        });
+        path.push(id);
+        traverse(next, path);
+        ok[id] = true;
+        return "OK";
     }
-    if ( !assigns.length ) {
-        return new EmptyStatement([], this.lineno, this.source);
-    } else {
-        var exp = assigns[0];
-        for ( var i=1;  i < assigns.length;  i++ ) {
-            exp = new CommaExpression(exp, assigns[i]);
-        }
-        return new ExpStatement([], exp, this.lineno, this.source);
-    }
+    var result = [];
+    depends.keys().forEach(function( it ){
+        var path = [];
+        traverse(it, path);
+        result = path.concat(result);
+    });
+    return result.reverse();
+}
+
+
+function CfTarget ( b, cache ) {
+    if ( b === "return" || b === "throw" ) return b;
+    if ( cache.get(new Identifier(b.id)) ) return cache.get(new Identifier(b.id));
+    return b[Cf](cache);
+}
+
+
+IL.GotoBlock.prototype[Cf] = function ( cache ) {
+    var block = new IL.GotoBlock();
+    cache.put(new Identifier(this.id), block);
+    block.scopes    = this.scopes.map(function( it ){ return it[Cf](cache); });
+    block.body      = this.body.map(function( it ){ return it[Cf](cache); });
+    block.arg       = this.arg[Cf](cache);
+    block.target    = CfTarget(this.target, cache);
+    block.exception = CfTarget(this.exception, cache);
+    return block;
+};
+
+IL.CallBlock.prototype[Cf] = function ( cache ) {
+    var block = new IL.CallBlock();
+    cache.put(new Identifier(this.id), block);
+    block.scopes    = this.scopes.map(function( it ){ return it[Cf](cache); });
+    block.body      = this.body.map(function( it ){ return it[Cf](cache); });
+    block.this_val  = this.this_val[Cf](cache);
+    block.func      = this.func[Cf](cache);
+    block.args      = this.args.map(function( it ){ return it[Cf](cache); });
+    block.target    = CfTarget(this.target, cache);
+    block.exception = CfTarget(this.exception, cache);
+    return block;
+};
+
+IL.NewBlock.prototype[Cf] = function ( cache ) {
+    var block = new IL.NewBlock();
+    cache.put(new Identifier(this.id), block);
+    block.scopes    = this.scopes.map(function( it ){ return it[Cf](cache); });
+    block.body      = this.body.map(function( it ){ return it[Cf](cache); });
+    block.func      = this.func[Cf](cache);
+    block.args      = this.args.map(function( it ){ return it[Cf](cache); });
+    block.target    = CfTarget(this.target, cache);
+    block.exception = CfTarget(this.exception, cache);
+    return block;
 };
 
 
-IfStatement.prototype[Cf] = function ( pack ) {
-    this.body = this.body[Cf](pack);
+IL.ExpStatement.prototype[Cf] = function ( cache ) {
+    return new IL.ExpStatement(
+        this.exp[Cf](cache)
+    );
+};
+
+IL.CondStatement.prototype[Cf] = function ( cache ) {
+    return new IL.CondStatement(
+        this.cond[Cf](cache),
+        CfTarget(this.target, cache)
+    );
+};
+
+IL.RecvStatement.prototype[Cf] = function ( cache ) {
+    return new IL.RecvStatement(
+        this.assignee[Cf](cache)
+    );
+};
+
+IL.EnumStatement.prototype[Cf] = function ( cache ) {
+    return new IL.EnumStatement(
+        this.exp[Cf](cache),
+        this.assignee[Cf](cache)
+    );
+};
+
+
+Expression.prototype[Cf] = function ( cache ) {
     return this;
 };
 
-
-IfElseStatement.prototype[Cf] = function ( pack ) {
-    this.tbody = this.tbody[Cf](pack);
-    this.fbody = this.fbody[Cf](pack);
-    return this;
+UnaryExpression.prototype[Cf] = function ( cache ) {
+    return new this.constructor(this.exp[Cf](cache));
 };
 
-
-DoWhileStatement.prototype[Cf] = IfStatement.prototype[Cf];
-
-
-WhileStatement.prototype[Cf] = IfStatement.prototype[Cf];
-
-
-ForStatement.prototype[Cf] = IfStatement.prototype[Cf];
-
-
-ForVarStatement.prototype[Cf] = function ( pack ) {
-    var init = (new VarStatement([], this.decls))[Cf](pack);
-    if ( init instanceof EmptyStatement ) {
-        init = null;
-    } else {
-        init = init.exp;
-    }
-    return new ForStatement(this.labels, init, this.cond, this.incr, this.body[Cf](pack), this.lineno, this.source);
+BinaryExpression.prototype[Cf] = function ( cache ) {
+    return new this.constructor(this.left[Cf](cache), this.right[Cf](cache));
 };
 
-
-ForInStatement.prototype[Cf] = IfStatement.prototype[Cf];
-
-
-ForInVarStatement.prototype[Cf] = function ( pack ) {
-    pack.registerVar(this.decl.id);
-    return new ForInStatement(this.labels, this.decl.id, this.exp, this.body[Cf](pack), this.lineno, this.source);
+ArrayInitializer.prototype[Cf] = function ( cache ) {
+    return new ArrayInitializer(this.elems.map(function( it ){
+        return it[Cf](cache);
+    }));
 };
 
-
-ForEachStatement.prototype[Cf] = IfStatement.prototype[Cf];
-
-
-ForEachVarStatement.prototype[Cf] = ForInVarStatement.prototype[Cf];
-
-
-WithStatement.prototype[Cf] = IfStatement.prototype[Cf];
-
-
-SwitchStatement.prototype[Cf] = Block.prototype[Cf];
-
-
-CaseClause.prototype[Cf] = Block.prototype[Cf];
-
-
-DefaultClause.prototype[Cf] = Block.prototype[Cf];
-
-
-TryCatchStatement.prototype[Cf] = function ( pack ) {
-    pack.registerVar(this.variable);
-    this.tryBlock   = this.tryBlock[Cf](pack);
-    this.catchBlock = this.catchBlock[Cf](pack);
-    return this;
+FunctionExpression.prototype[Cf] = function ( cache ) {
+    return prepare(this);
 };
 
-
-TryFinallyStatement.prototype[Cf] = function ( pack ) {
-    this.tryBlock     = this.tryBlock[Cf](pack);
-    this.finallyBlock = this.finallyBlock[Cf](pack);
-    return this;
+ObjectInitializer.prototype[Cf] = function ( cache ) {
+    return new ObjectInitializer(this.pairs.map(function( it ){
+        return { id: it.id,  exp: it.exp[Cf](cache) };
+    }));
 };
 
-
-TryCatchFinallyStatement.prototype[Cf] = function ( pack ) {
-    pack.registerVar(this.variable);
-    this.tryBlock     = this.tryBlock[Cf](pack);
-    this.catchBlock   = this.catchBlock[Cf](pack);
-    this.finallyBlock = this.finallyBlock[Cf](pack);
-    return this;
+DotAccessor.prototype[Cf] = function ( cache ) {
+    return new DotAccessor(this.base[Cf](cache), this.prop);
 };
 
-
-FunctionDeclaration.prototype[Cf] = function ( pack ) {
-    pack.addStatement( new ExpStatement(
-        [],
-        new SimpleAssignExpression(
-            this.name,
-            new FunctionExpression(null, this.params, this.body)
-        ),
-        this.lineno,
-        this.source
-    ));
-    return new EmptyStatement([]);
+ConditionalExpression.prototype[Cf] = function ( cache ) {
+    return new ConditionalExpression(
+        this.cond[Cf](cache),
+        this.texp[Cf](cache),
+        this.fexp[Cf](cache)
+    );
 };
-
 

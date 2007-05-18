@@ -38,10 +38,16 @@
 //@namespace Concurrent.Thread.Compiler
 
 //@require Concurrent.Thread
+//@require Concurrent.Thread.Compiler.Expression
+//@require Concurrent.Thread.Compiler.Statement
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
+var IL = Concurrent.Thread.Compiler.IntermediateLanguage;
 
 //@require Data.Cons.List
+//@require Data.Cons.Util
 //@with-namespace Data.Cons
+//@with-namespace Data.Cons.Util
+//@require Data.Functional.Array
 
 
 
@@ -52,83 +58,56 @@ var var_this = new Identifier(PREFIX+"this");
 var var_args = new Identifier(PREFIX+"arguments");
 var var_cont = new Identifier(PREFIX+"continuation");
 var var_self = new Identifier(PREFIX+"self");
+var var_compiled     = new Identifier(PREFIX+"compiled");
 var var_intermediate = new Identifier(PREFIX+"intermediate");
 
-var name_compiled  = new Identifier(PREFIX+"compiled");
 var name_arguments = new Identifier("arguments");
 var name_prototype = new Identifier("prototype");
 var name_apply     = new Identifier("apply");
+var name_procedure = new Identifier("procedure");
+var name_this_val  = new Identifier("this_val");
+var name_exception = new Identifier("exception");
 
-var name_null_function = new Identifier(PREFIX+"null_function");
-var null_function = new FunctionDeclaration([], name_null_function, [], nil());
+var var_null_function = new Identifier(PREFIX+"null_function");
+var null_function = new FunctionDeclaration([], var_null_function, [], nil());
 
 
 
 //@export CzConvert
-function CzConvert ( pack, func ) {
-    pack.head = pack.tail = nil();
-    var head = func.body;
-    do{
-        var block = head;
-        for ( var c=head;  !(c.cdr.isNil() || c.cdr.car instanceof Label);  c=c.cdr );
-        head  = c.cdr;
-        c.cdr = nil();
-        pack.addStatement( block_to_continuation(block) );
-    } while ( !head.isNil() );
-    var body = inner_function(func.params, pack.vars, pack.head);
+function CzConvert ( func ) {
+    var body = inner_function(func);
     return new FunctionExpression(
                null,
                [var_this, var_args, var_cont],
-               cons(
+               list(
                    new ReturnStatement([],
                        new CallExpression(
                            new DotAccessor(body, name_apply),
                            [var_this, var_args]
                        )
-                   ),
-                   nil()
+                   )
                )
            );
 }
 
 
-var name_procedure = new Identifier("procedure");
-var name_this_val  = new Identifier("this_val");
-var name_exception = new Identifier("exception");
-
-function block_to_continuation ( block ) {
-    var label = block.car;
-    for ( var c=block.cdr;  !c.isNil();  c=c.cdr ) {
-        c.car = c.car[Cz]();
-    }
-    block = cons( make_assign(name_arguments, var_args), block.cdr );
-    return new VarStatement([], [
-        { id : label.id,
-          exp: new ObjectInitializer([
-                   {prop: name_procedure, exp: new FunctionExpression(null, [var_intermediate], block)},
-                   {prop: name_this_val , exp: new ThisExpression() },
-                   {prop: name_exception, exp: label.exception }
-               ])
-        }
-    ]);
-}
 
 
 var arguments_callee = new DotAccessor(name_arguments, new Identifier("callee"));
 
-function inner_function ( params, vars, blocks ) {
-    var label0 = blocks.car.decls[0].id;
-    blocks = cons( var_declaration(vars),
+function inner_function ( func ) {
+    var blocks = func.body.map(function(it){ return it[Cz](); });
+    blocks = cons( var_declaration(func.vars),
              cons( null_function,
              cons( make_assign(var_args, name_arguments),
              cons( make_assign(arguments_callee, var_self),
                    blocks ) ) ) );
-    for ( var last=blocks.cdr.cdr.cdr;  !last.cdr.isNil();  last=last.cdr );
-    last.cdr = cons(make_return(label0), last.cdr);
-    return new FunctionExpression(null, params, blocks);
+    adder(blocks)( make_return(func.start) );
+    return new FunctionExpression(null, func.params, blocks);
 }
 
 function var_declaration ( vars ) {
+    if ( !vars.length ) return new EmptyStatement([]);
     var decls = [];
     vars.forEach(function( it ){
         decls.push({ id:it, exp:null });
@@ -142,6 +121,21 @@ function make_assign ( lhs, rhs ) {
 }
 
 
+var var_cont_ex = new DotAccessor(var_cont, name_exception);
+
+function target_to_name ( b ) {
+    if ( b instanceof IL.Block ) {
+        return new Identifier(PREFIX + b.id);
+    } else if ( b === "return" ) {
+        return var_cont;
+    } else if ( b === "throw" ) {
+        return var_cont_ex;
+    } else {
+        Kit.codeBug("invalid target");
+    }
+}
+
+
 var undefinedExp = new VoidExpression(new Literal(0));
 var name_continuation = new Identifier("continuation");
 var name_timeout      = new Identifier("timeout");
@@ -149,114 +143,180 @@ var name_ret_val      = new Identifier("ret_val");
 
 function make_return ( continuation, ret_val ) {
     return new ReturnStatement([], new ObjectInitializer([
-               { prop: name_continuation, exp: continuation            },
+               { prop: name_continuation, exp: target_to_name(continuation) },
                { prop: name_ret_val     , exp: ret_val || undefinedExp },
                { prop: name_timeout     , exp: undefinedExp            }
            ]) );
 }
 
 
+var assign_arguments = make_assign(name_arguments, var_args);
 
-ILExpStatement.prototype[Cz] = function ( ) {
-    return new ExpStatement([], this.exp);
+function make_continuation ( block, body ) {
+    return new VarStatement([], [{
+        id : target_to_name(block),
+        exp: new ObjectInitializer([
+                 {prop: name_procedure, exp: new FunctionExpression(null, [var_intermediate], cons(assign_arguments, body))},
+                 {prop: name_this_val , exp: new ThisExpression() },
+                 {prop: name_exception, exp: target_to_name(block.exception) }
+             ])
+    }]);
+}
+
+
+
+IL.GotoBlock.prototype[Cz] = function ( ) {
+    var body = this.body.map(function( it ) {
+        return it[Cz]();
+    });
+    body = cons(null, body);
+    adder(body)( make_return(this.target, this.arg) );
+    return make_continuation(this, body.cdr);
 };
 
 
-GotoStatement.prototype[Cz] = function ( ) {
-    return make_return(this.continuation, this.ret_val);
-};
-
-
-IfThenStatement.prototype[Cz] = function ( ) {
-    return new IfStatement([],
-        this.condition,
-        make_return(this.continuation)
-    );
-};
-
-
+var string_object   = new StringLiteral('"object"');
 var string_function = new StringLiteral('"function"');
 
-CallStatement.prototype[Cz] = function ( ) {
-    return new IfElseStatement([],
+IL.CallBlock.prototype[Cz] = function ( ) {
+    var body = this.body.map(function( it ) {
+        return it[Cz]();
+    });
+    body = cons(null, body);
+    adder(body)( new IfElseStatement([],
         new AndExpression(
             this.func,
             new StrictEqualExpression(
                 new TypeofExpression(
-                    new DotAccessor(this.func, name_compiled)
+                    new DotAccessor(this.func, var_compiled)
                 ),
                 string_function
             )
         ),
         new ReturnStatement([],
             new CallExpression(
-                new DotAccessor(this.func, name_compiled),
+                new DotAccessor(this.func, var_compiled),
                 [
                     this.this_val,
                     new ArrayInitializer(this.args),
-                    this.continuation
+                    target_to_name(this.target)
                 ]
             )
         ),
         make_return(
-            this.continuation,
+            this.target,
             new CallExpression(this.func, this.args)
         )
-    );
+    ) );
+    return make_continuation(this, body.cdr);
 };
 
 
-NewStatement.prototype[Cz] = function ( ) {
-/*  // Construct the following code-tree.
-    if ( CONSTRUCTOR && typeof CONSTRUCTOR.$Concurrent_Thread_compiled == "function" ) {
-    $Concurrent_Thread_null_function.prototype = CONSTRUCTOR.prototype;
-    return CONSTRUCTOR.$Concurrent_Thread_compiled(
-               new $Concurrent_Thread_null_function(),
-               [ARG1, ARG2, ...],
-               CONTINUATION
-           );
-    } else {
-        return { continuation: CONTINUATION,
-                 ret_val     : new CONSTRUCTOR(ARG1, ARG2...),
-                 timeout     : void 0
-               };
-    } 
- */
-    return new IfElseStatement([],
+IL.NewBlock.prototype[Cz] = function ( ) {
+    var body = this.body.map(function( it ) {
+        return it[Cz]();
+    });
+    body = cons(null, body);
+    /*  // Construct the following code-tree.
+        if ( CONSTRUCTOR && typeof CONSTRUCTOR.$Concurrent_Thread_compiled == "function" ) {
+        $Concurrent_Thread_null_function.prototype = CONSTRUCTOR.prototype;
+        $Concurrent_Thread_this = new $Concurrent_Thread_null_function();
+        return CONSTRUCTOR.$Concurrent_Thread_compiled(
+                   $Concurrent_Thread_this,
+                   [ARG1, ARG2, ...],
+                   { procedure: function($Concurrent_Thread_intermediate){
+                       return { continuation: CONTINUATION,
+                                ret_val     : $Concurrent_Thread_intermediate && (typeof $Concurrent_Thread_intermediate === "object" || typeof $Concurrent_Thread_intermediate === "function")
+                                                ? $Concurrent_Thread_intermediate : $Concurrent_Thread_this
+                                timeout     : void 0 };
+                   }, this_val: this, exception: EXCEPTION }
+               );
+        } else {
+            return { continuation: CONTINUATION,
+                     ret_val     : new CONSTRUCTOR(ARG1, ARG2...),
+                     timeout     : void 0
+                   };
+        } 
+     */
+    adder(body)( new IfElseStatement([],
         new AndExpression(
             this.func,
             new StrictEqualExpression(
                 new TypeofExpression(
-                    new DotAccessor(this.func, name_compiled)
+                    new DotAccessor(this.func, var_compiled)
                 ),
                 string_function
             )
         ),
         new Block([],
-            cons( make_assign( new DotAccessor(name_null_function, name_prototype),
-                               new DotAccessor(this.func         , name_prototype) ),
-            cons( new ReturnStatement([],
-                      new CallExpression(
-                          new DotAccessor(this.func, name_compiled),
-                          [
-                              new NewExpression(name_null_function, []),
-                              new ArrayInitializer(this.args),
-                              this.continuation
-                          ]
-                      )
-                  ),
-                  nil()
-            ))
+            list( 
+                make_assign( new DotAccessor(var_null_function, name_prototype),
+                             new DotAccessor(this.func        , name_prototype) ),
+                make_assign( var_this, new NewExpression(var_null_function, []) ),
+                new ReturnStatement([],
+                    new CallExpression(
+                        new DotAccessor(this.func, var_compiled),
+                        [
+                            var_this,
+                            new ArrayInitializer(this.args),
+                            new ObjectInitializer([
+                                {prop: name_procedure, exp: new FunctionExpression(null, [var_intermediate], list(
+                                           make_return(
+                                               this.target,
+                                               new ConditionalExpression(
+                                                   new AndExpression(
+                                                       var_intermediate,
+                                                       new OrExpression(
+                                                           new StrictEqualExpression(new TypeofExpression(var_intermediate), string_object),
+                                                           new StrictEqualExpression(new TypeofExpression(var_intermediate), string_function)
+                                                       )
+                                                   ),
+                                                   var_intermediate,
+                                                   var_this
+                                               )
+                                           )
+                                       ))},
+                                {prop: name_this_val , exp: new ThisExpression()},
+                                {prop: name_exception, exp: target_to_name(this.exception)}
+                             ])
+                        ]
+                    )
+                )
+            )
         ),
-        make_return(
-            this.continuation,
-            new NewExpression(this.func, this.args)
+        make_return(this.target, new NewExpression(this.func, this.args))
+    ) );
+    return make_continuation(this, body.cdr);
+};
+
+
+IL.ExpStatement.prototype[Cz] = function ( ) {
+    return new ExpStatement([], this.exp);
+};
+
+
+IL.CondStatement.prototype[Cz] = function ( ) {
+    return new IfStatement([], this.cond, make_return(this.target));
+};
+
+
+IL.RecvStatement.prototype[Cz] = function ( ) {
+    return make_assign(this.assignee, var_intermediate);
+};
+
+
+var name_push = new Identifier("push");
+
+IL.EnumStatement.prototype[Cz] = function ( ) {
+    return new Block([], list(
+        make_assign(this.assignee, new ArrayInitializer([])),
+        new ForInStatement([], var_intermediate, this.exp, 
+            new ExpStatement([], 
+                new CallExpression(
+                    new DotAccessor(this.assignee, name_push),
+                    [var_intermediate]
+                )
+            )
         )
-    );
+    ));
 };
-
-
-RecieveStatement.prototype[Cz] = function ( ) {
-    return new make_assign(this.lhs, var_intermediate);
-};
-

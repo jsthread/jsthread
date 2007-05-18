@@ -41,12 +41,14 @@
 //@require Concurrent.Thread
 //@require Concurrent.Thread.Compiler.Parser
 //@require Concurrent.Thread.Compiler.CssConvert
-//@require Concurrent.Thread.Compiler.CfConvert
+//@require Concurrent.Thread.Compiler.CvConvert
 //@require Concurrent.Thread.Compiler.CsConvert
-//@require Concurrent.Thread.Compiler.CeConvert
+//@require Concurrent.Thread.Compiler.CfConvert
 //@require Concurrent.Thread.Compiler.CzConvert
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
 //@with-namespace Concurrent.Thread.Compiler
+
+var IL = Concurrent.Thread.Compiler.IntermediateLanguage;
 
 //@require Data.Cons 0.2.0
 //@with-namespace Data.Cons
@@ -54,175 +56,52 @@
 
 
 var PREFIX            = "$Concurrent_Thread_";
-var intermediateVar   = new Identifier(PREFIX + "intermediate");
-var nullFunctionVar   = new Identifier(PREFIX + "null_function");
-var initialContReturn = new Identifier(PREFIX + "continuation");
-var initialContThrow  = new DotAccessor(initialContReturn, new Identifier("exception"));
+var var_self     = new Identifier(PREFIX + "self");
+var var_compiled = new Identifier(PREFIX + "compiled");
 
 
 //@export compile
 function compile ( f ) {
-    return eval(prepare(f));
+    return eval(prepare(f).toString());
 }
 
 //@export prepare
 function prepare ( f ) {
-    var func = parseFunction(f);
-    var name = func.name;
-    func.name = null;
-    f = func.toString();
-    func = CssConvert(func);
-    var pack = new TransPack();
-    func = CfConvert(pack, func);
-    func = CsConvert(pack, func);
-    func = CeConvert(pack, func);
-    convFunc(func);
-    func = CzConvert(pack, func);
-    return [
+    if ( !(f instanceof FunctionExpression) ) {
+        if ( typeof f != "function" ) throw new TypeError("argument must be a function");
+        f = parseFunction(f);
+    }
+    var name = f.name;
+    f.name = null;
+    var g = CssConvert(f);
+    g = CvConvert(g);
+    g = CsConvert(g);
+    g = CfConvert(g);
+    g = CzConvert(g);
+    return new CallExpression(
+        new FunctionExpression(null, [], list(
+            new VarStatement([], [{id:var_self, exp:f}]),
+            name ? new VarStatement([], [{id:name, exp:f}]) : new EmptyStatement([]),
+            new ExpStatement([], new SimpleAssignExpression(new DotAccessor(var_self, var_compiled), g)),
+            new ReturnStatement([], var_self)
+        )),
+        []
+    );
+    /* Constructs the following structure:
         "(function(){",
         "  var $Concurrent_Thread_self = ", f, ";",
         name  ?  "var " + name + " = " + "$Concurrent_Thread_self;"  :  "",
         "  $Concurrent_Thread_self.$Concurrent_Thread_compiled = ", func, ";",
         "  return $Concurrent_Thread_self;",
         "})()"
-    ].join("");
+    */
 }
 
 function parseFunction ( f ) {
-    if ( typeof f != "function" ) throw new TypeError("parseFunction: argument must be function");
-    var parser = new Parser();
-    var stmts = parser.parse("(" + f + ");");
+    var stmts = (new Parser()).parse("(" + f + ");");
     if ( !(stmts.car instanceof ExpStatement) ) throw new Error("not exp-statement!");
     if ( !(stmts.car.exp instanceof FunctionExpression) ) throw new Error("not function-expression!");
     return stmts.car.exp;
 }
 
 
-
-function TransPack ( ) {
-    this.label_cnt = 0;
-    this.stack_max = -1;
-//    this.cont_break    = null;
-//    this.cont_continue = null;
-    this.cont_return   = initialContReturn;
-    this.cont_throw    = initialContThrow;
-    this.vars = new IdentifierSet();
-    this.head = this.tail = nil();
-}
-
-var proto = TransPack.prototype;
-
-proto.registerVar = function ( id ) {
-    this.vars.add(id);
-};
-
-proto.createLabel = function ( ) {
-    return new Label(PREFIX + "label" + this.label_cnt++, this.cont_throw);
-};
-
-proto.createStackVar = function ( n ) {
-    var id = new Identifier(PREFIX + "stack" + n);
-    if ( n > this.stack_max ) {
-        this.stack_max = n;
-        this.registerVar(id);
-    }
-    return id;
-};
-
-proto.addStatement = function ( s ) {
-    if ( this.tail.isNil() ) {
-        this.head = this.tail = cons(s, this.tail);
-    } else {
-        this.tail = this.tail.cdr = cons(s, this.tail.cdr);
-    }
-};
-
-
-// Conversion of FunctionExpression (very dirty implementation!!)
-var CF = "$Concurrent_Thread_Compiler_ConvFunc";
-
-function convFunc ( func ) {
-    for ( var c=func.body;  !c.isNil();  c=c.cdr ) {
-        c.car[CF]();
-    }
-}
-
-function convFuncExp ( e ) {
-    if ( e instanceof FunctionExpression ) {
-        return prepare(eval("1, " + e.toString()));  // "1, " is necessary for IE. Umm...
-    } else {
-        e[CF]();
-        return e;
-    }
-}
-
-Label.prototype[CF] = function ( ) { };
-
-ILExpStatement.prototype[CF] = function ( ) {
-    this.exp = convFuncExp(this.exp);
-};
-
-PropsStatement.prototype[CF]  = function ( ) {
-    this.expression = convFuncExp(this.expression);
-};
-
-GotoStatement.prototype[CF]  = function ( ) {
-    this.ret_val = convFuncExp(this.ret_val);
-};
-
-IfThenStatement.prototype[CF]  = function ( ) {
-    this.condition = convFuncExp(this.condition);
-};
-
-CallStatement.prototype[CF]  = function ( ) {
-    this.this_val = convFuncExp(this.this_val);
-    this.func     = convFuncExp(this.func);
-    for ( var i=0;  i < this.args.length;  i++ ) {
-        this.args[i] = convFuncExp(this.args[i]);
-    }
-};
-
-NewStatement.prototype[CF] = function ( ) {
-    this.func     = convFuncExp(this.func);
-    for ( var i=0;  i < this.args.length;  i++ ) {
-        this.args[i] = convFuncExp(this.args[i]);
-    }
-};
-
-RecieveStatement.prototype[CF]  = function ( ) {
-    this.lhs = convFuncExp(this.lhs);
-};
-
-
-Expression.prototype[CF] = function ( ) { };
-
-UnaryExpression.prototype[CF] = function ( ) {
-    this.exp = convFuncExp(this.exp);
-};
-
-BinaryExpression.prototype[CF] = function ( ) {
-    this.left  = convFuncExp(this.left);
-    this.right = convFuncExp(this.right);
-};
-
-ArrayInitializer.prototype[CF] = function ( ) {
-    for ( var i=0;  i < this.elems.length;  i++ ) {
-        this.elems[i] = convFuncExp(this.elems[i]);
-    }
-};
-
-ObjectInitializer.prototype[CF] = function ( ) {
-    for ( var i=0;  i < this.pairs.length;  i++ ) {
-        this.pairs[i].exp = convFuncExp(this.pairs[i].exp);
-    }
-};
-
-DotAccessor.prototype[CF] = function ( ) {
-    this.base = convFuncExp(this.base);
-};
-
-ConditionalExpression.prototype[CF] = function ( ) {
-    this.cond = convFuncExp(this.cond);
-    this.texp = convFuncExp(this.texp);
-    this.fexp = convFuncExp(this.fexp);
-};

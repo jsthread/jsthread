@@ -39,8 +39,12 @@
 //@namespace Concurrent.Thread.Compiler
 
 //@require Concurrent.Thread
+//@require Concurrent.Thread.Compiler.Kit
 //@require Concurrent.Thread.Compiler.Statement
+//@require Concurrent.Thread.Compiler.IdentifierMap
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
+
+var IL = Concurrent.Thread.Compiler.IntermediateLanguage;
 
 //@require Data.Cons 0.2.0
 //@with-namespace Data.Cons
@@ -48,109 +52,471 @@
 
 
 var Cs = "Concurrent.Thread.Compiler.CsConvert";
+var STACK_VAR = "$Concurrent_Thread_stack";
 
 var undefinedExp = new VoidExpression(new NumberLiteral(0));
+var emptyLabel   = new Identifier("");
+
+function isStackVar ( v ) {
+    return v instanceof Identifier
+        && v.valueOf().match(/^$Concurrent_Thread_stack/);
+}
+
+
+function Context ( ) {
+    this.stackVars = [];
+    this.contBreak    = new IdentifierMap();
+    this.contContinue = new IdentifierMap();
+    this.contReturn   = "return";
+    this.contThrow    = "throw";
+    this.scopes       = [];
+}
+
+var proto = Context.prototype;
+
+proto.getStackVar = function ( n ) {
+    n = Math.floor(n);
+    if ( isNaN(n) || n < 0 ) Kit.codeBug("must be positive integer");
+    for ( var i=this.stackVars.length;  i <= n;  i++ ) {
+        this.stackVars[i] = new Identifier(STACK_VAR + n);
+    }
+    return this.stackVars[n];
+};
+
+proto.putBreakLabels = function ( labels, cont ) {
+    for ( var i=0;  i < labels.length;  i++ ) {
+        this.contBreak.put(labels[i], cont);
+    }
+};
+
+proto.removeBreakLabels = function ( labels ) {
+    for ( var i=0;  i < labels.length;  i++ ) {
+        this.contBreak.remove(labels[i]);
+    }
+};
+
+proto.putContinueLabels = function ( labels, cont ) {
+    for ( var i=0;  i < labels.length;  i++ ) {
+        this.contContinue.put(labels[i], cont);
+    }
+};
+
+proto.removeContinueLabels = function ( labels ) {
+    for ( var i=0;  i < labels.length;  i++ ) {
+        this.contContinue.remove(labels[i]);
+    }
+};
+
+proto.getScopes = function ( ) {
+    return this.scopes.slice(0, this.scopes.length);
+};
 
 
 
 //@export CsConvert
-function CsConvert ( pack, func ) {
-    pack.addStatement(pack.createLabel());
-    for ( var c=func.body;  !c.isNil();  c=c.cdr ) c.car[Cs](pack);
-    pack.addStatement( new GotoStatement(pack.cont_return, undefinedExp) );
-    for ( var c=pack.head;  !c.cdr.cdr.isNil();  c=c.cdr ) {
-        if ( !(c.car instanceof GotoStatement || c.car instanceof CallStatement)
-          && c.cdr.car instanceof Label
-        ) {
-            c.cdr = cons( new GotoStatement(c.cdr.car.id, undefinedExp), c.cdr);
-        }
-    }
-    func.body = pack.head;
-    pack.head = pack.tail = nil();
+function CsConvert ( func ) {
+    var context = new Context();
+    var last_block = new IL.GotoBlock([], nil(), undefinedExp, "return", "throw");
+    func.body  = CsStatements(func.body, list(last_block), context, 0);
+    func.start = func.body.car;
+    func.vars  = func.vars.concat(context.stackVars);
     return func;
 }
 
 
-EmptyStatement.prototype[Cs] = function ( pack ) {
-    // Do nothing.
+function CsStatements ( stmts, follows, ctxt, sttop ) {
+    if ( stmts.isNil() ) return follows;
+    follows = CsStatements(stmts.cdr, follows, ctxt, sttop);
+    return stmts.car[Cs](follows, ctxt, sttop);
+}
+
+
+EmptyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    return follows;
 };
 
-Block.prototype[Cs] = function ( pack ) {
-    for ( var c=this.body;  !c.isNil();  c=c.cdr ) {
-        c.car[Cs](pack);
-    }
-};
-
-ExpStatement.prototype[Cs] = function ( pack ) {
-    this.labels = [];
-    pack.addStatement(new ILExpStatement(this.exp));
-};
-
-IfStatement.prototype[Cs] = function ( pack ) {
-    var label = pack.createLabel();
-    pack.addStatement( new IfThenStatement(new NotExpression(this.cond), label.id) );
-    this.body[Cs](pack);
-    pack.addStatement(label);
-};
-
-IfElseStatement.prototype[Cs] = function ( pack ) {
-    var label1 = pack.createLabel();
-    var label2 = pack.createLabel();
-    pack.addStatement( new IfThenStatement(this.cond, label1.id) );
-    this.fbody[Cs](pack);
-    pack.addStatement( new GotoStatement(label2.id, undefinedExp) );
-    pack.addStatement(label1);
-    this.tbody[Cs](pack);
-    pack.addStatement( new GotoStatement(label2.id, undefinedExp) );
-    pack.addStatement(label2);
-};
-
-DoWhileStatement.prototype[Cs] = function ( pack ) {
-    var label = pack.createLabel();
-    pack.addStatement(label);
-    this.body[Cs](pack);
-    pack.addStatement( new IfThenStatement(this.cond, label.id) );
-};
-
-WhileStatement.prototype[Cs] = function ( pack ) {
-    var label1 = pack.createLabel();
-    var label2 = pack.createLabel();
-    pack.addStatement(label1);
-    pack.addStatement( new IfThenStatement(new NotExpression(this.cond), label2.id) );
-    this.body[Cs](pack);
-    pack.addStatement( new GotoStatement(label1.id, undefinedExp) );
-    pack.addStatement(label2);
-};
-
-ReturnStatement.prototype[Cs] = function ( pack ) {
-    pack.addStatement( new GotoStatement(
-        pack.cont_return,
-        this.exp || undefinedExp
-    ) );
-};
-
-ThrowStatement.prototype[Cs] = function ( pack ) {
-    pack.addStatement( new GotoStatement(pack.cont_throw, this.exp) );
-};
-
-TryCatchStatement.prototype[Cs] = function ( pack ) {
-    var label1 = pack.createLabel();
-    var label2 = pack.createLabel();
-    var label3 = pack.createLabel();
-    label2.exception = label1.id;
-    pack.addStatement(new GotoStatement(label2.id, undefinedExp));
-    pack.addStatement(label1);
-    pack.addStatement(new RecieveStatement(this.variable));
-    this.catchBlock[Cs](pack);
-    pack.addStatement(new GotoStatement(label3.id, undefinedExp));
-    pack.addStatement(label2);
-    var store_cont = pack.cont_throw;
-    pack.cont_throw = label1.id;
+Block.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, follows.car, ctxt.contThrow), follows);
+    ctxt.putBreakLabels(this.labels, follows.car);
     try {
-        this.tryBlock[Cs](pack);
+        return CsStatements(this.body, follows, ctxt, sttop);
     } finally {
-        pack.cont_throw = store_cont;
+        ctxt.removeBreakLabels(this.labels);
     }
-    pack.addStatement(new GotoStatement(label3.id, undefinedExp));
-    pack.addStatement(label3);
+};
+
+ExpStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    return this.exp[Cs](follows, ctxt, sttop);
+};
+
+IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block = follows.car;
+    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    ctxt.putBreakLabels(this.labels, next_block);
+    try {
+        follows = this.body[Cs](follows, ctxt, sttop);
+        follows.prependStatement( new CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
+        return this.cond[Cs](follows, ctxt, sttop);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+    }
+};
+
+IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block = follows.car;
+    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    ctxt.putBreakLabels(this.labels, next_block);
+    try {
+        follows = this.tbody[Cs](follows, ctxt, sttop);
+        var true_block = follows.car;
+        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefiendExp, next_block, ctxt.contThrow), follows);
+        follows = this.fbody[Cs](follows, ctxt, sttop);
+        follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), true_block) );
+        return this.cond[Cs](follows, ctxt, sttop);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+    }
+};
+
+DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block     = follows.car;
+    var first_block    = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
+    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    if ( this.cond.containsFunctionCall() ) {
+        follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), first_block) );
+        follows = this.cond[Cs](follows, ctxt, sttop);
+    } else {
+        follows.car.prependStatement( new IL.CondStatement(this.cond, first_block) );
+    }
+    var continue_block = follows.car;
+    follows = cons( new IL.GotoStatement(ctxt.getScopes(), undefinedExp, follows.car, ctxt.contThrow), follows );
+    ctxt.putBreakLabels(this.labels, next_block);
+    ctxt.putBreakLabels([emptyLabel], next_block);
+    ctxt.putContinueLabels(this.labels, continue_block);
+    ctxt.putContinueLabels([emptyLabel], continue_lock);
+    try {
+        follows = this.body[Cs](follows, ctxt, sttop);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+        ctxt.removeBreakLabels([emptyLabel]);
+        ctxt.removeContinueLabels(this.labels);
+        ctxt.removeContinueLabels([emptyLabel]);
+    }
+    first_block.target = follows.car;
+    return cons(first_block, follows);
+};
+
+WhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block  = follows.car;
+    var first_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
+    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, first_block, ctxt.contThrow), follows );
+    ctxt.putBreakLabels(this.labels, next_block);
+    ctxt.putBreakLabels([emptyLabel], next_block);
+    ctxt.putContinueLabels(this.labels, first_block);
+    ctxt.putContinueLabels([emptyLabel], first_block);
+    try {
+        follows = this.body[Cs](follows, ctxt, sttop);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+        ctxt.removeBreakLabels([emptyLabel]);
+        ctxt.removeContinueLabels(this.labels);
+        ctxt.removeContinueLabels([emptyLabel]);
+    }
+    if ( this.cond.containsFunctionCall() ) {
+        follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
+        follows = this.cond[Cs](follows, ctxt, sttop);
+    } else {
+        follows.car.prependStatement( new IL.CondStatement(new NotExpression(this.cond), next_block) );
+    }
+    first_block.target = follows.car;
+    return cons(first_block, follows);
+};
+
+ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block = follows.car;
+    var loop_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
+    var continue_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, loop_block, ctxt.contThrow);
+    follows = cons(continue_block, follows);
+    if ( this.incr ) follows = this.incr[Cs](follows, ctxt, sttop);
+    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, follows.car, ctxt.contThrow), follows);
+    ctxt.putBreakLabels(this.labels, next_block);
+    ctxt.putBreakLabels([emptyLabel], next_block);
+    ctxt.putContinueLabels(this.labels, loop_block);
+    ctxt.putContinueLabels([emptyLabel], loop_block);
+    try {
+        follows = this.body[Cs](follows, ctxt, sttop);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+        ctxt.removeBreakLabels([emptyLabel]);
+        ctxt.removeContinueLabels(this.labels);
+        ctxt.removeContinueLabels([emptyLabel]);
+    }
+    if ( this.cond ) {
+        if ( this.cond.containsFunctionCall() ) {
+            follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
+            follows = this.cond[Cs](follows, ctxt, sttop);
+        } else {
+            follows.car.prependStatement( new IL.CondStatement(new NotExpression(this.cond), next_block) );
+        }
+    }
+    loop_block.target = follows.car;
+    follows = cons( loop_block, follows );
+    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, follows.car, ctxt.contThrow), follows);
+    if ( this.init ) {
+        follows = this.init[Cs](follows, ctxt, sttop);
+    }
+    return follows;
+};
+
+ContinueStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    return cons(
+        new IL.GotoBlock(
+            ctxt.getScopes(),
+            nil(),
+            undefinedExp,
+            ctxt.contContinue.get( this.target ? this.target : emptyLabel ),
+            ctxt.contThrow
+        ),
+        follows
+    );
+};
+
+BreakStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    ctxt.putBreakLabels(this.labels, follows.car);
+    try {
+        return cons(
+            new IL.GotoBlock(
+                ctxt.getScopes(),
+                nil(),
+                undefinedExp,
+                ctxt.contBreak.get( this.target ? this.target : emptyLabel ),
+                ctxt.contThrow
+            ),
+            follows
+        );
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+    }
+};
+
+ReturnStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.exp.containsFunctionCall() ) {
+        follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), ctxt.getStackVar(sttop), ctxt.contReturn, ctxt.contThrow), follows);
+        return this.exp[Cs](follows, ctxt, sttop);
+    } else {
+        return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), this.exp, ctxt.contReturn, ctxt.contThrow), follows);
+    }
+};
+
+ThrowStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.exp.containsFunctionCall() ) {
+        follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), ctxt.getStackVar(sttop), ctxt.contThrow, ctxt.contThrow), follows);
+        return this.exp[Cs](follows, ctxt, sttop);
+    } else {
+        return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), this.exp, ctxt.contThrow, ctxt.contThrow), follows);
+    }
+};
+
+TryCatchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block = follows.car;
+    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    follows = this.catchBlock[Cs](follows, ctxt, sttop);
+    follows.car.prependStatement( new IL.RecvStatement(this.variable) );
+    var storeContThrow = ctxt.contThrow;
+    ctxt.contThrow = follows.car;
+    try {
+        follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+        return this.tryBlock[Cs](follows, ctxt, sttop);
+    } finally {
+        ctxt.contThrow = storeContThrow;
+    }
+};
+
+
+
+function make_assign ( left, right ) {
+    return new IL.ExpStatement( new SimpleAssignExpression(left, right) );
+}
+
+Expression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), this) );
+    return follows;
+};
+
+UnaryExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.exp.containsFunctionCall() ) {
+        follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new this.constructor(ctxt.getStackVar(sttop))) );
+        return this.exp[Cs](follows, ctxt, sttop);
+    } else {
+        return Expression.prototype[Cs].apply(this, arguments);
+    }
+};
+
+BinaryExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.right.containsFunctionCall() ) {
+        follows.car.prependStatement( make_assign(
+            ctxt.getStackVar(sttop),
+            new this.constructor(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop+1))
+        ) );
+        follows = this.right[Cs](follows, ctxt, sttop+1);
+        return this.left[Cs](follows, ctxt, sttop);
+    } else if ( this.left.containsFunctionCall() ) {
+        follows.car.prependStatement( make_assign(
+            ctxt.getStackVar(sttop),
+            new this.constructor(ctxt.getStackVar(sttop), this.right)
+        ) );
+        return this.left[Cs](follows, ctxt, sttop);
+    } else {
+        return Expression.prototype[Cs].apply(this, arguments);
+    }
+};
+
+
+function CsReference ( exp, ctxt, sttop, rest ) {
+    if ( exp instanceof DotAccessor ) {
+        var e = new DotAccessor(ctxt.getStackVar(sttop), exp.prop);
+        var follows = rest(e, sttop+1);
+        return exp.base[Cs](follows, ctxt, sttop);
+    } else if ( exp instanceof BracketAccessor ) {
+        var e = new BracketAccessor(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop+1));
+        var follows = rest(e, sttop+2);
+        follows = exp.right[Cs](follows, ctxt, sttop+1);
+        return exp.left[Cs](follows, ctxt, sttop);
+    } else if ( exp instanceof Identifier ) {
+        return rest(exp, sttop);
+    } else {
+        var follows = rest(ctxt.getStackVar(sttop), sttop+1);
+        return exp[Cs](follows, ctxt, sttop);
+    }
+}
+
+CallExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var self = this;
+    return CsReference(this.func, ctxt, sttop, function ( func, sttop2 ) {
+        for ( var asis_from=self.args.length-1;  asis_from >= 0;  asis_from-- ) {
+            if ( self.args[asis_from].containsFunctionCall() ) break;
+        }
+        asis_from++;
+        var args = [];
+        for ( var i=0;  i < asis_from;  i++ ) {
+            args[i] = ctxt.getStackVar(sttop2+i);
+        }
+        for ( ;  i < self.args.length;  i++ ) {
+            args[i] = self.args[i];
+        }
+        follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
+        follows = cons( new IL.CallBlock(
+                            ctxt.getScopes(),
+                            nil(),
+                            func instanceof DotAccessor     ? func.base :
+                            func instanceof BracketAccessor ? func.left : new NullLiteral(),
+                            func,
+                            args,
+                            follows.car,
+                            ctxt.contThrow
+                        ), follows );
+        for ( var i=asis_from-1;  i >= 0;  i-- ) {
+            follows = self.args[i][Cs](follows, ctxt, sttop2+i);
+        }
+        return follows;
+    });
+};
+
+NewExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    for ( var asis_from=this.args.length-1;  asis_from >= 0;  asis_from-- ) {
+        if ( this.args[asis_from].containsFunctionCall() ) break;
+    }
+    asis_from++;
+    var args = [];
+    for ( var i=0;  i < asis_from;  i++ ) {
+        args[i] = ctxt.getStackVar(sttop+1+i);
+    }
+    for ( ;  i < this.args.length;  i++ ) {
+        args[i] = this.args[i];
+    }
+    follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
+    follows = cons( new IL.NewBlock(
+                        ctxt.getScopes(),
+                        nil(),
+                        ctxt.getStackVar(sttop),
+                        args,
+                        follows.car,
+                        ctxt.contThrow
+                    ), follows );
+    for ( var i=asis_from-1;  i >= 0;  i-- ) {
+        follows = this.args[i][Cs](follows, ctxt, sttop+1+i);
+    }
+    this.func[Cs](follows, ctxt, sttop);
+    return follows;
+};
+
+AssignExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var self = this;
+    if ( this.right.containsFunctionCall() ) {
+        return CsReference(this.left, ctxt, sttop, function ( left, sttop2 ) {
+            follows.car.prependStatement( make_assign(
+                ctxt.getStackVar(sttop),
+                new self.constructor(left, ctxt.getStackVar(sttop2))
+            ) );
+            return self.right[Cs](follows, ctxt, sttop2);
+        });
+    } else if ( this.left.containsFunctionCall() ) {
+        return CsReference(this.left, ctxt, sttop, function ( left, sttop2 ) {
+            follows.car.prependStatement( make_assign(
+                ctxt.getStackVar(sttop),
+                new self.constructor(left, self.right)
+            ) );
+            return follows;
+        });
+    } else {
+        return Expression.prototype[Cs].apply(this, arguments);
+    }
+};
+
+AndExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.right.containsFunctionCall() ) {
+        var next_block = follows.car;
+        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = this.right[Cs](follows, ctxt, sttop);
+        follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
+        return this.left[Cs](follows, ctxt, sttop);
+    } else if ( this.left.containsFunctionCall() ) {
+        follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new AndExpression(ctxt.getStackVar(sttop), this.right)) );
+        return this.left[Cs](follows, ctxt, sttop);
+    } else {
+        return Expression.prototype[Cs].apply(this, arguments);
+    }
+};
+
+OrExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.right.containsFunctionCall() ) {
+        var next_block = follows.car;
+        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = this.right[Cs](follows, ctxt, sttop);
+        follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), next_block) );
+        return this.left[Cs](follows, ctxt, sttop);
+    } else if ( this.left.containsFunctionCall() ) {
+        follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new AndExpression(ctxt.getStackVar(sttop), this.right)) );
+        return this.left[Cs](follows, ctxt, sttop);
+    } else {
+        return Expression.prototype[Cs].apply(this, arguments);
+    }
+};
+
+ConditionalExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.texp.containsFunctionCall() || this.fexp.containsFunctionCall() ) {
+        var next_block = follows.car;
+        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = this.texp[Cs](follows, ctxt, sttop);
+        var true_block = follows.car;
+        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = this.fexp[Cs](follows, ctxt, sttop);
+        follows.car.prependStatement(new IL.CondStatement(ctxt.getStackVar(sttop), true_block));
+        return this.cond[Cs](follows, ctxt, sttop);
+    } else if ( this.cond.containsFunctionCall() ) {
+        follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new ConditionalExpression(ctxt.getStackVar(sttop), this.texp, this.fexp)) );
+        return this.cond[Cs](follows, ctxt, sttop);
+    } else {
+        return Expression.prototype[Cs].apply(this, arguments);
+    }
 };

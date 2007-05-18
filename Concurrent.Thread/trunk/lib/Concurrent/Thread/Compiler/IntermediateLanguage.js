@@ -36,121 +36,200 @@
 
 //@esmodpp
 //@version 0.0.0
-//@namespace Concurrent.Thread.Compiler
+//@namespace Concurrent.Thread.Compiler.IntermediateLanguage
 
 //@require Concurrent.Thread
 //@require Concurrent.Thread.Compiler.Statement
 //@require Concurrent.Thread.Compiler.Expression
 
+//@require Data.Cons.List
+//@require Data.Cons.Util
+//@with-namespace Data.Cons
+//@with-namespace Data.Cons.Util
 
 
-//@export StackVariable
-function StackVariable ( n ) {
-    Identifier.call(this, "$Concurrent_Thread_stack"+n);
+
+//@export Function
+function Function ( name, params, vars, body, start ) {
+    this.name   = name;    // Identifier | Null
+    this.params = params;  // [Identifier]
+    this.vars   = vars;    // [Identifier]
+    this.body   = body;    // <Block>
+    this.start  = start;   // Block
 }
 
-StackVariable.prototype = new Identifier();
-StackVariable.prototype.constructor = StackVariable;
+Function.prototype.toString = function ( ) {
+    return  [ "function ", this.name, "( ", this.params.join(", "), " ) {\n",
+              "  var ", this.vars.join(", "), ";\n",
+              this.body.join("\n").replace(/^/mg, "  "),
+              "\n}" ].join("");
+};
 
 
+//@export Block
+var block_id = 0;
 
-//@export Label
-function Label ( n, e ) {
-    this.id = new Identifier(n);
-    this.exception = e;
+function Block ( scopes, body, target, exception ) {
+    this.id        = "label" + block_id++;
+    this.scopes    = scopes;     // [Expression]
+    this.body      = body;       // <Statement>
+    this.target    = target;     // Block | "return" | "throw"
+    this.exception = exception;  // Block | "return" | "throw"
 }
 
-Label.prototype.toString = function ( ) {
-    return [ "  ", this.id, "[", this.exception, "]:" ].join("");
+var proto = Block.prototype;
+
+proto.toString = function ( ) {
+    Kit.codeBug('"toString" is not implemented for ', this.constructor);
+};
+
+proto.appendStatement = function ( /* variable arguments */ ) {
+    var args = arguments;
+    if ( this.body.isNil() ) {
+        this.body = cons(arguments[0], this.body);
+        args = Array.prototype.slice.call(arguments, 1, arguments.length);
+    } else {
+        adder(this.body).apply(null, args);
+    }
+};
+
+proto.prependStatement = function ( /* variable arguments */ ) {
+    for ( var i=arguments.length-1;  i >= 0;  i-- ) {
+        this.body = cons(arguments[i], this.body);
+    }
+};
+
+
+function stringify ( b ) {
+    if ( b instanceof Block ) {
+        return b.id;
+    } else {
+        return '"' + b + '"';
+    }
+}
+
+
+//@export GotoBlock
+function GotoBlock ( scopes, body, arg, target, exception ) {
+    Block.call(this, scopes, body, target, exception);
+    this.arg = arg;
+}
+
+var proto = GotoBlock.prototype = new Block();
+
+proto.constructor = GotoBlock;
+
+proto.toString = function ( ) {
+    return [ this.id, "([", this.scopes.join(", "), "], ", stringify(this.exception), "): {\n",
+             this.body.join("\n").replace(/^/mg, "  "), "\n",
+             "  goto ", this.arg, " -> ", stringify(this.target), "\n",
+             "}" ].join("");
+};
+
+
+//@export CallBlock
+function CallBlock ( scopes, body, this_val, func, args, target, exception ) {
+    Block.call(this, scopes, body, target, exception);
+    this.this_val  = this_val;   // Expression
+    this.func      = func;       // Expression
+    this.args      = args;       // [Expression]
+}
+
+var proto = CallBlock.prototype = new Block();
+
+proto.constructor = CallBlock;
+
+proto.toString = function ( ) {
+    return [ this.id, "([", this.scopes.join(", "), "], ", stringify(this.exception), "): {\n",
+             this.body.join("\n").replace(/^/mg, "  "), "\n",
+             "  call ", this.this_val, ".", this.func, "(", this.args.join(", "), ") -> ", stringify(this.target), "\n",
+             "}" ].join("");
+};
+
+
+//@export NewBlock
+function NewBlock ( scopes, body, func, args, target, exception ) {
+    Block.call(this, scopes, body, target, exception);
+    this.func      = func;       // Expression
+    this.args      = args;       // [Expression]
+}
+
+var proto = NewBlock.prototype = new Block();
+
+proto.constructor = NewBlock;
+
+proto.toString = function ( ) {
+    return [ this.id, "([", this.scopes.join(", "), "], ", stringify(this.exception), "): {\n",
+             this.body.join("\n").replace(/^/mg, "  "), "\n",
+             "  new ", this.func, "(", this.args.join(", "), ") -> ", stringify(this.target), "\n",
+             "}" ].join("");
 };
 
 
 
-//@export ILExpStatement
-function ILExpStatement ( e ) {
-    this.exp = e;
+//@export Statement
+function Statement ( ) {
+    // This is kind of interface.
 }
 
-ILExpStatement.prototype.toString = function ( ) {
-    return [ "    ", this.exp, ";" ].join("");
+Statement.prototype.toString = function ( ) {
+    Kit.codeBug('"toString" is not implemented for ', this.constructor);
 };
 
 
-
-//@export PropsStatement
-function PropsStatement ( e ) {
-    this.expression = e;  // Expression
+//@export ExpStatement
+function ExpStatement ( e ) {
+    this.exp = e;  // Expression
 }
 
-PropsStatement.prototype.toString = function ( ) {
-    return [ "    props( ", this.expression, " );" ].join("");
+var proto = ExpStatement.prototype = new Statement();
+
+proto.constructor = ExpStatement;
+
+proto.toString = function ( ) {
+    return this.exp + ";";
 };
 
 
-
-//@export GotoStatement
-function GotoStatement ( c, r ) {
-    this.continuation  = c;  // Identifier
-    this.ret_val       = r;  // Expression
+//@export CondStatement
+function CondStatement ( c, t ) {
+    this.cond   = c;  // Expression
+    this.target = t;  // Block
 }
 
-GotoStatement.prototype.toString = function ( ) {
-    return [ "    goto[", this.continuation, "]",
-                     "(", this.ret_val     , ");" ].join("");
+var proto = CondStatement.prototype = new Statement();
+
+proto.constructor = CondStatement;
+
+proto.toString = function ( ) {
+    return [ "if ", this.cond, " -> ", stringify(this.target), ";" ].join("");
 };
 
 
-
-//@export IfThenStatement
-function IfThenStatement ( e, c ) {
-    this.condition    = e;  // Expression
-    this.continuation = c;  // Identifier
+//@export RecvStatement
+function RecvStatement ( a ) {
+    this.assignee = a;  // Identifier | DotAccessor | BracketAccessor
 }
 
-IfThenStatement.prototype.toString = function ( ) {
-    return [ "    if ( ", this.condition, " ) ",
-                 "then[", this.continuation, "];" ].join("");
+var proto = RecvStatement.prototype = new Statement();
+
+proto.constructor = RecvStatement;
+
+proto.toString = function ( ) {
+    return [ "recv ", this.assignee, ";" ].join("");
 };
 
 
-
-//@export CallStatement
-function CallStatement ( c, t, f, a ) {
-    this.continuation = c;  // Label
-    this.this_val     = t;  // Expression
-    this.func         = f;  // Expression
-    this.args         = a;  // array of Expression
+//@export EnumStatement
+function EnumStatement ( e, a ) {
+    this.exp      = e;  // Expression
+    this.assignee = a;  // Identifier | DotAccessor | BracketAccessor
 }
 
-CallStatement.prototype.toString = function ( ) {
-    return [ "    call[", this.continuation, "]",
-                     "(", this.this_val, ", ", this.func, ")",
-                     "(", this.args.join(", ")          , ");" ].join("");
+var proto = EnumStatement.prototype = new Statement();
+
+proto.constructor = EnumStatement;
+
+proto.toString = function ( ) {
+    return [ "enum ", this.assignee, " <- ", this.exp, ";" ].join("");
 };
-
-
-
-//@export NewStatement
-function NewStatement ( c, f, a ) {
-    this.continuation = c;  // Label
-    this.func         = f;  // Expression
-    this.args         = a;  // array of Expression
-}
-
-NewStatement.prototype.toString = function ( ) {
-    return [ "    new[", this.continuation, "]",
-                    "(", this.func            , ")",
-                    "(", this.args.join(", ") , ");" ].join("");
-};
-
-
-
-//@export RecieveStatement
-function RecieveStatement ( e ) {
-    this.lhs = e;  // Identifier or DotAccessor or BracketAccessor
-}
-
-RecieveStatement.prototype.toString = function ( ) {
-    return [ "    recieve( ", this.lhs, " );" ].join("");
-};
-
