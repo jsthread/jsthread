@@ -327,3 +327,6 @@ CallExpression.prototype[Css] = function ( ) {
     return new this.constructor(this.func[Css](), args);
 };
 
+ConditionalExpression.prototype[Css] = function ( ) {
+    return new ConditionalExpression(this.cond[Css](), this.texp[Css](), this.fexp[Css]());
+};
