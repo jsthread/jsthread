@@ -203,7 +203,8 @@ DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         ctxt.removeContinueLabels([emptyLabel]);
     }
     first_block.target = follows.car;
-    return cons(first_block, follows);
+    return cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, first_block, ctxt.contThrow),
+                 cons(first_block, follows) );
 };
 
 WhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
@@ -229,7 +230,8 @@ WhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows.car.prependStatement( new IL.CondStatement(new NotExpression(this.cond), next_block) );
     }
     first_block.target = follows.car;
-    return cons(first_block, follows);
+    return cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, first_block, ctxt.contThrow),
+                 cons(first_block, follows) );
 };
 
 ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
