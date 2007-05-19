@@ -218,10 +218,10 @@ proto.join.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 
 
 
-Thread.create = function ( /* variable args */ ) {
-    var f = arguments[0];
+Thread.create = function ( f /* , ... */ ) {
     if ( typeof f != "function" ) throw new TypeError("can't create new thread from non-function value");
-    return this.compile(f).async(null, Array.prototype.slice.call(arguments, 1, arguments.length));
+    if ( typeof f.$Concurrent_Thread_compiled !== "function" ) f = this.compile(f);
+    return f.async(null, Array.prototype.slice.call(arguments, 1, arguments.length));
 };
 
 
