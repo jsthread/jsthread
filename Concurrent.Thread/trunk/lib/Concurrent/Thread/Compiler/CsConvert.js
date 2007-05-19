@@ -155,7 +155,7 @@ IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     ctxt.putBreakLabels(this.labels, next_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
-        follows.prependStatement( new CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
+        follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
         return this.cond[Cs](follows, ctxt, sttop);
     } finally {
         ctxt.removeBreakLabels(this.labels);
@@ -189,7 +189,7 @@ DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows.car.prependStatement( new IL.CondStatement(this.cond, first_block) );
     }
     var continue_block = follows.car;
-    follows = cons( new IL.GotoStatement(ctxt.getScopes(), undefinedExp, follows.car, ctxt.contThrow), follows );
+    follows = cons( new IL.GotoBlock(ctxt.getScopes(), undefinedExp, follows.car, ctxt.contThrow), follows );
     ctxt.putBreakLabels(this.labels, next_block);
     ctxt.putBreakLabels([emptyLabel], next_block);
     ctxt.putContinueLabels(this.labels, continue_block);
