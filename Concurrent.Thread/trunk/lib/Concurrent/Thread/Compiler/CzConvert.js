@@ -225,10 +225,12 @@ IL.NewBlock.prototype[Cz] = function ( ) {
                    $Concurrent_Thread_this,
                    [ARG1, ARG2, ...],
                    { procedure: function($Concurrent_Thread_intermediate){
+                    if ( !($Concurrent_Thread_intermediate && (typeof $Concurrent_Thread_intermediate === "object" || typeof $Concurrent_Thread_intermediate === "function") )
+                      $Concurrent_Thread_intermediate = $Concurrent_Thread_this;
+                    $Concurrent_Thread_this = null;  // encourages GC
                        return { continuation: CONTINUATION,
-                                ret_val     : $Concurrent_Thread_intermediate && (typeof $Concurrent_Thread_intermediate === "object" || typeof $Concurrent_Thread_intermediate === "function")
-                                                ? $Concurrent_Thread_intermediate : $Concurrent_Thread_this
-                                timeout     : void 0 };
+                                ret_val     : $Concurrent_Thread_intermediate,
+                                timeout     : void 0                          };
                    }, this_val: this, exception: EXCEPTION }
                );
         } else {
@@ -261,21 +263,21 @@ IL.NewBlock.prototype[Cz] = function ( ) {
                             new ArrayInitializer(this.args),
                             new ObjectInitializer([
                                 {prop: name_procedure, exp: new FunctionExpression(null, [var_intermediate], list(
-                                           make_return(
-                                               this.target,
-                                               new ConditionalExpression(
-                                                   new AndExpression(
-                                                       var_intermediate,
-                                                       new OrExpression(
-                                                           new StrictEqualExpression(new TypeofExpression(var_intermediate), string_object),
-                                                           new StrictEqualExpression(new TypeofExpression(var_intermediate), string_function)
-                                                       )
-                                                   ),
-                                                   var_intermediate,
-                                                   var_this
-                                               )
-                                           )
-                                       ))},
+                                    new IfStatement([],
+                                        new NotExpression(
+                                            new AndExpression(
+                                                var_intermediate,
+                                                new OrExpression(
+                                                    new StrictEqualExpression(new TypeofExpression(var_intermediate), string_object),
+                                                    new StrictEqualExpression(new TypeofExpression(var_intermediate), string_function)
+                                                )
+                                            )
+                                        ),
+                                        make_assign(var_intermediate, var_this)
+                                    ),
+                                    make_assign(var_this, new NullLiteral()),
+                                    make_return(this.target, var_intermediate)
+                                ))},
                                 {prop: name_this_val , exp: new ThisExpression()},
                                 {prop: name_exception, exp: target_to_name(this.exception)}
                              ])
