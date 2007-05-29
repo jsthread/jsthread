@@ -311,14 +311,16 @@ var name_push = new Identifier("push");
 
 IL.EnumStatement.prototype[Cz] = function ( ) {
     return new Block([], list(
-        make_assign(this.assignee, new ArrayInitializer([])),
+        make_assign(var_this, new ArrayInitializer([])),
         new ForInStatement([], var_intermediate, this.exp, 
             new ExpStatement([], 
                 new CallExpression(
-                    new DotAccessor(this.assignee, name_push),
+                    new DotAccessor(var_this, name_push),
                     [var_intermediate]
                 )
             )
-        )
+        ),
+        make_assign(this.assignee, var_this),
+        make_assign(var_this, new NullLiteral())
     ));
 };
