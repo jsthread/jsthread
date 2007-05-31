@@ -217,7 +217,7 @@ FunctionExpression.prototype[Cf] = function ( cache ) {
 
 ObjectInitializer.prototype[Cf] = function ( cache ) {
     return new ObjectInitializer(this.pairs.map(function( it ){
-        return { id: it.id,  exp: it.exp[Cf](cache) };
+        return { prop: it.prop,  exp: it.exp[Cf](cache) };
     }));
 };
 
