@@ -76,9 +76,9 @@ var proto = Context.prototype;
 
 proto.getStackVar = function ( n ) {
     n = Math.floor(n);
-    if ( isNaN(n) || n < 0 ) Kit.codeBug("must be positive integer");
+    if ( isNaN(n) || n < 0 ) Kit.codeBug("must be integer greater than zero");
     for ( var i=this.stackVars.length;  i <= n;  i++ ) {
-        this.stackVars[i] = new Identifier(STACK_VAR + n);
+        this.stackVars[i] = new Identifier(STACK_VAR + i);
     }
     return this.stackVars[n];
 };
