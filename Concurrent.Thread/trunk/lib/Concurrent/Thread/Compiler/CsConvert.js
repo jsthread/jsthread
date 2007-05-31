@@ -130,6 +130,25 @@ function CsStatements ( stmts, follows, ctxt, sttop ) {
     return stmts.car[Cs](follows, ctxt, sttop);
 }
 
+function CsReference ( exp, ctxt, sttop, rest ) {  // Expression -> Context -> Int -> (Expression -> <Block>) -> <Block>
+    if ( exp instanceof DotAccessor ) {
+        var e = new DotAccessor(ctxt.getStackVar(sttop), exp.prop);
+        var follows = rest(e, sttop+1);
+        return exp.base[Cs](follows, ctxt, sttop);
+    } else if ( exp instanceof BracketAccessor ) {
+        var e = new BracketAccessor(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop+1));
+        var follows = rest(e, sttop+2);
+        follows = exp.right[Cs](follows, ctxt, sttop+1);
+        return exp.left[Cs](follows, ctxt, sttop);
+    } else if ( exp instanceof Identifier ) {
+        return rest(exp, sttop);
+    } else {
+        var follows = rest(ctxt.getStackVar(sttop), sttop+1);
+        return exp[Cs](follows, ctxt, sttop);
+    }
+}
+
+
 
 EmptyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     return follows;
@@ -148,6 +167,7 @@ Block.prototype[Cs] = function ( follows, ctxt, sttop ) {
 ExpStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     return this.exp[Cs](follows, ctxt, sttop);
 };
+
 
 IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
@@ -177,6 +197,7 @@ IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         ctxt.removeBreakLabels(this.labels);
     }
 };
+
 
 DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block     = follows.car;
@@ -270,6 +291,64 @@ ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     return follows;
 };
 
+ForInStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( !this.lhs.hasLvalue() ) Kit.codeBug('for-in requires lvalue on the left hand side of "in": ' + this);
+    var next_block = follows.car;
+    var loop_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
+    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, loop_block, ctxt.contThrow), follows);
+    ctxt.putBreakLabels(this.labels, next_block);
+    ctxt.putBreakLabels([emptyLabel], next_block);
+    ctxt.putContinueLabels(this.labels, loop_block);
+    ctxt.putContinueLabels([emptyLabel], loop_block);
+    try {
+        follows = this.body[Cs](follows, ctxt, sttop+2);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+        ctxt.removeBreakLabels([emptyLabel]);
+        ctxt.removeContinueLabels(this.labels);
+        ctxt.removeContinueLabels([emptyLabel]);
+    }
+    if ( this.lhs.containsFunctionCall() ) {
+        follows = CsReference(this.lhs, ctxt, sttop+2, function( exp ){
+            follows.car.prependStatement( make_assign(
+                exp,
+                new BracketAccessor(
+                    ctxt.getStackVar(sttop),
+                    new PostIncExpression(ctxt.getStackVar(sttop+1))
+                )
+            ) );
+            return follows;
+        });
+    } else {
+        follows.car.prependStatement( make_assign(
+            this.lhs,
+            new BracketAccessor(
+                ctxt.getStackVar(sttop),
+                new PostIncExpression(ctxt.getStackVar(sttop+1))
+            )
+        ) );
+    }
+    follows.car.prependStatement( new IL.CondStatement(
+        new GreaterEqualExpression(
+            ctxt.getStackVar(sttop+1),
+            new DotAccessor(ctxt.getStackVar(sttop), new Identifier("length"))
+        ),
+        next_block
+    ) );
+    loop_block.target = follows.car;
+    follows = cons( loop_block, follows );
+    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, loop_block, ctxt.contThrow), follows );
+    follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop+1), new NumberLiteral(0)) );
+    if ( this.exp.containsFunctionCall() ) {
+        follows.car.prependStatement( new IL.EnumStatement(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop)) );
+        follows = this.exp[Cs](follows, ctxt, sttop);
+    } else {
+        follows.car.prependStatement( new IL.EnumStatement(this.exp, ctxt.getStackVar(sttop)) );
+    }
+    return follows;
+};
+
+
 ContinueStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     return cons(
         new IL.GotoBlock(
@@ -309,6 +388,7 @@ ReturnStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), this.exp, ctxt.contReturn, ctxt.contThrow), follows);
     }
 };
+
 
 ThrowStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( this.exp.containsFunctionCall() ) {
@@ -372,25 +452,6 @@ BinaryExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
         return Expression.prototype[Cs].apply(this, arguments);
     }
 };
-
-
-function CsReference ( exp, ctxt, sttop, rest ) {
-    if ( exp instanceof DotAccessor ) {
-        var e = new DotAccessor(ctxt.getStackVar(sttop), exp.prop);
-        var follows = rest(e, sttop+1);
-        return exp.base[Cs](follows, ctxt, sttop);
-    } else if ( exp instanceof BracketAccessor ) {
-        var e = new BracketAccessor(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop+1));
-        var follows = rest(e, sttop+2);
-        follows = exp.right[Cs](follows, ctxt, sttop+1);
-        return exp.left[Cs](follows, ctxt, sttop);
-    } else if ( exp instanceof Identifier ) {
-        return rest(exp, sttop);
-    } else {
-        var follows = rest(ctxt.getStackVar(sttop), sttop+1);
-        return exp[Cs](follows, ctxt, sttop);
-    }
-}
 
 CallExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var self = this;
