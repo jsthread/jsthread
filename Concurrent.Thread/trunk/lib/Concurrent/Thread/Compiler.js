@@ -81,7 +81,7 @@ function prepare ( f ) {
     return new CallExpression(
         new FunctionExpression(null, [], list(
             new VarStatement([], [{id:var_self, exp:f}]),
-            name ? new VarStatement([], [{id:name, exp:f}]) : new EmptyStatement([]),
+            name ? new VarStatement([], [{id:name, exp:var_self}]) : new EmptyStatement([]),
             new ExpStatement([], new SimpleAssignExpression(new DotAccessor(var_self, var_compiled), g)),
             new ReturnStatement([], var_self)
         )),
