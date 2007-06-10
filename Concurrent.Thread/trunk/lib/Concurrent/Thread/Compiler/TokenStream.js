@@ -556,8 +556,8 @@ retry:
                 this.skipLine();
                 continue retry;
             } else if ( this.matchChar('*') ) {
-                c = this.getChar();
                 for (;;) {
+                    c = this.getChar();
                     if ( c === EOF_CHAR ) {
                         this.parser.addError("msg.unterminated.comment");
                         return Token.ERROR;
