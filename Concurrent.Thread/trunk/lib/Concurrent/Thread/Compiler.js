@@ -38,6 +38,8 @@
 //@version 0.0.0
 //@namespace Concurrent.Thread
 
+//@require Concurrent.Thread.Compiler.Kit
+
 //@require Concurrent.Thread
 //@require Concurrent.Thread.Compiler.Parser
 //@require Concurrent.Thread.Compiler.CssConvert
@@ -62,15 +64,26 @@ var var_compiled = new Identifier(PREFIX + "compiled");
 
 //@export compile
 function compile ( f ) {
-    return eval(prepare(f).toString());
+    return eval(prepare(f));
 }
 
 //@export prepare
 function prepare ( f ) {
-    if ( !(f instanceof FunctionExpression) ) {
-        if ( typeof f != "function" ) throw new TypeError("argument must be a function");
-        f = parseFunction(f);
-    }
+    if ( typeof f != "function" ) throw new TypeError("argument must be a function");
+    return prepareTree(parseFunction(f)).toString();
+}
+
+function parseFunction ( f ) {
+    var stmts = (new Parser()).parse("(" + f + ");");
+    if ( !(stmts.car instanceof ExpStatement) ) throw new Error("not exp-statement!");
+    if ( !(stmts.car.exp instanceof FunctionExpression) ) throw new Error("not function-expression!");
+    return stmts.car.exp;
+}
+
+
+//@export prepareTree
+function prepareTree ( f ) {
+    if ( !(f instanceof FunctionExpression) ) Kit.codeBug("not FunctionalExpression");
     var name = f.name;
     f.name = null;
     var g = CssConvert(f);
@@ -96,12 +109,4 @@ function prepare ( f ) {
         "})()"
     */
 }
-
-function parseFunction ( f ) {
-    var stmts = (new Parser()).parse("(" + f + ");");
-    if ( !(stmts.car instanceof ExpStatement) ) throw new Error("not exp-statement!");
-    if ( !(stmts.car.exp instanceof FunctionExpression) ) throw new Error("not function-expression!");
-    return stmts.car.exp;
-}
-
 

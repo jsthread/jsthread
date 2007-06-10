@@ -212,7 +212,7 @@ ArrayInitializer.prototype[Cf] = function ( cache ) {
 };
 
 FunctionExpression.prototype[Cf] = function ( cache ) {
-    return prepare(this);
+    return prepareTree(this);
 };
 
 ObjectInitializer.prototype[Cf] = function ( cache ) {
