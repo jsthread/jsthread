@@ -164,14 +164,14 @@ post.$Concurrent_Thread_compiled = function ( $this, $args, $cont ) {
     }
     if ( !headers || !(headers instanceof Array) ) headers = [];
     var content_type_exists = false;
-    for ( var i=0;  i < this.length;  i+=2 ) {
+    for ( var i=0;  i < headers.length;  i+=2 ) {
         if ( String(headers[i]).match(/^Content-type$/i) ) {
             content_type_exists = true;
             break;
         }
     }
     if ( !content_type_exists ) {
-        headers.push("Content-type", "application/x-www-form-urlencoded");
+        headers = headers.concat("Content-type", "application/x-www-form-urlencoded");
     }
     return send.$Concurrent_Thread_compiled(
         null,
