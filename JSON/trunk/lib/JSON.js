@@ -74,6 +74,7 @@ function dump_string ( str ) {
             c = c.toString(16);
             while ( c.length < 4 ) c = "0" + c;
             return "\\u" + c;
+        }
     }) + '"';
 }
 
