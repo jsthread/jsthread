@@ -381,11 +381,15 @@ BreakStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 };
 
 ReturnStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
-    if ( this.exp.containsFunctionCall() ) {
-        follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), ctxt.getStackVar(sttop), ctxt.contReturn, ctxt.contThrow), follows);
-        return this.exp[Cs](follows, ctxt, sttop);
+    if ( this.exp ) {
+        if ( this.exp.containsFunctionCall() ) {
+            follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), ctxt.getStackVar(sttop), ctxt.contReturn, ctxt.contThrow), follows);
+            return this.exp[Cs](follows, ctxt, sttop);
+        } else {
+            return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), this.exp, ctxt.contReturn, ctxt.contThrow), follows);
+        }
     } else {
-        return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), this.exp, ctxt.contReturn, ctxt.contThrow), follows);
+        return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, ctxt.contReturn, ctxt.contThrow), follows);
     }
 };
 
