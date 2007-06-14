@@ -31,18 +31,38 @@ function bind ( opts ) {
     } else {
         params = "Named";
     }
+    var body;
     if ( request.match(/^POST$/i) ) {
         if ( params.match(/^Named$/i) ) {
-            return makeNamedPost(opts.url, opts.method);
+            body = makeNamedPost(opts.url, opts.method);
         } else {
-            return makePositionedPost(opts.url, opts.method);
+            body = makePositionedPost(opts.url, opts.method);
         }
     } else {
         if ( params.match(/^Named$/i) ) {
-            return makeNamedGet(opts.url, opts.method);
+            body = makeNamedGet(opts.url, opts.method);
         } else {
-            return makePositionedGet(opts.url, opts.method);
+            body = makePositionedGet(opts.url, opts.method);
         }
+    }
+    var with_pre;
+    var pre = opts.preprocess;
+    if ( pre != null ) {
+        if ( typeof pre != "function" ) throw new TypeError('"preprocess" option must be function');
+        with_pre = eval(Thread.prepare(function(){
+            return body.apply(this, pre.apply(this, arguments));
+        }));
+    } else {
+        with_pre = body;
+    }
+    var post = opts.postprocess;
+    if ( post != null ) {
+        if ( typeof post != "function" ) throw new TypeError('"preprocess" option must be function');
+        return eval(Thread.prepare(function(){
+            return post(with_pre.apply(this, arguments));
+        }));
+    } else {
+        return with_pre;
     }
 }
 
