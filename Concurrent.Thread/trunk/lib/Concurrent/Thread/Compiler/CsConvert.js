@@ -189,7 +189,7 @@ IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     try {
         follows = this.tbody[Cs](follows, ctxt, sttop);
         var true_block = follows.car;
-        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefiendExp, next_block, ctxt.contThrow), follows);
+        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
         follows = this.fbody[Cs](follows, ctxt, sttop);
         follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), true_block) );
         return this.cond[Cs](follows, ctxt, sttop);
