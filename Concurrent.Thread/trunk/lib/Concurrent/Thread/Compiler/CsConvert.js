@@ -453,6 +453,18 @@ BinaryExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     }
 };
 
+DotAccessor.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    if ( this.base.containsFunctionCall() ) {
+        follows.car.prependStatement( make_assign(
+            ctxt.getStackVar(sttop),
+            new DotAccessor(ctxt.getStackVar(sttop), this.prop)
+        ) );
+        return this.base[Cs](follows, ctxt, sttop);
+    } else {
+        return Expression.prototype[Cs].apply(this, arguments);
+    }
+};
+
 CallExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var self = this;
     return CsReference(this.func, ctxt, sttop, function ( func, sttop2 ) {
