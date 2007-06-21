@@ -67,10 +67,27 @@ function compile ( f ) {
     return eval(prepare(f));
 }
 
+
+//@export CACHE_LIMIT
+var CACHE_LIMIT = 50;
+var prepare_cache = {};
+var cache_history = [];
+
 //@export prepare
 function prepare ( f ) {
     if ( typeof f != "function" ) throw new TypeError("argument must be a function");
-    return prepareTree(parseFunction(f)).toString();
+    f = f.toString();
+    var c = prepare_cache[f];
+    if ( c ) return c;
+    c = prepareTree(parseFunction(f)).toString();
+    while ( cache_history.length >= CACHE_LIMIT  &&  cache_history.length > 0 ) {  // avoid endless loop
+        delete prepare_cache[cache_history.shift()];
+    }
+    if ( CACHE_LIMIT >= 1 ) {
+        prepare_cache[f] = c;
+        cache_history.push(f);
+    }
+    return c;
 }
 
 function parseFunction ( f ) {
