@@ -109,10 +109,10 @@ send.$Concurrent_Thread_compiled = function ( $this, $args, $cont ) {
                         timeout     : undefined
                     };
                 } else {
-                    try{ req.abort(); }catch(e){}  // IE less than 7 does not support "abort".
+                    try{ req.abort(); }catch(_){}  // IE less than 7 does not support "abort".
                     return {
-                        continuation: $cont,
-                        ret_val     : req,
+                        continuation: $cont.exception,
+                        ret_val     : e,
                         timeout     : undefined
                     };
                 }
