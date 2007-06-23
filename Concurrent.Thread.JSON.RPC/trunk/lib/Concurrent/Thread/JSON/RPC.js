@@ -85,7 +85,7 @@ function makeNamedPost( url, method ) {
                 params : args2params(arguments)
             }), POST_HEADERS);
             res = eval("(" + res.responseText + ")");
-            if ( res.error ) throw new RemoteError(res.error);
+            if ( res.error ) throw new JSONRPCError(res.error);
             return res.result;
         }
     ));
@@ -100,7 +100,7 @@ function makePositionedPost ( url, method ) {
                 params : arrayize(arguments)
             }), POST_HEADERS);
             res = eval("(" + res.responseText + ")");
-            if ( res.error ) throw new RemoteError(res.error);
+            if ( res.error ) throw new JSONRPCError(res.error);
             return res.result;
         }
     ));
@@ -112,7 +112,7 @@ function makeNamedGet ( url, method ) {
         function ( /* variable arguments */ ) {
             var res = Thread.Http.get(url + params2query(args2params(arguments)), COMMON_HEADERS);
             res = eval("(" + res.responseText + ")");
-            if ( res.error ) throw new RemoteError(res.error);
+            if ( res.error ) throw new JSONRPCError(res.error);
             return res.result;
         }
     ));
@@ -126,7 +126,7 @@ function makePositionedGet ( url, method ) {
             arguments.length++;
             var res = Thread.Http.get(url + params2query(args2params(arguments)), COMMON_HEADERS);
             res = eval("(" + res.responseText + ")");
-            if ( res.error ) throw new RemoteError(res.error);
+            if ( res.error ) throw new JSONRPCError(res.error);
             return res.result;
         }
     ));
@@ -164,9 +164,10 @@ function params2query ( params ) {
 }
 
 
-//@export RemoteError
-var RemoteError = newErrorClass(NAMESPACE + ".RemoteError", function( e ){
-    this.error = e;
+//@export JSONRPCError
+var JSONRPCError = newErrorClass(NAMESPACE + ".JSONRPCError", function( e ){
+    this.code    = e.code;
+    this.message = e.message;
+    if ( e.hasOwnProperty("error") ) this.error = e.error;
     return false;
 });
-Error.prototype.message = "remote procedure returns error";
