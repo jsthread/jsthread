@@ -120,8 +120,9 @@ function standBy ( t ) {
 // Cut "join" link.
 function unjoin ( ) {
     if ( this._join_thread ) {
-        var it = this._join_thread._joined_list.head().find(function( that ){
-            return that === this;
+        var self = this;
+        var it = this._join_thread._joined_list.head().find(function( it ){
+            return it === self;
         });
         it.remove();
         this._join_thread = null;
