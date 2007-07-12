@@ -111,6 +111,10 @@ proto.getScopes = function ( ) {
     return this.scopes.slice(0, this.scopes.length);
 };
 
+proto.makeGotoBlock = function ( arg, target ) {
+    return new IL.GotoBlock(this.getScopes(), nil(), arg, target, this.contThrow);
+};
+
 
 
 //@export CsConvert
@@ -155,7 +159,7 @@ EmptyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 };
 
 Block.prototype[Cs] = function ( follows, ctxt, sttop ) {
-    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, follows.car, ctxt.contThrow), follows);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows);
     ctxt.putBreakLabels(this.labels, follows.car);
     try {
         return CsStatements(this.body, follows, ctxt, sttop);
@@ -171,7 +175,7 @@ ExpStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows);
     ctxt.putBreakLabels(this.labels, next_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
@@ -184,12 +188,12 @@ IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows);
     ctxt.putBreakLabels(this.labels, next_block);
     try {
         follows = this.tbody[Cs](follows, ctxt, sttop);
         var true_block = follows.car;
-        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows);
         follows = this.fbody[Cs](follows, ctxt, sttop);
         follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), true_block) );
         return this.cond[Cs](follows, ctxt, sttop);
@@ -200,9 +204,9 @@ IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 
 DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
-    var next_block     = follows.car;
-    var first_block    = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
-    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    var next_block  = follows.car;
+    var first_block = ctxt.makeGotoBlock(undefinedExp, null);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
     if ( this.cond.containsFunctionCall() ) {
         follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), first_block) );
         follows = this.cond[Cs](follows, ctxt, sttop);
@@ -210,7 +214,7 @@ DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows.car.prependStatement( new IL.CondStatement(this.cond, first_block) );
     }
     var continue_block = follows.car;
-    follows = cons( new IL.GotoBlock(ctxt.getScopes(), undefinedExp, follows.car, ctxt.contThrow), follows );
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
     ctxt.putBreakLabels(this.labels, next_block);
     ctxt.putBreakLabels([emptyLabel], next_block);
     ctxt.putContinueLabels(this.labels, continue_block);
@@ -224,14 +228,14 @@ DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         ctxt.removeContinueLabels([emptyLabel]);
     }
     first_block.target = follows.car;
-    return cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, first_block, ctxt.contThrow),
+    return cons( ctxt.makeGotoBlock(undefinedExp, first_block),
                  cons(first_block, follows) );
 };
 
 WhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block  = follows.car;
-    var first_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
-    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, first_block, ctxt.contThrow), follows );
+    var first_block = ctxt.makeGotoBlock(undefinedExp, null);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, first_block), follows );
     ctxt.putBreakLabels(this.labels, next_block);
     ctxt.putBreakLabels([emptyLabel], next_block);
     ctxt.putContinueLabels(this.labels, first_block);
@@ -251,17 +255,17 @@ WhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows.car.prependStatement( new IL.CondStatement(new NotExpression(this.cond), next_block) );
     }
     first_block.target = follows.car;
-    return cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, first_block, ctxt.contThrow),
+    return cons( ctxt.makeGotoBlock(undefinedExp, first_block),
                  cons(first_block, follows) );
 };
 
 ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    var loop_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
-    var continue_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, loop_block, ctxt.contThrow);
+    var loop_block = ctxt.makeGotoBlock(undefinedExp, null);
+    var continue_block = ctxt.makeGotoBlock(undefinedExp, loop_block);
     follows = cons(continue_block, follows);
     if ( this.incr ) follows = this.incr[Cs](follows, ctxt, sttop);
-    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, follows.car, ctxt.contThrow), follows);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
     ctxt.putBreakLabels(this.labels, next_block);
     ctxt.putBreakLabels([emptyLabel], next_block);
     ctxt.putContinueLabels(this.labels, loop_block);
@@ -284,7 +288,7 @@ ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     }
     loop_block.target = follows.car;
     follows = cons( loop_block, follows );
-    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, follows.car, ctxt.contThrow), follows);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
     if ( this.init ) {
         follows = this.init[Cs](follows, ctxt, sttop);
     }
@@ -294,8 +298,8 @@ ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 ForInStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( !this.lhs.hasLvalue() ) Kit.codeBug('for-in requires lvalue on the left hand side of "in": ' + this);
     var next_block = follows.car;
-    var loop_block = new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, null, ctxt.contThrow);
-    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, loop_block, ctxt.contThrow), follows);
+    var loop_block = ctxt.makeGotoBlock(undefinedExp, null);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, loop_block), follows );
     ctxt.putBreakLabels(this.labels, next_block);
     ctxt.putBreakLabels([emptyLabel], next_block);
     ctxt.putContinueLabels(this.labels, loop_block);
@@ -337,7 +341,7 @@ ForInStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     ) );
     loop_block.target = follows.car;
     follows = cons( loop_block, follows );
-    follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, loop_block, ctxt.contThrow), follows );
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, loop_block), follows );
     follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop+1), new NumberLiteral(0)) );
     if ( this.exp.containsFunctionCall() ) {
         follows.car.prependStatement( new IL.EnumStatement(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop)) );
@@ -351,12 +355,9 @@ ForInStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 ContinueStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     return cons(
-        new IL.GotoBlock(
-            ctxt.getScopes(),
-            nil(),
+        ctxt.makeGotoBlock(
             undefinedExp,
-            ctxt.contContinue.get( this.target ? this.target : emptyLabel ),
-            ctxt.contThrow
+            ctxt.contContinue.get( this.target ? this.target : emptyLabel )
         ),
         follows
     );
@@ -366,12 +367,9 @@ BreakStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     ctxt.putBreakLabels(this.labels, follows.car);
     try {
         return cons(
-            new IL.GotoBlock(
-                ctxt.getScopes(),
-                nil(),
+            ctxt.makeGotoBlock(
                 undefinedExp,
-                ctxt.contBreak.get( this.target ? this.target : emptyLabel ),
-                ctxt.contThrow
+                ctxt.contBreak.get( this.target ? this.target : emptyLabel )
             ),
             follows
         );
@@ -383,35 +381,35 @@ BreakStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 ReturnStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( this.exp ) {
         if ( this.exp.containsFunctionCall() ) {
-            follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), ctxt.getStackVar(sttop), ctxt.contReturn, ctxt.contThrow), follows);
+            follows = cons( ctxt.makeGotoBlock(ctxt.getStackVar(sttop), ctxt.contReturn), follows );
             return this.exp[Cs](follows, ctxt, sttop);
         } else {
-            return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), this.exp, ctxt.contReturn, ctxt.contThrow), follows);
+            return cons( ctxt.makeGotoBlock(this.exp, ctxt.contReturn), follows );
         }
     } else {
-        return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, ctxt.contReturn, ctxt.contThrow), follows);
+        return cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contReturn), follows );
     }
 };
 
 
 ThrowStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( this.exp.containsFunctionCall() ) {
-        follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), ctxt.getStackVar(sttop), ctxt.contThrow, ctxt.contThrow), follows);
+        follows = cons( ctxt.makeGotoBlock(ctxt.getStackVar(sttop), ctxt.contThrow), follows );
         return this.exp[Cs](follows, ctxt, sttop);
     } else {
-        return cons(new IL.GotoBlock(ctxt.getScopes(), nil(), this.exp, ctxt.contThrow, ctxt.contThrow), follows);
+        return cons( ctxt.makeGotoBlock(this.exp, ctxt.contThrow), follows );
     }
 };
 
 TryCatchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
     follows = this.catchBlock[Cs](follows, ctxt, sttop);
     follows.car.prependStatement( new IL.RecvStatement(this.variable) );
     var storeContThrow = ctxt.contThrow;
     ctxt.contThrow = follows.car;
     try {
-        follows = cons(new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows);
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
         return this.tryBlock[Cs](follows, ctxt, sttop);
     } finally {
         ctxt.contThrow = storeContThrow;
@@ -555,7 +553,7 @@ AssignExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
 AndExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( this.right.containsFunctionCall() ) {
         var next_block = follows.car;
-        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
         follows = this.right[Cs](follows, ctxt, sttop);
         follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
         return this.left[Cs](follows, ctxt, sttop);
@@ -570,7 +568,7 @@ AndExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
 OrExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( this.right.containsFunctionCall() ) {
         var next_block = follows.car;
-        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
         follows = this.right[Cs](follows, ctxt, sttop);
         follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), next_block) );
         return this.left[Cs](follows, ctxt, sttop);
@@ -585,10 +583,10 @@ OrExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
 ConditionalExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( this.texp.containsFunctionCall() || this.fexp.containsFunctionCall() ) {
         var next_block = follows.car;
-        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
         follows = this.texp[Cs](follows, ctxt, sttop);
         var true_block = follows.car;
-        follows = cons( new IL.GotoBlock(ctxt.getScopes(), nil(), undefinedExp, next_block, ctxt.contThrow), follows );
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
         follows = this.fexp[Cs](follows, ctxt, sttop);
         follows.car.prependStatement(new IL.CondStatement(ctxt.getStackVar(sttop), true_block));
         return this.cond[Cs](follows, ctxt, sttop);
