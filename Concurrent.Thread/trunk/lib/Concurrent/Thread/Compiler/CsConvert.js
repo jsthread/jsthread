@@ -261,15 +261,15 @@ WhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    var loop_block = ctxt.makeGotoBlock(undefinedExp, null);
-    var continue_block = ctxt.makeGotoBlock(undefinedExp, loop_block);
-    follows = cons(continue_block, follows);
+    var last_block = ctxt.makeGotoBlock(undefinedExp, null);
+    follows = cons(last_block, follows);
     if ( this.incr ) follows = this.incr[Cs](follows, ctxt, sttop);
+    var incr_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
-    ctxt.putBreakLabels(this.labels, next_block);
+    ctxt.putBreakLabels(this.labels , next_block);
     ctxt.putBreakLabels([emptyLabel], next_block);
-    ctxt.putContinueLabels(this.labels, loop_block);
-    ctxt.putContinueLabels([emptyLabel], loop_block);
+    ctxt.putContinueLabels(this.labels , incr_block);
+    ctxt.putContinueLabels([emptyLabel], incr_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
     } finally {
@@ -286,8 +286,7 @@ ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
             follows.car.prependStatement( new IL.CondStatement(new NotExpression(this.cond), next_block) );
         }
     }
-    loop_block.target = follows.car;
-    follows = cons( loop_block, follows );
+    last_block.target = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
     if ( this.init ) {
         follows = this.init[Cs](follows, ctxt, sttop);
