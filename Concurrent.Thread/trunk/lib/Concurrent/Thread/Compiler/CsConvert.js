@@ -403,15 +403,20 @@ ThrowStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 TryCatchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
-    follows = this.catchBlock[Cs](follows, ctxt, sttop);
-    follows.car.prependStatement( new IL.RecvStatement(this.variable) );
-    var storeContThrow = ctxt.contThrow;
-    ctxt.contThrow = follows.car;
+    ctxt.putBreakLabels(this.labels, next_block);
     try {
-        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
-        return this.tryBlock[Cs](follows, ctxt, sttop);
+        follows = this.catchBlock[Cs](follows, ctxt, sttop);
+        follows.car.prependStatement( new IL.RecvStatement(this.variable) );
+        var storeContThrow = ctxt.contThrow;
+        ctxt.contThrow = follows.car;
+        try {
+            follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
+            return this.tryBlock[Cs](follows, ctxt, sttop);
+        } finally {
+            ctxt.contThrow = storeContThrow;
+        }
     } finally {
-        ctxt.contThrow = storeContThrow;
+        ctxt.removeBreakLabels(this.labels);
     }
 };
 
