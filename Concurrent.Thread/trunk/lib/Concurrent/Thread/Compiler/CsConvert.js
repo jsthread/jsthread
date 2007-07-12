@@ -113,6 +113,14 @@ proto.getScopes = function ( ) {
     return this.scopes.slice(0, this.scopes.length);
 };
 
+proto.pushScope = function ( /* variable args */ ) {
+    return this.scopes.push.apply(this.scopes, arguments);
+};
+
+proto.popScope = function ( ) {
+    return this.scopes.pop();
+};
+
 proto.makeGotoBlock = function ( arg, target ) {
     return new IL.GotoBlock(this.getScopes(), nil(), arg, target, this.contThrow);
 };
@@ -389,6 +397,25 @@ ReturnStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         }
     } else {
         return cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contReturn), follows );
+    }
+};
+
+
+WithStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block = follows.car;
+    ctxt.putBreakLabels(this.labels, next_block);
+    try {
+        ctxt.pushScope(ctxt.getStackVar(sttop));
+        try {
+            follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
+            follows = this.body[Cs](follows, ctxt, sttop+1);
+        } finally {
+            ctxt.popScope();
+        }
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
+        return this.exp[Cs](follows, ctxt, sttop);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
     }
 };
 

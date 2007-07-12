@@ -153,10 +153,14 @@ function make_return ( continuation, ret_val ) {
 var assign_arguments = make_assign(name_arguments, var_args);
 
 function make_continuation ( block, body ) {
+    body = new Block([], body);
+    for ( var i=block.scopes.length-1;  i >= 0;  i-- ) {
+        body = new WithStatement([], block.scopes[i], body);
+    }
     return new VarStatement([], [{
         id : target_to_name(block),
         exp: new ObjectInitializer([
-                 {prop: name_procedure, exp: new FunctionExpression(null, [var_intermediate], cons(assign_arguments, body))},
+                 {prop: name_procedure, exp: new FunctionExpression(null, [var_intermediate], list(assign_arguments, body))},
                  {prop: name_this_val , exp: new ThisExpression() },
                  {prop: name_exception, exp: target_to_name(block.exception) }
              ])
