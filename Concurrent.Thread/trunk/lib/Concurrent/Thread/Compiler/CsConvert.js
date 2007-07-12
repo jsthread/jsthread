@@ -46,8 +46,10 @@
 
 var IL = Concurrent.Thread.Compiler.IntermediateLanguage;
 
-//@require Data.Cons 0.2.0
+//@require        Data.Cons.List
 //@with-namespace Data.Cons
+//@require        Data.Functional.Loop
+//@with-namespace Data.Functional
 
 
 
@@ -387,6 +389,50 @@ ReturnStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         }
     } else {
         return cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contReturn), follows );
+    }
+};
+
+
+SwitchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block = follows.car;
+    ctxt.putBreakLabels(this.labels , next_block);
+    ctxt.putBreakLabels([emptyLabel], next_block);
+    try {
+        var default_target  = next_block;
+        var cond_and_target = this.clauses.reverse().map(function( clause ){
+            follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
+            follows = CsStatements(clause.body, follows, ctxt, sttop);
+            var clause_block = follows.car;
+            if ( clause instanceof DefaultClause ) {
+                default_target = clause_block;
+                ignore();
+            } else {
+                return {cond:clause.exp, target:clause_block};
+            }
+        });
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, default_target), follows );
+        cond_and_target.forEach(function( it ){
+            if ( it.cond.containsFunctionCall() ) {
+                follows.car.prependStatement(
+                    new IL.CondStatement(
+                        new StrictEqualExpression(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop+1)),
+                        it.target
+                    )
+                );
+                follows = it.cond[Cs](follows, ctxt, sttop+1);
+            } else {
+                follows.car.prependStatement(
+                    new IL.CondStatement(
+                        new StrictEqualExpression(ctxt.getStackVar(sttop), it.cond),
+                        it.target
+                    )
+                );
+            }
+        });
+        return this.exp[Cs](follows, ctxt,sttop);
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+        ctxt.removeBreakLabels([emptyLabel]);
     }
 };
 
