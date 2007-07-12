@@ -420,6 +420,61 @@ TryCatchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     }
 };
 
+TryFinallyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
+    var next_block = follows.car;
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
+    ctxt.putBreakLabels(this.labels, next_block);
+    try {
+        var self = this;
+
+        var contBreak    = new IdentifierMap();
+        ctxt.contBreak.keys().forEach(function( label ){
+            follows = cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contBreak.get(label)), follows );
+            follows = self.finallyBlock[Cs](follows, ctxt, sttop);
+            contBreak.put(label, follows.car);
+        });
+        
+        var contContinue = new IdentifierMap();
+        ctxt.contContinue.keys().forEach(function( label ){
+            follows = cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contContinue.get(label)), follows );
+            follows = self.finallyBlock[Cs](follows, ctxt, sttop);
+            contContinue.put(label, follows.car);
+        });
+        
+        follows = cons( ctxt.makeGotoBlock(ctxt.getStackVar(sttop), ctxt.contReturn), follows );
+        follows = this.finallyBlock[Cs](follows, ctxt, sttop+1);
+        follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
+        var contReturn = follows.car;
+        
+        follows = cons( ctxt.makeGotoBlock(ctxt.getStackVar(sttop), ctxt.contThrow), follows );
+        follows = this.finallyBlock[Cs](follows, ctxt, sttop+1);
+        follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
+        var contThrow = follows.car;
+
+        follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
+        follows = this.finallyBlock[Cs](follows, ctxt, sttop);
+        
+        var restoreBreak    = ctxt.contBreak;
+        var restoreContinue = ctxt.contContinue;
+        var restoreReturn   = ctxt.contReturn;
+        var restoreThrow    = ctxt.contThrow;
+        ctxt.contBreak    = contBreak;
+        ctxt.contContinue = contContinue;
+        ctxt.contReturn   = contReturn;
+        ctxt.contThrow    = contThrow;
+        try {
+            return this.tryBlock[Cs](follows, ctxt, sttop);
+        } finally {
+            ctxt.contBreak    = restoreBreak;
+            ctxt.contContinue = restoreContinue;
+            ctxt.contReturn   = restoreReturn;
+            ctxt.contThrow    = restoreThrow;
+        }
+    } finally {
+        ctxt.removeBreakLabels(this.labels);
+    }
+};
+
 
 
 function make_assign ( left, right ) {
