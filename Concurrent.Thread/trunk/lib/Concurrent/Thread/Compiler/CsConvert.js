@@ -228,7 +228,7 @@ DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     ctxt.putBreakLabels(this.labels, next_block);
     ctxt.putBreakLabels([emptyLabel], next_block);
     ctxt.putContinueLabels(this.labels, continue_block);
-    ctxt.putContinueLabels([emptyLabel], continue_lock);
+    ctxt.putContinueLabels([emptyLabel], continue_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
     } finally {
