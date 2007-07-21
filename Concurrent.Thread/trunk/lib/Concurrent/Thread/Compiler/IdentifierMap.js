@@ -40,6 +40,8 @@
 
 //@require Concurrent.Thread.Compiler.IdentifierSet
 
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
 
 
 //@export IdentifierMap
@@ -52,12 +54,12 @@ var proto = IdentifierMap.prototype;
 
 proto.clone = function clone ( ) {
     var c = new IdentifierMap();
-    for ( var i in this._map ) c._map[i] = this._map[i];
+    for ( var i in this._map ) {
+        if ( hasOwnProperty.call(this._map, i) ) c._map[i] = this._map[i];
+    }
     return c;
 };
 
-
-var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 proto.exists = function ( /* variable arguments */ ) {
     for ( var i=0;  i < arguments.length;  i++ ) {
