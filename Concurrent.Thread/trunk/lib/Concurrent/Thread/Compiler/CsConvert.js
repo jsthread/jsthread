@@ -485,14 +485,14 @@ TryFinallyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         ctxt.contBreak.keys().forEach(function( label ){
             follows = cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contBreak.get(label)), follows );
             follows = self.finallyBlock[Cs](follows, ctxt, sttop);
-            contBreak = contBreak.put(label, follows.car);
+            contBreak.put(label, follows.car);
         });
         
         var contContinue = new IdentifierMap();
         ctxt.contContinue.keys().forEach(function( label ){
             follows = cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contContinue.get(label)), follows );
             follows = self.finallyBlock[Cs](follows, ctxt, sttop);
-            contContinue = contContinue.put(label, follows.car);
+            contContinue.put(label, follows.car);
         });
         
         follows = cons( ctxt.makeGotoBlock(ctxt.getStackVar(sttop), ctxt.contReturn), follows );
