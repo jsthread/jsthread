@@ -85,28 +85,31 @@ proto.getStackVar = function ( n ) {
     return this.stackVars[n];
 };
 
-proto.putBreakLabels = function ( labels, cont ) {
+proto.putBreakLabels = function ( labels, target ) {
+    if ( !labels.length ) return this.contBreak;
+    var restore = this.contBreak.clone();
     for ( var i=0;  i < labels.length;  i++ ) {
-        this.contBreak.put(labels[i], cont);
+        this.contBreak.put(labels[i], target);
     }
+    return restore;
 };
 
-proto.removeBreakLabels = function ( labels ) {
-    for ( var i=0;  i < labels.length;  i++ ) {
-        this.contBreak.remove(labels[i]);
+proto.putBreakAndContinueLabels = function ( labels, breakTarget, continueTarget ) {
+    if ( !labels.length ) {
+        return {
+            contBreak   : this.contBreak,
+            contContinue: this.contContinue
+        };
     }
-};
-
-proto.putContinueLabels = function ( labels, cont ) {
+    var restore = {
+        contBreak   : this.contBreak.clone(),
+        contContinue: this.contContinue.clone()
+    };
     for ( var i=0;  i < labels.length;  i++ ) {
-        this.contContinue.put(labels[i], cont);
+        this.contBreak.put(labels[i], breakTarget);
+        this.contContinue.put(labels[i], continueTarget);
     }
-};
-
-proto.removeContinueLabels = function ( labels ) {
-    for ( var i=0;  i < labels.length;  i++ ) {
-        this.contContinue.remove(labels[i]);
-    }
+    return restore;
 };
 
 proto.getScopes = function ( ) {
@@ -170,11 +173,11 @@ EmptyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 Block.prototype[Cs] = function ( follows, ctxt, sttop ) {
     follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows);
-    ctxt.putBreakLabels(this.labels, follows.car);
+    var restore = ctxt.putBreakLabels(this.labels, follows.car);
     try {
         return CsStatements(this.body, follows, ctxt, sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
+        ctxt.contBreak = restore;
     }
 };
 
@@ -186,20 +189,20 @@ ExpStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows);
-    ctxt.putBreakLabels(this.labels, next_block);
+    var restore = ctxt.putBreakLabels(this.labels, follows.car);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
         follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
         return this.cond[Cs](follows, ctxt, sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
+        ctxt.contBreak = restore;
     }
 };
 
 IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows);
-    ctxt.putBreakLabels(this.labels, next_block);
+    var restore = ctxt.putBreakLabels(this.labels, follows.car);
     try {
         follows = this.tbody[Cs](follows, ctxt, sttop);
         var true_block = follows.car;
@@ -208,7 +211,7 @@ IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), true_block) );
         return this.cond[Cs](follows, ctxt, sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
+        ctxt.contBreak = restore;
     }
 };
 
@@ -225,17 +228,12 @@ DoWhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     }
     var continue_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
-    ctxt.putBreakLabels(this.labels, next_block);
-    ctxt.putBreakLabels([emptyLabel], next_block);
-    ctxt.putContinueLabels(this.labels, continue_block);
-    ctxt.putContinueLabels([emptyLabel], continue_block);
+    var restore = ctxt.putBreakAndContinueLabels(this.labels.concat(emptyLabel), next_block, continue_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
-        ctxt.removeBreakLabels([emptyLabel]);
-        ctxt.removeContinueLabels(this.labels);
-        ctxt.removeContinueLabels([emptyLabel]);
+        ctxt.contBreak    = restore.contBreak;
+        ctxt.contContinue = restore.contContinue;
     }
     first_block.target = follows.car;
     return cons( ctxt.makeGotoBlock(undefinedExp, first_block),
@@ -246,17 +244,12 @@ WhileStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block  = follows.car;
     var first_block = ctxt.makeGotoBlock(undefinedExp, null);
     follows = cons( ctxt.makeGotoBlock(undefinedExp, first_block), follows );
-    ctxt.putBreakLabels(this.labels, next_block);
-    ctxt.putBreakLabels([emptyLabel], next_block);
-    ctxt.putContinueLabels(this.labels, first_block);
-    ctxt.putContinueLabels([emptyLabel], first_block);
+    var restore = ctxt.putBreakAndContinueLabels(this.labels.concat(emptyLabel), next_block, first_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
-        ctxt.removeBreakLabels([emptyLabel]);
-        ctxt.removeContinueLabels(this.labels);
-        ctxt.removeContinueLabels([emptyLabel]);
+        ctxt.contBreak    = restore.contBreak;
+        ctxt.contContinue = restore.contContinue;
     }
     if ( this.cond.containsFunctionCall() ) {
         follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
@@ -276,17 +269,12 @@ ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     if ( this.incr ) follows = this.incr[Cs](follows, ctxt, sttop);
     var incr_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
-    ctxt.putBreakLabels(this.labels , next_block);
-    ctxt.putBreakLabels([emptyLabel], next_block);
-    ctxt.putContinueLabels(this.labels , incr_block);
-    ctxt.putContinueLabels([emptyLabel], incr_block);
+    var restore = ctxt.putBreakAndContinueLabels(this.labels.concat(emptyLabel), next_block, incr_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
-        ctxt.removeBreakLabels([emptyLabel]);
-        ctxt.removeContinueLabels(this.labels);
-        ctxt.removeContinueLabels([emptyLabel]);
+        ctxt.contBreak    = restore.contBreak;
+        ctxt.contContinue = restore.contContinue;
     }
     if ( this.cond ) {
         if ( this.cond.containsFunctionCall() ) {
@@ -309,17 +297,12 @@ ForInStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     var loop_block = ctxt.makeGotoBlock(undefinedExp, null);
     follows = cons( ctxt.makeGotoBlock(undefinedExp, loop_block), follows );
-    ctxt.putBreakLabels(this.labels, next_block);
-    ctxt.putBreakLabels([emptyLabel], next_block);
-    ctxt.putContinueLabels(this.labels, loop_block);
-    ctxt.putContinueLabels([emptyLabel], loop_block);
+    var restore = ctxt.putBreakAndContinueLabels(this.labels.concat(emptyLabel), next_block, loop_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop+2);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
-        ctxt.removeBreakLabels([emptyLabel]);
-        ctxt.removeContinueLabels(this.labels);
-        ctxt.removeContinueLabels([emptyLabel]);
+        ctxt.contBreak    = restore.contBreak;
+        ctxt.contContinue = restore.contContinue;
     }
     if ( this.lhs.containsFunctionCall() ) {
         follows = CsReference(this.lhs, ctxt, sttop+2, function( exp ){
@@ -373,7 +356,7 @@ ContinueStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 };
 
 BreakStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
-    ctxt.putBreakLabels(this.labels, follows.car);
+    var restore = ctxt.putBreakLabels(this.labels, follows.car);
     try {
         return cons(
             ctxt.makeGotoBlock(
@@ -383,7 +366,7 @@ BreakStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
             follows
         );
     } finally {
-        ctxt.removeBreakLabels(this.labels);
+        ctxt.contBreak = restore;
     }
 };
 
@@ -403,7 +386,7 @@ ReturnStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 WithStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    ctxt.putBreakLabels(this.labels, next_block);
+    var restore = ctxt.putBreakLabels(this.labels, next_block);
     try {
         ctxt.pushScope(ctxt.getStackVar(sttop));
         try {
@@ -415,15 +398,14 @@ WithStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
         return this.exp[Cs](follows, ctxt, sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
+        ctxt.contBreak = restore;
     }
 };
 
 
 SwitchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    ctxt.putBreakLabels(this.labels , next_block);
-    ctxt.putBreakLabels([emptyLabel], next_block);
+    var restore = ctxt.putBreakLabels(this.labels.concat(emptyLabels) , next_block);
     try {
         var default_target  = next_block;
         var cond_and_target = this.clauses.reverse().map(function( clause ){
@@ -458,8 +440,7 @@ SwitchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         });
         return this.exp[Cs](follows, ctxt,sttop);
     } finally {
-        ctxt.removeBreakLabels(this.labels);
-        ctxt.removeBreakLabels([emptyLabel]);
+        ctxt.contBreak = restore;
     }
 };
 
@@ -476,7 +457,7 @@ ThrowStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 TryCatchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
-    ctxt.putBreakLabels(this.labels, next_block);
+    var restore = ctxt.putBreakLabels(this.labels, next_block);
     try {
         follows = this.catchBlock[Cs](follows, ctxt, sttop);
         follows.car.prependStatement( new IL.RecvStatement(this.variable) );
@@ -489,29 +470,29 @@ TryCatchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
             ctxt.contThrow = storeContThrow;
         }
     } finally {
-        ctxt.removeBreakLabels(this.labels);
+        ctxt.contBreak = restore;
     }
 };
 
 TryFinallyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
-    ctxt.putBreakLabels(this.labels, next_block);
+    var restoreBreak = ctxt.putBreakLabels(this.labels, next_block);
     try {
         var self = this;
 
-        var contBreak    = new IdentifierMap();
+        var contBreak = new IdentifierMap();
         ctxt.contBreak.keys().forEach(function( label ){
             follows = cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contBreak.get(label)), follows );
             follows = self.finallyBlock[Cs](follows, ctxt, sttop);
-            contBreak.put(label, follows.car);
+            contBreak = contBreak.put(label, follows.car);
         });
         
         var contContinue = new IdentifierMap();
         ctxt.contContinue.keys().forEach(function( label ){
             follows = cons( ctxt.makeGotoBlock(undefinedExp, ctxt.contContinue.get(label)), follows );
             follows = self.finallyBlock[Cs](follows, ctxt, sttop);
-            contContinue.put(label, follows.car);
+            contContinue = contContinue.put(label, follows.car);
         });
         
         follows = cons( ctxt.makeGotoBlock(ctxt.getStackVar(sttop), ctxt.contReturn), follows );
@@ -527,7 +508,6 @@ TryFinallyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows );
         follows = this.finallyBlock[Cs](follows, ctxt, sttop);
         
-        var restoreBreak    = ctxt.contBreak;
         var restoreContinue = ctxt.contContinue;
         var restoreReturn   = ctxt.contReturn;
         var restoreThrow    = ctxt.contThrow;
@@ -538,13 +518,12 @@ TryFinallyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
         try {
             return this.tryBlock[Cs](follows, ctxt, sttop);
         } finally {
-            ctxt.contBreak    = restoreBreak;
             ctxt.contContinue = restoreContinue;
             ctxt.contReturn   = restoreReturn;
             ctxt.contThrow    = restoreThrow;
         }
     } finally {
-        ctxt.removeBreakLabels(this.labels);
+        ctxt.contBreak = restoreBreak;
     }
 };
 

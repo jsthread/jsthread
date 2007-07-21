@@ -50,6 +50,13 @@ function IdentifierMap ( ) {
 var proto = IdentifierMap.prototype;
 
 
+proto.clone = function clone ( ) {
+    var c = new IdentifierMap();
+    for ( var i in this._map ) c._map[i] = this._map[i];
+    return c;
+};
+
+
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
 proto.exists = function ( /* variable arguments */ ) {
