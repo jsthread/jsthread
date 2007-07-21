@@ -405,7 +405,7 @@ WithStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 
 SwitchStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
-    var restore = ctxt.putBreakLabels(this.labels.concat(emptyLabels) , next_block);
+    var restore = ctxt.putBreakLabels(this.labels.concat(emptyLabel) , next_block);
     try {
         var default_target  = next_block;
         var cond_and_target = this.clauses.reverse().map(function( clause ){
