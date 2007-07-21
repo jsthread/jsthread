@@ -41,6 +41,7 @@
 //@require Concurrent.Thread.Compiler.Expression
 //@require Concurrent.Thread.Compiler.Statement
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
+//@require Concurrent.Thread.Compiler.IdentifierMap
 //@with-namespace Concurrent.Thread
 var IL = Concurrent.Thread.Compiler.IntermediateLanguage;
 
