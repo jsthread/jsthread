@@ -624,13 +624,13 @@ retry:
 /**
  * Parser calls the method when it gets / or /= in literal context.
  */
-function readRegExp ( startToken )
+proto.readRegExp = function ( startToken )
 {
     if ( startToken === Token.ASSIGN_DIV ) {
         // Miss-scanned /=
-        stringBuffer = ["/="];
-    } else if ( startToken !== Token.DIV ) {
-        stringBuffer = ["/"];
+        this.stringBuffer = ["/="];
+    } else if ( startToken === Token.DIV ) {
+        this.stringBuffer = ["/"];
     } else {
         Kit.codeBug();
     }
