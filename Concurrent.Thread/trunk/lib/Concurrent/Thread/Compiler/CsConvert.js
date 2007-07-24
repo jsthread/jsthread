@@ -87,7 +87,8 @@ proto.getStackVar = function ( n ) {
 
 proto.putBreakLabels = function ( labels, target ) {
     if ( !labels.length ) return this.contBreak;
-    var restore = this.contBreak.clone();
+    var restore = this.contBreak;
+    this.contBreak = this.contBreak.clone();
     for ( var i=0;  i < labels.length;  i++ ) {
         this.contBreak.put(labels[i], target);
     }
@@ -102,9 +103,11 @@ proto.putBreakAndContinueLabels = function ( labels, breakTarget, continueTarget
         };
     }
     var restore = {
-        contBreak   : this.contBreak.clone(),
-        contContinue: this.contContinue.clone()
+        contBreak   : this.contBreak,
+        contContinue: this.contContinue
     };
+    this.contBreak    = this.contBreak.clone();
+    this.contContinue = this.contContinue.clone();
     for ( var i=0;  i < labels.length;  i++ ) {
         this.contBreak.put(labels[i], breakTarget);
         this.contContinue.put(labels[i], continueTarget);
