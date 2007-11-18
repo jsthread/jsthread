@@ -175,8 +175,8 @@ EmptyStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 };
 
 Block.prototype[Cs] = function ( follows, ctxt, sttop ) {
-    follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows);
     var restore = ctxt.putBreakLabels(this.labels, follows.car);
+    follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows);
     try {
         return CsStatements(this.body, follows, ctxt, sttop);
     } finally {
@@ -192,7 +192,7 @@ ExpStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows);
-    var restore = ctxt.putBreakLabels(this.labels, follows.car);
+    var restore = ctxt.putBreakLabels(this.labels, next_block);
     try {
         follows = this.body[Cs](follows, ctxt, sttop);
         follows.car.prependStatement( new IL.CondStatement(new NotExpression(ctxt.getStackVar(sttop)), next_block) );
@@ -205,7 +205,7 @@ IfStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
 IfElseStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, next_block), follows);
-    var restore = ctxt.putBreakLabels(this.labels, follows.car);
+    var restore = ctxt.putBreakLabels(this.labels, next_block);
     try {
         follows = this.tbody[Cs](follows, ctxt, sttop);
         var true_block = follows.car;
