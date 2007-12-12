@@ -1,0 +1,654 @@
+\documentclass[a4j]{jsarticle}
+\usepackage{amsfonts}
+\usepackage{fancyvrb}
+
+
+
+%	Curly letters; use in maths mode only; adds an index entry
+%
+%\newcommand{\curly}[1]{{\cal #1}\index{$\protect\cal #1$}}
+
+% Curly letters and brackets
+\newcommand{\lb}{[\![}				% left double bracket
+\newcommand{\rb}{]\!]}				% right double bracket
+\newcommand{\db}[1]{\lb#1\rb}			% enclose args in double bracs
+\newcommand{\den}[2]{{#1}\db{#2}\,}	
+
+\newcommand{\lba}{{\tt <\!\!\!<}}				% left double brace
+\newcommand{\rba}{{\tt >\!\!\!>}}				% right double brace
+\newcommand{\set}[1]{\lba{#1}\rba}			% enclose args in double angle bracs
+
+\newcommand{\lbb}{\{\!\!\{}				% left double brace
+\newcommand{\rbb}{\}\!\!\}}				% right double brace
+\newcommand{\map}[1]{\lbb{#1}\rbb}			% enclose args in double braces
+
+\newcommand{\defC}[3]{\den{#1}{\sf #2}_{\it #3}}
+\newcommand{\Cs}{\defC{\mathbb{C}_{\sf s}}}
+
+
+\newcommand{\Stack}[1]{\mathbb{S}_{\sf tack}(#1)}
+
+\newcommand{\defB}[3]{{#1}({\sf #2})_{#3}}
+\newcommand{\Bexp}{\defB{\mathbb{B}_{\sf exp}}}
+\newcommand{\Bcond}{\defB{\mathbb{B}_{\sf cond}}}
+\newcommand{\Bcall}{\defB{\mathbb{B}_{\sf call}}}
+\newcommand{\Brecv}{\defB{\mathbb{B}_{\sf recv}}}
+\newcommand{\Bret}{\defB{\mathbb{B}_{\sf ret}}}
+\newcommand{\Benum}{\defB{\mathbb{B}_{\sf enum}}}
+
+\newcommand{\var}[1]{{\it #1}}
+\newcommand{\sub}[2]{{\(#1_{#2}\)}}
+
+
+
+\begin{document}
+
+
+
+\section{Notational Convention}
+
+\subsection{Set}
+
+値の集合を次のように記述することとする。
+
+$  \set{v_1, v_2, ...}  $
+
+また、$\set{}$で空集合を表すこととする。
+
+
+
+\subsection{Map}
+
+キーと値の対応を示すマップを次のように定義する。
+
+\begin{itemize}
+\item $\map{}$ はマップである
+\item $\var{\mu}$がマップならば$\var{\mu}\map{\var{k}:\var{v}}$はマップである
+\end{itemize}
+
+意味的には$\map{}$は空のマップを表し、
+$\var{\mu}\map{\var{k}:\var{v}}$で\var{k}に対応する値が\var{v}である以外は$\var{\mu}$と同じマップを表すこととする。
+また、$\var{\mu}$がマップであるとき、$\var{\mu}$の上でキー\var{k}に対応する値を$\var{\mu}\map{k}$と書くこととする。
+
+従って$\var{\mu}$がマップであるとき次が成り立つ。
+
+\begin{eqnarray*}
+\mu\map{k:v}\map{k}  &  =  &  v           \\
+\mu\map{k:v}\map{l}  &  =  &  \mu\map{l}
+\end{eqnarray*}
+
+また、下記のような略記法を導入し、本文中で空でないマップを表す際に適宜用いることとする。
+
+\begin{eqnarray*}
+\map{k_1:v_1,\ k_2:v_2,\ ...\ k_n:v_n}  &  =  &  \map{}\map{k_1:v_1}\map{k_2:v_2}...\map{k_n:v_n}
+\end{eqnarray*}
+
+
+
+\section{Code Translation}
+
+\subsection{Labeled Statement}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{label}:\ \var{s_1} }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{s_1} }{(l, m\cup \set{\var{label}}, t, b\map{\var{label}:\var{n}}, c, r, x, s)} $  \\
+\end{tabular}
+
+
+
+\subsection{Expression Statement}
+
+\subsubsection{Primary Expressions}
+
+\begin{eqnarray*}
+	\Cs{ \var{v}; }{(l, m, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, \var{v} }{(l, n, x)}  \\
+	\Cs{ true;    }{(l, m, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, true    }{(l, n, x)}  \\
+	\Cs{ false;   }{(l, m, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, false   }{(l, n, x)}  \\
+	\Cs{ null;    }{(l, m, n, b, c, r, x, s)}       &  =  &   \Bexp{ \Stack{\var{s}}, null    }{(l, n, x)}  \\
+	...\\
+	\Cs{ ( \var{e} ); }{(l, m, n, b, c, r, x, s)}   &  =  &   \Cs{ \var{e}; }{(l, m, n, b, c, r, x, s)}  \\
+\end{eqnarray*}
+
+
+
+\subsubsection{Member Expressions}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e}.\var{p}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e}; }{(l, m, t, b, c, r, x, s)}              $  \\
+	   &  $ \Bexp{ \Stack{\var{s}}, \Stack{\var{s}}.\var{p} }{(t, n, x)}    $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}]; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}                 $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s')}                $  \\
+	   &  $ \Bexp{ \Stack{\var{s}}, \Stack{\var{s}}[\Stack{\var{s'}}] }{(t_2, n, x)}    $
+\end{tabular}
+
+
+\subsubsection{Function Call}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}.\var{p} ( \var{e_2}, \var{e_3}, ... \var{e_m} ); }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}      $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s_1)}    $  \\
+	   &  $ \Cs{ \var{e_3}; }{(t_2, m, t_3, b, c, r, x, s_2)}    $  \\
+	   &  ...  \\
+	   &  $ \Cs{ \var{e_m}; }{(t_{m-1}, m, t_m, b, c, r, x, s_{m-1})}    $  \\
+	   &  $ \Bcall{ \Stack{\var{s}}, \Stack{\var{s}}.\var{p}, \Stack{\var{s_1}}, \Stack{\var{s_2}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
+	   &  $ \Brecv{ \Stack{\var{s}} }{(t_{m+1}, n, x)}    $  \\
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}] ( \var{e_3}, \var{e_4}, ... \var{e_m} ); }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}      $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s_1)}    $  \\
+	   &  $ \Cs{ \var{e_3}; }{(t_2, m, t_3, b, c, r, x, s_2)}    $  \\
+	   &  $ \Cs{ \var{e_4}; }{(t_3, m, t_4, b, c, r, x, s_3)}    $  \\
+	   &  ...  \\
+	   &  $ \Cs{ \var{e_m}; }{(t_{m-1}, m, t_m, b, c, r, x, s_{m-1})}    $  \\
+	   &  $ \Bcall{ \Stack{\var{s}}, \Stack{\var{s}}[\Stack{\var{s_1}}], \Stack{\var{s_2}}, \Stack{\var{s_3}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
+	   &  $ \Brecv{ \Stack{\var{s}} }{(t_{m+1}, n, x)}    $  \\
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1} ( \var{e_2}, \var{e_3}, ... \var{e_m} ); }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=  &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}      $  \\
+	   &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s_1)}    $  \\
+	   &  $ \Cs{ \var{e_3}; }{(t_2, m, t_3, b, c, r, x, s_2)}    $  \\
+	   &  ...  \\
+	   &  $ \Cs{ \var{e_m}; }{(t_{m-1}, m, t_m, b, c, r, x, s_{m-1})}    $  \\
+	   &  $ \Bcall{ null, \Stack{\var{s}}, \Stack{\var{s_1}}, \Stack{\var{s_2}}, ... \Stack{\var{s_{m-1}}} }{(t_m, t_{m+1}, x)}    $  \\
+	   &  $ \Brecv{ \Stack{\var{s}} }{(t_{m+1}, n, x)}    $  \\
+\end{tabular}
+
+
+\subsubsection{Assignment}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{v} = \var{e}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e}; }{(l, m, t, b, c, r, x, s)} $  \\
+	    &  $ \Bexp{ \var{v}, \Stack{\var{s}} }{(t, n, x)}      $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}.\var{p} = \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}                    $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s')}                   $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}.\var{p}, \Stack{\var{s'}} }{(t_2, n, x)} $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}] = \var{e_3}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}                                $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s_1)}                              $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, m, t_3, b, c, r, x, s_2)}                              $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}[\Stack{\var{s_1}}], \Stack{\var{s_2}} }{(t_3, n, x)} $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{v}\ op=\ \var{e}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e}; }{(l, m, t, b, c, r, x, s)} $  \\
+	    &  $ \Bexp{ \var{v}, \var{v}\ op\ \Stack{\var{s}} }{(t, n, x)}      $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}.\var{p}\ op=\ \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, m, t, b, c, r, x, s)}                 $  \\
+	    &  $ \Cs{ \Stack{\var{s}}.\var{p}; }{(l, m, t, b, c, r, x, s_1)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(l, m, t, b, c, r, x, s_2)}               $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}.\var{p}, \Stack{\var{s_1}}\ op\ \Stack{\var{s_2}} }{(t, n, x)}      $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}[\var{e_2}]\ op=\ \var{e_3}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}                                                    $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s_1)}                                                  $  \\
+	    &  $ \Cs{ \Stack{\var{s}}[ \Stack{\var{s_1}} ]; }{(t_2, m, t_3, b, c, r, x, s_2)}                       $  \\
+	    &  $ \Cs{ \var{e_3}; }{(t_2, m, t_3, b, c, r, x, s_3)}                                                  $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}[\Stack{\var{s_1}}], \Stack{\var{s_2}}\ op\ \Stack{\var{s_3}} }{(t_3, n, x)} $
+\end{tabular}
+
+
+
+\subsubsection{Special Forms}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ \&\&\ \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, m, t_1, b, c, r, x, s)}        $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2}, \var{n} }{(t_1, x, x)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, m, n, b, c, r, x, s)}        $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ ||\ \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, m, t_1, b, c, r, x, s)}        $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{n}, \var{t_2} }{(t_1, x, x)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, m, n, b, c, r, x, s)}        $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ ?\ \var{e_2}\ :\ \var{e_3}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l, m, t_1, b, c, r, x, s)}          $  \\
+	    &  $ \Bcond{ \Stack{\var{s}}, \var{t_2}, \var{t_3} }{(t_1, x, x)} $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_2, m, n, b, c, r, x, s)}          $  \\
+	    &  $ \Cs{ \var{e_3}; }{(t_3, m, n, b, c, r, x, s)}          $
+\end{tabular}
+
+
+\subsubsection{Other Binary Operators}
+
+\begin{tabular}{ll}
+	\multicolumn{2}{l}{
+		$ \Cs{ \var{e_1}\ op\ \var{e_2}; }{(l, m, n, b, c, r, x, s)} $
+	}  \\
+	=   &  $ \Cs{ \var{e_1}; }{(l  , m, t_1, b, c, r, x, s)}                $  \\
+	    &  $ \Cs{ \var{e_2}; }{(t_1, m, t_2, b, c, r, x, s')}               $  \\
+	    &  $ \Bexp{ \Stack{\var{s}}\ op\ \Stack{\var{s'}} }{(t_2, n, x)} $
+\end{tabular}
+
+
+
+\subsection{If Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ if\ (\ \var{e}\ )\ \var{s_1} }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, m, t_1, b, c, x, s)}          $ \\
+   &  $ \Bcond{ \Stack{s}, \var{t_2}, \var{n} }{(t_1, x, x)} $ \\
+   &  $ \Cs{ \var{s_1} }{(t_2, \set{}, n, b, c, r, x, s)}        $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ if\ (\ \var{e}\ )\ \var{s_1}\ else\ \var{s_2} }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, m, t_1, b, c, x, s)}         $ \\
+   &  $ \Bcond{ \Stack{s}, \var{t_2}, \var{t_3} }{(t_1, x, x)} $ \\
+   &  $ \Cs{ \var{s_1} }{(t_2, m, n, b, c, r, x, s)}     $ \\
+   &  $ \Cs{ \var{s_2} }{(t_3, m, n, b, c, r, x, s)}     $
+\end{tabular}
+
+
+
+\subsection{Iteration Statements}
+
+\subsubsection{Do-While Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ do\ \var{s_1}\ while\ (\ \var{e}\ ); }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{s_1} }{(l, \set{}, t_1, b', c', r, x, s)}  $ \\
+   &  $ \Cs{ \var{e}; }{(t_1, \set{}, t_2, \map{}, \map{}, r, x, s)} $ \\
+   &  $ \Bcond{ \Stack{\var{s}}, \var{l}, \var{n} }{(t_2, x, x)}  $
+\end{tabular}
+
+where
+
+\begin{tabular}{l}
+$  m  = \set{l_1, l_2, ... l_k}                             $  \\
+$  b' = b \map{l_1:n  , l_2:n  , ... l_k:n  } \map{"":n}    $  \\
+$  c' = c \map{l_1:t_1, l_2:t_1, ... l_k:t_1} \map{"":t_1}  $
+\end{tabular}
+
+
+
+\subsubsection{While Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ while\ (\ \var{e}\ )\ \var{s_1} }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, \set{}, t_1, \map{}, \map{}, r, x, s)}  $ \\
+   &  $ \Bcond{ \Stack{\var{s}}, t_2, \var{n} }{(t_1, x, x)}                 $ \\
+   &  $ \Cs{ \var{s_1} }{(t_2, \set{}, l, b', c', r, x, s)}            $
+\end{tabular}
+
+where
+
+\begin{tabular}{l}
+$  m  = \set{l_1, l_2, ... l_k}                     $  \\
+$  b' = b \map{l_1:n, l_2:n, ... l_k:n} \map{"":n}  $  \\
+$  c' = c \map{l_1:l, l_2:l, ... l_k:l} \map{"":l}  $
+\end{tabular}
+
+
+
+\subsubsection{For Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ for\ (\ \var{e_1};\ \var{e_2};\ \var{e_3}\ )\ \var{s_1} }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e_1}; }{(l  , \set{}, t_1, \map{}, \map{}, r, x, s)}  $ \\
+   &  $ \Cs{ \var{e_2}; }{(t_1, \set{}, t_2, \map{}, \map{}, r, x, s)}  $ \\
+   &  $ \Bcond{ \Stack{\var{s}}, t_3, \var{n} }{(t_2, x, x)}                     $ \\
+   &  $ \Cs{ \var{s_1} }{(t_3, \set{}, t_4, b', c', r, x, s)}           $ \\
+   &  $ \Cs{ \var{e_3} }{(t_4, \map{}, t_1, \map{}, \map{}, r, x, s)}   $
+\end{tabular}
+
+where
+
+\begin{tabular}{l}
+$  m  = \set{l_1, l_2, ... l_k}                             $  \\
+$  b' = b \map{l_1:n  , l_2:n  , ... l_k:n  } \map{"":n  }  $  \\
+$  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_4}  $
+\end{tabular}
+
+
+
+\subsubsection{For-in Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ for\ (\ \var{v}\ in\ \var{e}\ )\ \var{s_1} }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l  , \set{}, t_1, \map{}, \map{}, r, x, s)}          $ \\
+   &  $ \Benum{ \Stack{\var{s}}, \Stack{\var{s}} }{(t_1, t_2, x)}             $ \\
+   &  $ \Bexp{ \Stack{\var{s'}}, 0 }{(t_2, t_3, x)}                           $ \\
+   &  $ \Bcond{ \Stack{\var{s'}} < \Stack{\var{s}}.length, t_4, \var{n} }{(t_3, x, x)} $ \\
+   &  $ \Cs{ \var{s_1} }{(t_4, \set{}, t_5, b', c', r, x, s'')}               $ \\
+   &  $ \Bexp{ \Stack{\var{s'}}, \Stack{\var{s'}}+1 }{(t_5, t_3, x)}          $
+\end{tabular}
+
+where
+
+\begin{tabular}{l}
+$  m  = \set{l_1, l_2, ... l_k}                             $  \\
+$  b' = b \map{l_1:n  , l_2:n  , ... l_k:n  } \map{"":n  }  $  \\
+$  c' = c \map{l_1:t_4, l_2:t_4, ... l_k:t_4} \map{"":t_3}  $
+\end{tabular}
+
+
+
+\subsection{Break Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ break; }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bcond{ true, \var{b}\map{""}, \var{x} }{(l, x, x)}    $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ break\ \var{label}; }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bcond{ true, \var{b}\map{\var{label}}, \var{x} }{(l, x, x)}    $
+\end{tabular}
+
+
+
+\subsection{Continue Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ continue; }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bcond{ true, \var{c}\map{""}, \var{x} }{(l, x, x)}    $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ continue\ \var{label}; }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bcond{ true, \var{c}\map{\var{label}}, \var{x} }{(l, x, x)}    $
+\end{tabular}
+
+
+
+\subsection{Return Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ return\ \var{e}; }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, \set{}, t_1, b, c, r, x, s)} $ \\
+   &  $ \Bret{ \Stack{\var{s}} }{(t_1, r, x)}    $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ return; }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Bret{ (void 0) }{(l, r, x)}    $
+\end{tabular}
+
+
+
+\subsection{Throw Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ throw\ \var{e}; }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{e}; }{(l, \set{}, t, b, c, r, x, s)} $ \\
+   &  $ \Bret{ \Stack{\var{s}} }{(t, x, x)}    $
+\end{tabular}
+
+
+
+\subsection{Try Statement}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ try\ \var{s_1}\ catch\ (\ \var{v}\ )\ \var{s_2} }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{s_1} }{(l, \set{}, n, b, c, r, t_1, s)}    $ \\
+   &  $ \Brecv{ \var{v} }{(t_1, \set{}, t_2, b, c, r, x, s)} $ \\
+   &  $ \Cs{ \var{s_2} }{(t_2, \set{}, n, b, c, r, x, s)}    $
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ try\ \var{s_1}\ finally\ \var{s_2} }{(l, m, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ \var{s_1} }{(l, \set{}, n', b', c', r_1, x_1, s)} $ \\
+
+   &  $ \Brecv{ \Stack{s'} }{(t_1, t_2, x)}                   $  \\
+   &  $ \Cs{ \var{s_2} }{(t_2, \set{}, t_3, b, c, r, x, s'')} $  \\
+   &  $ \Bcond{true, \Stack{s'}, \var{x}}{(t_3, x, x)}        $  \\
+
+   &  $ \Bret{ \var{n} }{(n', t_1, x)} $  \\
+   
+   &  $ \Bret{ \var{b_1} }{(b_1', t_1, x)} $  \\
+   &  $ \Bret{ \var{b_2} }{(b_2', t_1, x)} $  \\
+   &  ...  \\
+   &  $ \Bret{ \var{b_n} }{(b_n', t_1, x)} $  \\
+
+   &  $ \Bret{ \var{c_1} }{(c_1', t_1, x)} $  \\
+   &  $ \Bret{ \var{c_2} }{(c_2', t_1, x)} $  \\
+   &  ...  \\
+   &  $ \Bret{ \var{c_m} }{(c_m', t_1, x)} $  \\
+
+   &  $ \Brecv{ \Stack{s} }{(r_1, r_2, x)} $  \\
+   &  $ \Bret{ \var{r_3} }{(r_2, t_1, x)}  $  \\
+   &  $ \Bret{ \Stack{s} }{(r_3, r, x)}    $  \\
+
+   &  $ \Brecv{ \Stack{s} }{(x_1, x_2, x)} $  \\
+   &  $ \Bret{ \var{x_3} }{(x_2, t_1, x)}  $  \\
+   &  $ \Bret{ \Stack{s} }{(x_3, x, x)}    $  \\
+\end{tabular}
+
+where
+
+\begin{tabular}{lcl}
+	$ b  $  &  =  &  $ \map{ lb_1:b_1 , lb_2:b_2 , ... lb_n:b_n  } $  \\
+	$ b' $  &  =  &  $ \map{ lb_1:b_1', lb_2:b_2', ... lb_n:b_n' } $  \\
+	$ c  $  &  =  &  $ \map{ lc_1:c_1 , lc_2:c_2 , ... lc_m:c_m  } $  \\
+	$ c' $  &  =  &  $ \map{ lc_1:c_1', lc_2:c_2', ... lc_m:c_m' } $  \\
+\end{tabular}
+
+\vspace{1em}
+
+\begin{tabular}{ll}
+\multicolumn{2}{l}{
+	$ \Cs{ try\ \var{s_1}\ catch\ (\ \var{v}\ )\ \var{s_2}\ finally\ \var{s_3} }{(l, n, b, c, r, x, s)} $
+}  \\
+=  &  $ \Cs{ try\ \{\ try\ \var{s_1}\ catch\ (\ \var{v}\ )\ \var{s_2}\ \}\ finally\ \var{s_3} }{(l, n, b, c, r, x, s)} $ \\
+\end{tabular}
+
+
+
+
+\section{Code Generation}
+
+$  \Stack{ s }  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+$stack_\var[s]
+\end{Verbatim}
+
+
+$  \Bexp{ \var{v}, \var{e} }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( ) {
+      \var[v] = \var[e];
+      return { continuation: \var[n] };
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+$  \Bcond{ \var{e}, \var{t}, \var{f} }{(l, \_, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( ) {
+      if ( \var[e] ) {
+          return { continuation: \var[t] };
+      } else {
+          return { continuation: \var[f] };
+      }
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+$  \Bret{ \var{v} }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( ) {
+        return {
+            continuation: \var[n],
+            ret_val     : \var[v]
+        };
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+$  \Bcall{ \var{t}, \var{f}, \var{a_1}, \var{a_2}, ... }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\!|]
+var \var!l| = {
+    procedure: function ( ) {
+        if ( \(\lb\) \var!f| is native function \(\rb\) ) {
+            return {
+                continuation: \var!n|,
+                ret_val     : \var!f|.apply(\var!t|, [\var!\sub!a|!1||, \var!\sub!a|!2||, ...])
+            };
+        } else {
+            return \var!f|(\var!t|, [\var!\sub!a|!1||, \var!\sub!a|!2||, ...], \var!n|);
+        }
+    },
+    exception: \var!x|
+};
+\end{Verbatim}
+
+
+$  \Brecv{ \var{v} }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( $ret_val ) {
+        \var[v] = $ret_val;
+        return {
+            continuation: \var[n]
+        };
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+$  \Benum{ \var{v}, \var{e} }{(l, n, x)}  =  $
+\begin{Verbatim}[frame=single, commandchars=\\\[\]]
+var \var[l] = {
+    procedure: function ( ) {
+      var a = new Array();
+      for ( var i in \var[e] ) a.push(i);
+      \var[v] = a;
+      return { continuation: \var[n] };
+    },
+    exception: \var[x]
+};
+\end{Verbatim}
+
+
+
+\end{document}
+
