@@ -39,7 +39,6 @@
 //@namespace Data.Functional.List
 
 //@require Data.Functional.List.Iterator 0.4.0
-//@require Oop.Spawn
 
 
 // This module provides convinient wrapper to construct 
