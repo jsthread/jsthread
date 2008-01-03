@@ -3,52 +3,36 @@
 //@namespace WebBrowser.GUI
 
 //@require Concurrent.Thread.Compiler
+//@with-namespace Concurrent
+
+//@require WebBrowser.GUI.Event
+//@with-namespace WebBrowser.GUI
+
+//@require Data.Functional.Array
+
+//@require Util.Arrayize
+//@with-namespace Util.Arrayize
+
 
 
 //@export waitFor
-var waitFor = Concurrent.Thread.compile(
-    function waitFor ( target, eventtype, options ) {
-        if ( !target || typeof target !== "object" ) {
-            throw new TypeError("not a object: " + target);
-        }
-        
-        eventtype = String(eventtype).toLowerCase();
-        
-        options = options || {};
-        var opts = {};
-        opts.cancelDefault = Boolean(options.cancelDefault);
-        opts.isCapture     = Boolean(options.isCapture);
-        opts.cancelBubble  = Boolean(options.cancelBubble);
-        
-        var self = Concurrent.Thread.self();
-        var signal = {};
-        function handler ( e ) {
-            e = e || window.e;
-            if ( opts.cancelDefault && e.cancelDefault ) {
-                e.cancelDefault();
-            }
-            if ( opts.cancelBubble && e.cancelBubble ) {
-                e.cancelBubble();
-            }
-            if ( target.detachEvent ) {
-                target.detachEvent("on"+eventtype, handler);
-            } else if ( target.removeEventListener ) {
-                target.removeEventListener(eventtype, handler, opts.isCapture);
-            } else {
-                delete target["on"+eventtype];
-            }
-            signal.event = e;
-            self.notify(signal);
-            return opts.cancelDefault ? false : undefined;
-        }
-        if ( target.attachEvent ) {
-            target.attachEvent("on"+eventtype, handler);
-        } else if ( target.addEventListener ) {
-            target.addEventListener(eventtype, handler, opts.isCapture);
-        } else {
-            target["on"+eventtype] = handler;
-        }
+var waitFor = eval(Concurrent.Thread.prepare(
+    function waitFor ( target, type, options ) {
+        var arg = {};
+        for ( var i in options ) arg[i] = options[i];
+        arg.target = target;
+        arg.type   = type;
+        return select(arg);
+    }
+));
+
+
+//@export select
+var select = eval(Concurrent.Thread.prepare(
+    function select ( /* variable args */ ) {
         try {
+            var signal = {};
+            set_handlers(arrayize(arguments), signal);
             Concurrent.Thread.stop();
         } catch ( e ) {
             if ( e === signal ) {
@@ -58,5 +42,35 @@ var waitFor = Concurrent.Thread.compile(
             }
         }
     }
-);
+));
 
+
+function set_handlers ( args, signal ) {
+    var self = Concurrent.Thread.self();
+    
+    args = args.map(function( arg ){
+        if ( !arg.target || typeof arg.target !== "object" ) {
+            throw new TypeError("not a object: " + target);
+        }
+        return {
+            target         : arg.target,
+            type           : String(arg.type),
+            useCapture     : Boolean(arg.useCapture),
+            preventDefault : Boolean(arg.preventDefault),
+            stopPropagation: Boolean(arg.stopPropagation)
+        };
+    });
+    
+    var lsn_ids = args.map(function( arg ){
+        function handler ( e ) {
+            if ( arg.preventDefault  ) e.preventDefault();
+            if ( arg.stopPropagation ) e.stopPropagation();
+            lsn_ids.forEach(function( id ){
+                Event.detach(id);
+            });
+            signal.event  = e;
+            self.notify(signal);
+        }
+        return Event.attach(arg.target, arg.type, handler, arg.useCapture);
+    });
+}
