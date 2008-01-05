@@ -759,10 +759,11 @@ proto.statementHelper = function ( labels )
                 this.allLabelSet.add(e.label);
                 labels.push(e.label);
                 try {
-                    return this.statementHelper(labels);
+                    statement = this.statementHelper(labels);
                 } finally {
                     this.allLabelSet.remove(e.label);
                 }
+                return statement;
             } else {
                 throw e;
             }
