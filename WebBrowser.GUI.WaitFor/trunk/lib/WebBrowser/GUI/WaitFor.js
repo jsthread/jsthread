@@ -68,7 +68,13 @@ function set_handlers ( args, signal ) {
             lsn_ids.forEach(function( id ){
                 Event.detach(id);
             });
-            signal.event  = e;
+            // IE invalidates event properties after leaving the event handler.
+            // So, we pass a copy of the current event object (but DO NOT copy its methods).
+            var evt = {};
+            for ( var i in e ) {
+                if ( typeof e[i] !== "function" ) evt[i] = e[i];
+            }
+            signal.event  = evt;
             self.notify(signal);
         }
         return Event.attach(arg.target, arg.type, handler, arg.useCapture);
