@@ -1,6 +1,6 @@
 //@esmodpp
 
-//@require WebBrowser.GUI.WaitFor
+//@require WebBrowser.GUI.Event.WaitFor
 //@require Concurrent.Thread.Compiler
 //@require WebBrowser.Cookie
 
@@ -28,7 +28,7 @@ Concurrent.Thread.create(function(){
                        +  '<input type="text" name="name">'
                        +  '<input type="button" name="OK" value="OK">';
         document.body.appendChild(form);
-        WebBrowser.GUI.waitFor(form.OK, "click");
+        WebBrowser.GUI.Event.waitFor(form.OK, "click");
         return form.name.value;
     }
     

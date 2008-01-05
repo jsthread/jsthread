@@ -1,12 +1,11 @@
 //@esmodpp
 //@version 0.0.0
-//@namespace WebBrowser.GUI
+//@namespace WebBrowser.GUI.Event
 
 //@require Concurrent.Thread.Compiler
 //@with-namespace Concurrent
 
 //@require WebBrowser.GUI.Event
-//@with-namespace WebBrowser.GUI
 
 //@require Data.Functional.Array
 
@@ -66,7 +65,7 @@ function set_handlers ( args, signal ) {
             if ( arg.preventDefault  ) e.preventDefault();
             if ( arg.stopPropagation ) e.stopPropagation();
             lsn_ids.forEach(function( id ){
-                Event.detach(id);
+                detach(id);
             });
             // IE invalidates event properties after leaving the event handler.
             // So, we pass a copy of the current event object (but DO NOT copy its methods).
@@ -77,6 +76,6 @@ function set_handlers ( args, signal ) {
             signal.event  = evt;
             self.notify(signal);
         }
-        return Event.attach(arg.target, arg.type, handler, arg.useCapture);
+        return attach(arg.target, arg.type, handler, arg.useCapture);
     });
 }
