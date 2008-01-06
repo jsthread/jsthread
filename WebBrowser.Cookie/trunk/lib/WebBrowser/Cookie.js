@@ -186,8 +186,9 @@ proto.toLocaleString = function ( ) {
 
 function make_cookie ( v ) {
     var cookie = this._name + '=' + encodeURIComponent(dump(v));
+    var expires = null;
     if ( this._expires ) {
-        cookie += '; expires=' + this._expires.toUTCString();
+        expires = this._expires;
     } else if ( this._duration ) {
         var d = new Date();
         d.setFullYear(d.getFullYear() + this._duration.year,
@@ -196,7 +197,13 @@ function make_cookie ( v ) {
         d.setHours(d.getHours()   + this._duration.hour,
                    d.getMinutes() + this._duration.min,
                    d.getSeconds() + this._duration.sec );
-        cookie += '; expires=' + d.toUTCString();
+        expires = d;
+    }
+    if ( expires ) {
+        cookie += '; expires=' + expires.toUTCString();
+        var max_age = Math.floor((expires.valueOf() - (new Date).valueOf()) / 1000);
+        if ( max_age < 0 ) max_age = 0;
+        cookie += '; max-age=' + max_age;
     }
     if ( this._path   ) cookie += '; path=' + this._path;
     if ( this._domain ) cookie += '; domain=' + this._domain;
