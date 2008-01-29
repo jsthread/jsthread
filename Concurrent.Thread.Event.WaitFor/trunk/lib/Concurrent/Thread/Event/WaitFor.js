@@ -1,11 +1,12 @@
 //@esmodpp
 //@version 0.0.0
-//@namespace WebBrowser.GUI.Event
+//@namespace Concurrent.Thread.Event
 
 //@require Concurrent.Thread.Compiler
 //@with-namespace Concurrent
 
-//@require WebBrowser.GUI.Event
+//@require        WebBrowser.GUI.Event
+//@with-namespace WebBrowser.GUI.Event
 
 //@require Data.Functional.Array
 
