@@ -11,7 +11,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Data.Error.NotSupportedError module.
+ * The Original Code is Data.Error.UnsupportedMethodError module.
  *
  * The Initial Developer of the Original Code is
  * Daisuke Maki.
@@ -35,21 +35,21 @@
  * ***** END LICENSE BLOCK ***** */
 
 //@esmodpp
-//@version 0.1.2
+//@version 0.2.0
 
 //@require Data.Error
 //@namespace Data.Error
 
 
-//@export NotSupportedError
-var NotSupportedError = newErrorClass(
-    NAMESPACE + ".NotSupportedError",
+//@export UnsupportedMethodError
+var UnsupportedMethodError = newErrorClass(
+    NAMESPACE + ".UnsupportedMethodError",
     function ( message, method ) {
         this.method = method;
     }
 );
 
-var proto = NotSupportedError.prototype;
+var proto = UnsupportedMethodError.prototype;
 
 proto.message = "an optional method is not supported.";
 
@@ -58,7 +58,7 @@ proto.toString = function ( ) {
         return Error.prototype.toString.call(this);
     }
     else {
-        var e = new NotSupportedError();
+        var e = new UnsupportedMethodError();
         for ( var i in this ) e[i] = this[i];
         e.message = "an optional method `" + this.method + "' is not supported.";
         return e.toString();

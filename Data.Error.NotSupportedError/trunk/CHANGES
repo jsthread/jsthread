@@ -1,9 +1,0 @@
-ver. 0.1.0
-　・情けないことにファイル名が違っていた。
-　・プリプロセッサをesmodppに変更。
-　・data.error ver. 0.2.0に対応して拡張。
-
-
-ver. 0.1.1
-　・oop.SUPERがdeprecatedになったのでその対応と、toStringメソッドの
-　　実装しなおし。
