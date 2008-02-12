@@ -2,13 +2,13 @@
 //@require        Test.Simple
 //@with-namespace Test.Simple
 
-//@require Oop.Spawn
+//@require Object.Spawn
 
 
 test(7, function(){
     
     var parent = {hoge:"foo"};
-    var child  = parent.spawn();
+    var child  = Object.spawn(parent);
     ok( parent.isPrototypeOf(child) );
     
     ok( child.hoge === "foo" );
