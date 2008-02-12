@@ -11,7 +11,7 @@
  * for the specific language governing rights and limitations under the
  * License.
  *
- * The Original Code is Data.Error.NotImplementedError.
+ * The Original Code is Data.Error.UnimplementedMethodError.
  *
  * The Initial Developer of the Original Code is
  * Daisuke Maki.
@@ -35,30 +35,29 @@
  * ***** END LICENSE BLOCK ***** */
 
 //@esmodpp
-//@version 0.1.2
+//@version 0.2.0
 
 //@require Data.Error
 //@namespace Data.Error
 
 
-//@export NotImplementedError
-var NotImplementedError = newErrorClass(
-    NAMESPACE + ".NotImplementedError",
+//@export UnimplementedMethodError
+var UnimplementedMethodError = newErrorClass(
+    NAMESPACE + ".UnimplementedMethodError",
     function ( message, method ) {
         this.method = method;
     }
 );
 
-var proto = NotImplementedError.prototype;
+var proto = UnimplementedMethodError.prototype;
 
 proto.message = "a required method has not been implemented.";
 
 proto.toString = function ( ) {
     if ( this.hasOwnProperty("message") || !this.method ) {
         return Error.prototype.toString.call(this);
-    }
-    else {
-        var e = new NotImplementedError();
+    } else {
+        var e = new UnimplementedMethodError();
         for ( var i in this ) e[i] = this[i];
         e.message = "an required method `" + this.method + "' has not been implemented.";
         return e.toString();

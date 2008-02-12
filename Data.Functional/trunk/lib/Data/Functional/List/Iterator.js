@@ -43,7 +43,7 @@
 //@require        Data.Iterator.BidirectionalIterator
 //@with-namespace Data.Iterator
 
-//@require Data.Error.NotImplementedError
+//@require Data.Error.UnimplementedMethodError
 //@with-namespace Data.Error
 
 
@@ -69,9 +69,9 @@ proto.toString = function ( ) {
 // which can be defferent from the argument.
 // The effect of assignment at the tail of a list should be identical 
 // to the one of insertion.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 proto.assign = function ( v ) {
-    throw new NotImplementedError(undefined, "assign");
+    throw new UnimplementedMethodError(undefined, "assign");
 };
 
 
@@ -80,9 +80,9 @@ proto.assign = function ( v ) {
 // of the container, which can be defferent from the argument.
 // The position which the iterator points to after insertion is 
 // implementation-dependent.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 proto.insert = function ( v ) {
-    throw new NotImplementedError(undefined, "insert");
+    throw new UnimplementedMethodError(undefined, "insert");
 };
 
 
@@ -90,9 +90,9 @@ proto.insert = function ( v ) {
 // points, then, returns the value of the container.
 // The position which the iterator points to after removal is 
 // implementation-dependent.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 proto.remove = function ( ) {
-    throw new NotImplementedError(undefined, "remove");
+    throw new UnimplementedMethodError(undefined, "remove");
 };
 
 

@@ -41,7 +41,7 @@
 //@require Data.Functional.Loop 0.5.0
 //@with-namespace Data.Functional.Loop
 
-//@require Data.Error.NotImplementedError
+//@require Data.Error.UnimplementedMethodError
 //@with-namespace Data.Error
 
 
@@ -62,7 +62,7 @@ proto.toString = function ( ) {
 
 
 proto.iterator = function ( ) {
-    throw new NotImplementedError([
+    throw new UnimplementedMethodError([
         "`iterator' method is not implemented. Any ",
         obj_name,
         " must implement a proper version of it."

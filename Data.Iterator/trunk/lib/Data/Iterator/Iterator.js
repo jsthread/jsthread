@@ -38,7 +38,7 @@
 //@version 0.2.1
 //@namespace Data.Iterator
 
-//@require Data.Error.NotImplementedError
+//@require Data.Error.UnimplementedMethodError
 //@with-namespace Data.Error
 
 
@@ -54,7 +54,7 @@ var proto = Iterator.prototype;
 var obj_name = "[object " + NAMESPACE + ".Iterator]";
 
 function mustImplement ( method ) {
-    throw new NotImplementedError(
+    throw new UnimplementedMethodError(
         [ "`", method, "' method is not implemented. ",
           "Any ", obj_name, " must implement a proper version of it." ].join(""),
         method );
@@ -68,7 +68,7 @@ proto.toString = function ( ) {
 
 // Returns true if this iterator points to the tail of a list,
 // false othersise.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.isTail = function ( ) {
     mustImplement("isTail");
@@ -77,7 +77,7 @@ proto.isTail = function ( ) {
 
 // Returns value of the element which is just after the position 
 // this iterator points to.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method, 
 // which may throws Data.Iterator.NoSuchElementError.
 proto.value = function ( ) {
@@ -87,7 +87,7 @@ proto.value = function ( ) {
 
 // Returns a new iterator that points to the next position to the 
 // one which this iterator points to.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method, 
 // which may throws Data.Iterator.NoSuchElementError.
 proto.next = function ( ) {

@@ -40,7 +40,7 @@
 
 //@require Data.Iterator.Iterator
 
-//@require Data.Error.NotImplementedError
+//@require Data.Error.UnimplementedMethodError
 //@with-namespace Data.Error
 
 
@@ -57,7 +57,7 @@ proto.constructor = BidirectionalIterator;
 var obj_name = "[object " + NAMESPACE + ".BidirectionalIterator]";
 
 function mustImplement ( method ) {
-    throw new NotImplementedError(
+    throw new UnimplementedMethodError(
         [ "`", method, "' method is not implemented. ",
           "Any ", obj_name, " must implement a proper version of it." ].join(""),
         method );
@@ -71,7 +71,7 @@ proto.toString = function ( ) {
 
 // Returns true if this iterator points to the head of a list,
 // false othersise.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.isHead = function ( ) {
     mustImplement("isHead");
@@ -80,7 +80,7 @@ proto.isHead = function ( ) {
 
 // Returns a new iterator that points to the previous position to 
 // the one which this iterator points to.
-// The default implementation merely throws NotImplementedError.
+// The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.previous = function ( ) {
     mustImplement("previous");
