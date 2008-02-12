@@ -2,7 +2,7 @@
 //@require Test.Simple
 //@with-namespace Test.Simple
 
-//@require Oop.Bind
+//@require Function.Bind
 
 
 test(4, function(){
