@@ -35,31 +35,23 @@
  * ***** END LICENSE BLOCK ***** */
 
 //@esmodpp
-//@version 0.2.0
+//@namespace Data.Error
+//@version   0.3.0
 
 //@require Data.Error 0.3.0
-//@namespace Data.Error
 
 
 //@export UnimplementedMethodError
 var UnimplementedMethodError = Error.extend(
-    function ( $super, message, method ) {
-        $super(message);
-        this.method = method;
-    },
-    {
-        name    : NAMESPACE + ".UnimplementedMethodError",
-        message : "a required method has not been implemented.",
-        toString: function ( ) {
-            if ( this.hasOwnProperty("message") || !this.method ) {
-                return Error.prototype.toString.call(this);
-            } else {
-                var e = new UnimplementedMethodError();
-                for ( var i in this ) e[i] = this[i];
-                e.message = "an required method `" + this.method + "' has not been implemented.";
-                return e.toString();
-            }
+    function ( $super, method, invocant, message ) {
+        if ( message !== undefined ) {
+            $super(message);
+        } else {
+            $super("an required method `" + method + "' has not been implemented");
         }
-    }
+        this.method   = method;
+        this.invocant = invocant;
+    },
+    { name: NAMESPACE + ".UnimplementedMethodError" }
 );
 

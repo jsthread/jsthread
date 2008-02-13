@@ -43,7 +43,7 @@
 //@require        Data.Iterator.BidirectionalIterator
 //@with-namespace Data.Iterator
 
-//@require Data.Error.UnimplementedMethodError
+//@require Data.Error.UnimplementedMethodError 0.3.0
 //@with-namespace Data.Error
 
 
@@ -71,7 +71,7 @@ proto.toString = function ( ) {
 // to the one of insertion.
 // The default implementation merely throws UnimplementedMethodError.
 proto.assign = function ( v ) {
-    throw new UnimplementedMethodError(undefined, "assign");
+    throw new UnimplementedMethodError(NAMESPACE + ".Iterator#assign", this);
 };
 
 
@@ -82,7 +82,7 @@ proto.assign = function ( v ) {
 // implementation-dependent.
 // The default implementation merely throws UnimplementedMethodError.
 proto.insert = function ( v ) {
-    throw new UnimplementedMethodError(undefined, "insert");
+    throw new UnimplementedMethodError(NAMESPACE + ".Iterator#insert", this);
 };
 
 
@@ -92,7 +92,7 @@ proto.insert = function ( v ) {
 // implementation-dependent.
 // The default implementation merely throws UnimplementedMethodError.
 proto.remove = function ( ) {
-    throw new UnimplementedMethodError(undefined, "remove");
+    throw new UnimplementedMethodError(NAMESPACE + ".Iterator#remove", this);
 };
 
 

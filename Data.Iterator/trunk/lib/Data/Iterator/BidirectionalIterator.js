@@ -40,7 +40,7 @@
 
 //@require Data.Iterator.Iterator
 
-//@require Data.Error.UnimplementedMethodError
+//@require Data.Error.UnimplementedMethodError 0.3.0
 //@with-namespace Data.Error
 
 
@@ -56,13 +56,6 @@ proto.constructor = BidirectionalIterator;
 
 var obj_name = "[object " + NAMESPACE + ".BidirectionalIterator]";
 
-function mustImplement ( method ) {
-    throw new UnimplementedMethodError(
-        [ "`", method, "' method is not implemented. ",
-          "Any ", obj_name, " must implement a proper version of it." ].join(""),
-        method );
-}
-
 
 proto.toString = function ( ) {
     return obj_name;
@@ -74,7 +67,7 @@ proto.toString = function ( ) {
 // The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.isHead = function ( ) {
-    mustImplement("isHead");
+    throw new UnimplementedMethodError(NAMESPACE+".BidirectionalIterator#isHead", this);
 };
 
 
@@ -83,6 +76,6 @@ proto.isHead = function ( ) {
 // The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.previous = function ( ) {
-    mustImplement("previous");
+    throw new UnimplementedMethodError(NAMESPACE+".BidirectionalIterator#previous", this);
 };
 

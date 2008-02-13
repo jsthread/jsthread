@@ -38,7 +38,7 @@
 //@version 0.0.0
 //@namespace StdIO
 
-//@require Data.Error.UnimplementedMethodError
+//@require Data.Error.UnimplementedMethodError 0.3.0
 //@with-namespace Data.Error
 
 
@@ -46,7 +46,7 @@
 var Out = {};
 
 Out.write = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(undefined, "write");
+    throw new UnimplementedMethodError(NAMESPACE+".Out.write", this);
 };
 
 Out.writeLine = function ( /* variable args */ ) {
@@ -70,15 +70,15 @@ for ( var i in Out ) {
 var In = {};
 
 In.read = function ( n ) {
-    throw new UnimplementedMethodError(undefined, "read");
+    throw new UnimplementedMethodError(NAMESPACE+".In.read", this);
 };
 
 In.unread = function ( str ) {
-    throw new UnimplementedMethodError(undefined, "unread");
+    throw new UnimplementedMethodError(NAMESPACE+".In.unread", this);
 };
 
 In.atEOS = function ( ) {
-    throw new UnimplementedMethodError(undefined, "atEOS");
+    throw new UnimplementedMethodError(NAMESPACE+".In.atEOS", this);
 };
 
 In.readLine = function ( ) {

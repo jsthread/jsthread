@@ -42,7 +42,7 @@
 //@with-namespace Data.Functional.Loop
 
 //@require Data.Error 0.3.0
-//@require Data.Error.UnimplementedMethodError
+//@require Data.Error.UnimplementedMethodError 0.3.0
 //@with-namespace Data.Error
 
 
@@ -63,11 +63,7 @@ proto.toString = function ( ) {
 
 
 proto.iterator = function ( ) {
-    throw new UnimplementedMethodError([
-        "`iterator' method is not implemented. Any ",
-        obj_name,
-        " must implement a proper version of it."
-    ].join(""), "iterator");
+    throw new UnimplementedMethodError(NAMESPACE+".Enumerable#iterator", this);
 };
 
 

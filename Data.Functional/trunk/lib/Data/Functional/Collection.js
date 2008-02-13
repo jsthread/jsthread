@@ -42,7 +42,7 @@
 //@require Data.Functional.Loop       0.5.0
 //@with-namespace Data.Functional.Loop
 
-//@require Data.Error.UnimplementedMethodError
+//@require Data.Error.UnimplementedMethodError 0.3.0
 //@with-namespace Data.Error
 
 
@@ -73,7 +73,7 @@ proto.toArray = function ( ) {
 
 
 proto.add = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(undefined, "add");
+    throw new UnimplementedMethodError(NAMESPACE + ".Collection#add", this);
 };
 
 
@@ -97,7 +97,7 @@ proto.addAll = function ( /* variable arguments */ ) {
 
 
 proto.removeAt = function ( it ) {
-    throw new UnimplementedMethodError(undefined, "removeAt");
+    throw new UnimplementedMethodError(NAMESPACE + ".Collection#removeAt", this);
 };
 
 

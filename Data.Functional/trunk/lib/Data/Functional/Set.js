@@ -43,7 +43,7 @@
 //@require Data.Iterator.Iterator
 //@with-namespace Data.Iterator
 
-//@require Data.Error.UnimplementedMethodError
+//@require Data.Error.UnimplementedMethodError 0.3.0
 //@require Data.Error.IllegalStateError
 //@with-namespace Data.Error
 
@@ -66,7 +66,7 @@ proto.toString = function ( ) {
 
 
 proto.contains = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(undefined, "contains")
+    throw new UnimplementedMethodError(NAMESPACE + ".Set#contains", this);
 };
 
 proto.containsAll = function ( /* variable args */ ) {
@@ -86,7 +86,7 @@ proto.containsAll = function ( /* variable args */ ) {
 
 
 proto.remove = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(undefined, "remove")
+    throw new UnimplementedMethodError(NAMESPACE + ".Set#remove", this);
 };
 
 proto.removeAll = function ( /* variable args */ ) {

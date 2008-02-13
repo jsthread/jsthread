@@ -53,13 +53,6 @@ var proto = Iterator.prototype;
 
 var obj_name = "[object " + NAMESPACE + ".Iterator]";
 
-function mustImplement ( method ) {
-    throw new UnimplementedMethodError(
-        [ "`", method, "' method is not implemented. ",
-          "Any ", obj_name, " must implement a proper version of it." ].join(""),
-        method );
-}
-
 
 proto.toString = function ( ) {
     return obj_name;
@@ -71,7 +64,7 @@ proto.toString = function ( ) {
 // The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.isTail = function ( ) {
-    mustImplement("isTail");
+    throw new UnimplementedMethodError(NAMESPACE+".Iterator#isTail", this);
 };
 
 
@@ -81,7 +74,7 @@ proto.isTail = function ( ) {
 // Sub-classes must implement their own version of this method, 
 // which may throws Data.Iterator.NoSuchElementError.
 proto.value = function ( ) {
-    mustImplement("value");
+    throw new UnimplementedMethodError(NAMESPACE+".Iterator#value", this);
 };
 
 
@@ -91,7 +84,7 @@ proto.value = function ( ) {
 // Sub-classes must implement their own version of this method, 
 // which may throws Data.Iterator.NoSuchElementError.
 proto.next = function ( ) {
-    mustImplement("next");
+    throw new UnimplementedMethodError(NAMESPACE+".Iterator#next", this);
 };
 
 
