@@ -11,7 +11,7 @@
 //@require        Util.Arrayize
 //@with-namespace Util.Arrayize
 
-//@require        Data.Error
+//@require        Data.Error 0.3.0
 //@with-namespace Data.Error
 
 
@@ -165,9 +165,14 @@ function params2query ( params ) {
 
 
 //@export JSONRPCError
-var JSONRPCError = newErrorClass(NAMESPACE + ".JSONRPCError", function( e ){
-    this.code    = e.code;
-    this.message = e.message;
-    if ( e.hasOwnProperty("error") ) this.error = e.error;
-    return false;
+var JSONRPCError = Error.extend(
+    function ( $super, e ) {
+        if ( e instanceof Object ) {
+            $super(e.message);
+            for ( var i in e ) this[i] = e[i];
+        } else {
+            $super(e);
+        }
+    },
+    {name: NAMESPACE + ".JSONRPCError"}
 });

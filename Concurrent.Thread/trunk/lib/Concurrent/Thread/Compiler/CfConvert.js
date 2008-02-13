@@ -45,7 +45,7 @@
 //@with-namespace Concurrent.Thread
 var IL = Concurrent.Thread.Compiler.IntermediateLanguage;
 
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@with-namespace Data.Error
 
 //@require Data.Cons.List
@@ -91,7 +91,10 @@ function cacheToList ( cache ) {
 
 
 //@export CyclicExceptionHandlerError
-var CyclicExceptionHandlerError = newErrorClass(NAMESPACE + ".CyclicExceptionHandlerError");
+var CyclicExceptionHandlerError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    {name: NAMESPACE + ".CyclicExceptionHandlerError"}
+);
 
 function check_cyclic ( depends ) {
     var ok = {};

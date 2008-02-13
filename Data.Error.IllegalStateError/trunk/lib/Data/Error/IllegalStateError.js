@@ -38,9 +38,15 @@
 //@version 0.0.0
 
 //@namespace Data.Error
-//@require   Data.Error
+//@require   Data.Error 0.3.0
 
 
 //@export IllegalStateError
-var IllegalStateError = newErrorClass(NAMESPACE + ".IllegalStateError");
+var IllegalStateError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    {
+        name   : NAMESPACE + ".IllegalStateError",
+        message: "illegal state"
+    }
+);
 

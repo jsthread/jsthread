@@ -37,31 +37,30 @@
 //@esmodpp
 //@version 0.2.0
 
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@namespace Data.Error
 
 
 //@export UnsupportedMethodError
-var UnsupportedMethodError = newErrorClass(
-    NAMESPACE + ".UnsupportedMethodError",
-    function ( message, method ) {
+var UnsupportedMethodError = Error.extend(
+    function ( $super, message, method ) {
+        $super(message);
         this.method = method;
+    },
+    {
+        name    : NAMESPACE + ".UnsupportedMethodError",
+        message : "an optional method is not supported.",
+        toString: function ( ) {
+            if ( this.hasOwnProperty("message") || !this.method ) {
+                return Error.prototype.toString.call(this);
+            }
+            else {
+                var e = new UnsupportedMethodError();
+                for ( var i in this ) e[i] = this[i];
+                e.message = "an optional method `" + this.method + "' is not supported.";
+                return e.toString();
+            }
+        }
     }
 );
-
-var proto = UnsupportedMethodError.prototype;
-
-proto.message = "an optional method is not supported.";
-
-proto.toString = function ( ) {
-    if ( this.hasOwnProperty("message") || !this.method ) {
-        return Error.prototype.toString.call(this);
-    }
-    else {
-        var e = new UnsupportedMethodError();
-        for ( var i in this ) e[i] = this[i];
-        e.message = "an optional method `" + this.method + "' is not supported.";
-        return e.toString();
-    }
-};
 

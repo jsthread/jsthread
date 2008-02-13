@@ -38,12 +38,17 @@
 //@version 0.2.0
 //@namespace Data.Iterator
 
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@with-namespace Data.Error
 
 
 
 //@export NoSuchElementError
-var NoSuchElementError = newErrorClass(NAMESPACE + ".NoSuchElementError");
-NoSuchElementError.prototype.message = "no such element";
+var NoSuchElementError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    {
+        name   : NAMESPACE + ".NoSuchElementError",
+        message: "no such element"
+    }
+);
 

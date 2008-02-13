@@ -39,7 +39,7 @@
 //@version   0.1.0
 
 //@require StdIO
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@with-namespace Data.Error
 
 
@@ -91,4 +91,7 @@ function ok ( e, m ) {
 
 
 //@export UninitializedError
-var UninitializedError = newErrorClass(NAMESPACE + ".UninitializedError");
+var UninitializedError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    { name: NAMESPACE + ".UninitializedError" }
+);

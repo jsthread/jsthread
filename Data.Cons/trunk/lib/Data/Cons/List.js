@@ -50,7 +50,7 @@
 //@require Data.Iterator.NoSuchElementError
 //@with-namespace Data.Iterator
 
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@require Data.Error.IllegalStateError
 //@with-namespace Data.Error
 
@@ -456,10 +456,20 @@ proto.constructor = ReverseIterator;
 
 
 //@export InsertAtHeadError
-var InsertAtHeadError = newErrorClass(NAMESPACE+".InsertAtHeadError");
-InsertAtHeadError.prototype.message = "can't insert at head of cons-list";
+var InsertAtHeadError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    {
+        name   : NAMESPACE + ".InsertAtHeadError",
+        message: "can't insert at head of cons-list"
+    }
+);
 
 //@export RemoveHeadError
-var RemoveHeadError = newErrorClass(NAMESPACE+".RemoveHeadError");
-RemoveHeadError.prototype.message = "can't remove head of cons-list";
+var RemoveHeadError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    {
+        name   : NAMESPACE + ".RemoveHeadError",
+        message: "can't remove head of cons-list"
+    }
+);
 

@@ -41,6 +41,7 @@
 //@require Data.Functional.Loop 0.5.0
 //@with-namespace Data.Functional.Loop
 
+//@require Data.Error 0.3.0
 //@require Data.Error.UnimplementedMethodError
 //@with-namespace Data.Error
 
@@ -145,6 +146,11 @@ proto.any = function ( f ) {
 
 
 //@export EmptyEnumerationError
-var EmptyEnumerationError = newErrorClass(NAMESPACE + ".EmptyEnumerationError");
-EmptyEnumerationError.prototype.message = "empty enumeration";
+var EmptyEnumerationError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    {
+        name   : NAMESPACE + ".EmptyEnumerationError",
+        message: "empty enumeration"
+    }
+);
 

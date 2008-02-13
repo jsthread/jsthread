@@ -39,7 +39,7 @@
 //@namespace Concurrent
 
 //@require Data.LinkedList
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@with-namespace Data.Error
 
 
@@ -264,11 +264,21 @@ Thread.yield.$Concurrent_Thread_compiled = function ( this_val, args, cont ) {
 };
 
 
-var KillException = Thread.KillException = newExceptionClass("Concurrent.Thread.KillException");
-KillException.prototype.message = "thread killed";
+var KillException = Thread.KillException = Exception.extend(
+    function ( $super, message ) { $super(message); },
+    {
+        name   : NAMESPACE + ".Thread.KillException",
+        message: "thread killed"
+    }
+);
 
-var NotAliveError = Thread.NotAliveError = newErrorClass("Concurrent.Thread.NotAliveError");
-NotAliveError.prototype.message = "thread not alive";
+var NotAliveError = Thread.NotAliveError = Error.extend(
+    function ( $super, message ) { $super(message); },
+    {
+        name   : NAMESPACE + ".Thread.NotAliveError",
+        message: "thread not alive"
+    }
+);
 
 
 

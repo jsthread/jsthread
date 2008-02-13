@@ -37,29 +37,29 @@
 //@esmodpp
 //@version 0.2.0
 
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@namespace Data.Error
 
 
 //@export UnimplementedMethodError
-var UnimplementedMethodError = newErrorClass(
-    NAMESPACE + ".UnimplementedMethodError",
-    function ( message, method ) {
+var UnimplementedMethodError = Error.extend(
+    function ( $super, message, method ) {
+        $super(message);
         this.method = method;
+    },
+    {
+        name    : NAMESPACE + ".UnimplementedMethodError",
+        message : "a required method has not been implemented.",
+        toString: function ( ) {
+            if ( this.hasOwnProperty("message") || !this.method ) {
+                return Error.prototype.toString.call(this);
+            } else {
+                var e = new UnimplementedMethodError();
+                for ( var i in this ) e[i] = this[i];
+                e.message = "an required method `" + this.method + "' has not been implemented.";
+                return e.toString();
+            }
+        }
     }
 );
 
-var proto = UnimplementedMethodError.prototype;
-
-proto.message = "a required method has not been implemented.";
-
-proto.toString = function ( ) {
-    if ( this.hasOwnProperty("message") || !this.method ) {
-        return Error.prototype.toString.call(this);
-    } else {
-        var e = new UnimplementedMethodError();
-        for ( var i in this ) e[i] = this[i];
-        e.message = "an required method `" + this.method + "' has not been implemented.";
-        return e.toString();
-    }
-};

@@ -59,7 +59,7 @@
 //@require   Concurrent.Thread.Compiler.Statement
 //@require   Concurrent.Thread.Compiler.IdentifierSet
 
-//@require Data.Error
+//@require Data.Error 0.3.0
 //@with-namespace Data.Error
 
 //@require Data.Stack
@@ -78,7 +78,10 @@ var TI_CHECK_LABEL = 1 << 17;  // indicates to check for label
 
 
 // Exception to unwind
-var ParserException = newExceptionClass(NAMESPACE + ".ParserException");
+var ParserException = Exception.extend(
+    function($super, message){ $super(message); },
+    { name: NAMESPACE + ".ParserException" }
+);
 
 // Exception to return statement-label
 function LabelException ( label ) {
