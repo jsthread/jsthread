@@ -41,7 +41,7 @@
 //@require Data.Functional.Array 0.4.0
 //@with-namespace Data.Functional
 
-//@require Data.Error.UnsupportedMethodError
+//@require Data.Error.UnsupportedMethodError 0.3.0
 //@with-namespace Data.Error
 
 
@@ -112,7 +112,7 @@ proto.reverseTail = function ( n ) {
   "push", "removeAt", "set"  , "shift"   , "unshift" ].forEach(function( it )
 {
     proto[it] = function ( ) {
-        throw new UnsupportedMethodError("String does not support `" + it + "' method, because it is immutable.", it);
+        throw new UnsupportedMethodError(it, this, "String does not support `" + it + "' method, because it is immutable");
     };
 });
 
@@ -197,7 +197,7 @@ proto.distance = function ( that ) {
 // Generate non-supported methods.
 [ "assign", "insert", "remove" ].forEach(function( it ){
     proto[it] = function ( ) {
-        throw new UnsupportedMethodError("string-iterator does not support `" + it + "' method, because string is immutable.", it);
+        throw new UnsupportedMethodError(it, this, "string-iterator does not support `" + it + "' method, because string is immutable.");
     };
 });
 

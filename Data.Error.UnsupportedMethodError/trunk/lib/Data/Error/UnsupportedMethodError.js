@@ -35,7 +35,7 @@
  * ***** END LICENSE BLOCK ***** */
 
 //@esmodpp
-//@version 0.2.0
+//@version 0.3.0
 
 //@require Data.Error 0.3.0
 //@namespace Data.Error
@@ -43,24 +43,15 @@
 
 //@export UnsupportedMethodError
 var UnsupportedMethodError = Error.extend(
-    function ( $super, message, method ) {
-        $super(message);
-        this.method = method;
-    },
-    {
-        name    : NAMESPACE + ".UnsupportedMethodError",
-        message : "an optional method is not supported.",
-        toString: function ( ) {
-            if ( this.hasOwnProperty("message") || !this.method ) {
-                return Error.prototype.toString.call(this);
-            }
-            else {
-                var e = new UnsupportedMethodError();
-                for ( var i in this ) e[i] = this[i];
-                e.message = "an optional method `" + this.method + "' is not supported.";
-                return e.toString();
-            }
+    function ( $super, method, invocant, message ) {
+        if ( message !== undefined ) {
+            $super(message);
+        } else {
+            $super("an optional method `" + method + "' is not supported");
         }
-    }
+        this.method   = method;
+        this.invocant = invocant;
+    },
+    { name: NAMESPACE + ".UnsupportedMethodError" }
 );
 
