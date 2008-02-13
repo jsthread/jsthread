@@ -46,7 +46,7 @@
 var Out = {};
 
 Out.write = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(NAMESPACE+".Out.write", this);
+    throw new UnimplementedMethodError("write", this);
 };
 
 Out.writeLine = function ( /* variable args */ ) {
@@ -70,15 +70,15 @@ for ( var i in Out ) {
 var In = {};
 
 In.read = function ( n ) {
-    throw new UnimplementedMethodError(NAMESPACE+".In.read", this);
+    throw new UnimplementedMethodError("read", this);
 };
 
 In.unread = function ( str ) {
-    throw new UnimplementedMethodError(NAMESPACE+".In.unread", this);
+    throw new UnimplementedMethodError("unread", this);
 };
 
 In.atEOS = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE+".In.atEOS", this);
+    throw new UnimplementedMethodError("atEOS", this);
 };
 
 In.readLine = function ( ) {

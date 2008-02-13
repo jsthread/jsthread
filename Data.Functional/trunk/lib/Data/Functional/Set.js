@@ -66,7 +66,7 @@ proto.toString = function ( ) {
 
 
 proto.contains = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(NAMESPACE + ".Set#contains", this);
+    throw new UnimplementedMethodError("contains", this);
 };
 
 proto.containsAll = function ( /* variable args */ ) {
@@ -86,7 +86,7 @@ proto.containsAll = function ( /* variable args */ ) {
 
 
 proto.remove = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(NAMESPACE + ".Set#remove", this);
+    throw new UnimplementedMethodError("remove", this);
 };
 
 proto.removeAll = function ( /* variable args */ ) {

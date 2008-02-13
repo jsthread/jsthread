@@ -67,7 +67,7 @@ proto.toString = function ( ) {
 // The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.isHead = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE+".BidirectionalIterator#isHead", this);
+    throw new UnimplementedMethodError("isHead", this);
 };
 
 
@@ -76,6 +76,6 @@ proto.isHead = function ( ) {
 // The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.previous = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE+".BidirectionalIterator#previous", this);
+    throw new UnimplementedMethodError("previous", this);
 };
 

@@ -71,7 +71,7 @@ proto.toString = function ( ) {
 // to the one of insertion.
 // The default implementation merely throws UnimplementedMethodError.
 proto.assign = function ( v ) {
-    throw new UnimplementedMethodError(NAMESPACE + ".Iterator#assign", this);
+    throw new UnimplementedMethodError("assign", this);
 };
 
 
@@ -82,7 +82,7 @@ proto.assign = function ( v ) {
 // implementation-dependent.
 // The default implementation merely throws UnimplementedMethodError.
 proto.insert = function ( v ) {
-    throw new UnimplementedMethodError(NAMESPACE + ".Iterator#insert", this);
+    throw new UnimplementedMethodError("insert", this);
 };
 
 
@@ -92,7 +92,7 @@ proto.insert = function ( v ) {
 // implementation-dependent.
 // The default implementation merely throws UnimplementedMethodError.
 proto.remove = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE + ".Iterator#remove", this);
+    throw new UnimplementedMethodError("remove", this);
 };
 
 

@@ -38,7 +38,7 @@
 //@version 0.2.1
 //@namespace Data.Iterator
 
-//@require Data.Error.UnimplementedMethodError
+//@require Data.Error.UnimplementedMethodError 0.3.0
 //@with-namespace Data.Error
 
 
@@ -64,7 +64,7 @@ proto.toString = function ( ) {
 // The default implementation merely throws UnimplementedMethodError.
 // Sub-classes must implement their own version of this method.
 proto.isTail = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE+".Iterator#isTail", this);
+    throw new UnimplementedMethodError("isTail", this);
 };
 
 
@@ -74,7 +74,7 @@ proto.isTail = function ( ) {
 // Sub-classes must implement their own version of this method, 
 // which may throws Data.Iterator.NoSuchElementError.
 proto.value = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE+".Iterator#value", this);
+    throw new UnimplementedMethodError("value", this);
 };
 
 
@@ -84,7 +84,7 @@ proto.value = function ( ) {
 // Sub-classes must implement their own version of this method, 
 // which may throws Data.Iterator.NoSuchElementError.
 proto.next = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE+".Iterator#next", this);
+    throw new UnimplementedMethodError("next", this);
 };
 
 

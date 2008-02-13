@@ -63,7 +63,7 @@ proto.toString = function ( ) {
 
 
 proto.iterator = function ( ) {
-    throw new UnimplementedMethodError(NAMESPACE+".Enumerable#iterator", this);
+    throw new UnimplementedMethodError("iterator", this);
 };
 
 

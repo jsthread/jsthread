@@ -73,7 +73,7 @@ proto.toArray = function ( ) {
 
 
 proto.add = function ( /* variable args */ ) {
-    throw new UnimplementedMethodError(NAMESPACE + ".Collection#add", this);
+    throw new UnimplementedMethodError("add", this);
 };
 
 
@@ -97,7 +97,7 @@ proto.addAll = function ( /* variable arguments */ ) {
 
 
 proto.removeAt = function ( it ) {
-    throw new UnimplementedMethodError(NAMESPACE + ".Collection#removeAt", this);
+    throw new UnimplementedMethodError("removeAt", this);
 };
 
 
