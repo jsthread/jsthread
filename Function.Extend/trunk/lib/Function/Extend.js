@@ -2,8 +2,6 @@
 //@version 0.0.0
 
 //@require        Function.Bind
-//@require        Data.Error.IllegalStateError
-//@with-namespace Data.Error
 //@require        Util.Arrayize
 //@with-namespace Util.Arrayize
 
@@ -20,7 +18,7 @@ Function.prototype.extend = function extend ( init, props ) {
         var self = this;
         var super_is_called = false;
         function super_call ( ) {
-            if ( super_is_called ) throw new IllegalStateError("super-constructor has already been called");
+            if ( super_is_called ) throw new Error("super-constructor has already been called");
             super_is_called = true;
             var ret_val = SuperClass.apply(self, arguments);
             if ( ret_val instanceof Object ) {
