@@ -45,7 +45,9 @@
 
 var tester = null;
 
-test = function test ( n, t ) {
+
+//@export test
+function test ( n, t ) {
     var name, tests, test_case;
     if ( n instanceof Object ) {
         name      = n.name;
@@ -152,5 +154,6 @@ test = function test ( n, t ) {
         // #/generated#
     );
 };
+
 
 ok = eval("0, " + ok);
