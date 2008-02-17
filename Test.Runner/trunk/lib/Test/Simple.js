@@ -72,9 +72,9 @@ function test ( n, t ) {
 
 
 //@export ok
-function ok ( p, n ) {
+function ok ( pred, name, message ) {
     if ( !tester ) throw UninitializedError("Test environment has not been initialized.");
-    return tester.assert(p, n);
+    return tester.assert.apply(tester, arguments);
 }
 
 
