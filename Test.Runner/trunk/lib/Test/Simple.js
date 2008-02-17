@@ -43,7 +43,7 @@
 //@with-namespace Data.Error
 
 
-var test_runner = null;
+var tester = null;
 
 //@export test
 function test ( n, t ) {
@@ -61,20 +61,20 @@ function test ( n, t ) {
         throw new TypeError("Test case must be of type Function.");
     }
     return Test.Runner.addTest(name, tests, function(){
-        test_runner = this;
+        tester = this;
         try {
             test_case.call(this);
         } finally {
-            test_runner = null;
+            tester = null;
         }
     });
 }
 
 
 //@export ok
-function ok ( e, m ) {
-    if ( !test_runner ) throw UninitializedError("Test environment has not been initialized.");
-    return test_runner.ok.apply(test_runner, arguments);
+function ok ( p, n ) {
+    if ( !tester ) throw UninitializedError("Test environment has not been initialized.");
+    return tester.assert(p, n);
 }
 
 

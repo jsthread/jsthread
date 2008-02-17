@@ -71,18 +71,15 @@ function Simple ( name, tests, test_case ) {
 }
 var proto = Simple.prototype;
 
-proto.ok = function ( p, m ) {
-    if ( !p ) {
+proto.assert = function ( pred, name, message ) {
+    if ( !pred ) {
         this._failed++;
         StdIO.Out.write("not ");
     }
     StdIO.Out.write("ok ", ++this._progress);
-    if ( arguments.length >= 2 ) StdIO.Out.write(" - ", m);
+    if ( arguments.length >= 2 ) StdIO.Out.write(" - ", name);
     StdIO.Out.writeln();
-};
-
-proto.diag = function ( /* variable args */ ) {
-    StdIO.Err.writeln(arrayize(arguments).join("").replace(/^/mg, "# "));
+    if ( arguments.length >= 3 ) diag(message);
 };
 
 proto.run = function ( ) {
@@ -91,24 +88,28 @@ proto.run = function ( ) {
         this._test_case();
     } catch ( e ) {
         if ( this._progress === 0 ) {
-            this.diag("Looks like your test finished with an exception before it could output anything.");
+            diag("Looks like your test finished with an exception before it could output anything.");
         } else {
-            this.diag("Looks like your test finished with an exception just after ", this._progress);
+            diag("Looks like your test finished with an exception just after ", this._progress);
         }
-        this.diag("Exception thrown: ", e);
+        diag("Exception thrown: ", e);
         if ( e.stack ) {  // Mozilla can retrieve stack trace
-            this.diag("----- Stack trace -----\n", e.stack, "-----------------------");
+            diag("----- Stack trace -----\n", e.stack, "-----------------------");
         }
     } finally {
         if        ( this._progress === 0         ) {
-            this.diag("No tests run!");
+            diag("No tests run!");
         } else if ( this._progress < this._tests ) {
-            this.diag("Looks like you planned ", this._tests, " tests but only ran ", this._progress, ".");
+            diag("Looks like you planned ", this._tests, " tests but only ran ", this._progress, ".");
         } else if ( this._progress > this._tests ) {
-            this.diag("Looks like you planned ", this._tests, " tests but ran ", this._progress - this._tests, " extra.");
+            diag("Looks like you planned ", this._tests, " tests but ran ", this._progress - this._tests, " extra.");
         }
         if ( this._failed > 0 ) {
-            this.diag("Looks like you failed ", this._failed, " tests of ", this._progress, " run.");
+            diag("Looks like you failed ", this._failed, " tests of ", this._progress, " run.");
         }
     }
+};
+
+function diag ( /* variable args */ ) {
+    StdIO.Err.writeln(arrayize(arguments).join("").replace(/^/mg, "# "));
 };
