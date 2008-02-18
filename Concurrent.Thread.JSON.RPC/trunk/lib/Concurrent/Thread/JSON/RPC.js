@@ -175,4 +175,4 @@ var JSONRPCError = Error.extend(
         }
     },
     {name: NAMESPACE + ".JSONRPCError"}
-});
+);
