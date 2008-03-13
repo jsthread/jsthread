@@ -68,8 +68,8 @@ function compile ( f ) {
 }
 
 
-//@export CACHE_LIMIT
-var CACHE_LIMIT = 50;
+//@shared CACHE_LIMIT
+CACHE_LIMIT = 50;
 var prepare_cache = {};
 var cache_history = [];
 
