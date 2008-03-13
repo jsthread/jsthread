@@ -725,7 +725,7 @@ OrExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
         follows.car.prependStatement( new IL.CondStatement(ctxt.getStackVar(sttop), next_block) );
         return this.left[Cs](follows, ctxt, sttop);
     } else if ( this.left.containsFunctionCall() ) {
-        follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new AndExpression(ctxt.getStackVar(sttop), this.right)) );
+        follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new OrExpression(ctxt.getStackVar(sttop), this.right)) );
         return this.left[Cs](follows, ctxt, sttop);
     } else {
         return Expression.prototype[Cs].apply(this, arguments);
