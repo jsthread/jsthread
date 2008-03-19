@@ -71,6 +71,8 @@ var initial_continuation = {
         procedure: initial_exception_handler
     }
 };
+// Cyclic reference ensures that at least one exceptinal continuation always exists.
+initial_continuation.exception.exception = initial_continuation.exception;
 
 
 
