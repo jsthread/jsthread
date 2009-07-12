@@ -185,7 +185,7 @@ Block.prototype[Cs] = function ( follows, ctxt, sttop ) {
 };
 
 ExpStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
-    return this.exp[Cs](follows, ctxt, sttop);
+    return this.exp[Cs](follows, ctxt, sttop, true);
 };
 
 
@@ -269,7 +269,7 @@ ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     var next_block = follows.car;
     var last_block = ctxt.makeGotoBlock(undefinedExp, null);
     follows = cons(last_block, follows);
-    if ( this.incr ) follows = this.incr[Cs](follows, ctxt, sttop);
+    if ( this.incr ) follows = this.incr[Cs](follows, ctxt, sttop, true);
     var incr_block = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
     var restore = ctxt.putBreakAndContinueLabels(this.labels.concat(emptyLabel), next_block, incr_block);
@@ -290,7 +290,7 @@ ForStatement.prototype[Cs] = function ( follows, ctxt, sttop ) {
     last_block.target = follows.car;
     follows = cons( ctxt.makeGotoBlock(undefinedExp, follows.car), follows );
     if ( this.init ) {
-        follows = this.init[Cs](follows, ctxt, sttop);
+        follows = this.init[Cs](follows, ctxt, sttop, true);
     }
     return follows;
 };
@@ -536,12 +536,19 @@ function make_assign ( left, right ) {
     return new IL.ExpStatement( new SimpleAssignExpression(left, right) );
 }
 
-Expression.prototype[Cs] = function ( follows, ctxt, sttop ) {
-    follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), this) );
+function prepend_exp ( exp, follows, ctxt, sttop, is_void ) {
+    follows.car.prependStatement(
+        is_void ? new IL.ExpStatement(exp)
+                : make_assign(ctxt.getStackVar(sttop), exp)
+    );
     return follows;
+}
+
+Expression.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
+    return prepend_exp(this, follows, ctxt, sttop, is_void);
 };
 
-ArrayInitializer.prototype[Cs] = function ( follows, ctxt, sttop ) {
+ArrayInitializer.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     for ( var asis_from=this.elems.length-1;  asis_from >= 0;  asis_from-- ) {
         if ( this.elems[asis_from].containsFunctionCall() ) break;
     }
@@ -553,14 +560,14 @@ ArrayInitializer.prototype[Cs] = function ( follows, ctxt, sttop ) {
     for ( ;  i < this.elems.length;  i++ ) {
         elems[i] = this.elems[i];
     }
-    follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new ArrayInitializer(elems)) );
+    follows = prepend_exp(new ArrayInitializer(elems), follows, ctxt, sttop, is_void);
     for ( var i=asis_from-1;  i >= 0;  i-- ) {
         follows = this.elems[i][Cs](follows, ctxt, sttop+i);
     }
     return follows;
 };
 
-ObjectInitializer.prototype[Cs] = function ( follows, ctxt, sttop ) {
+ObjectInitializer.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     for ( var asis_from=this.pairs.length-1;  asis_from >= 0;  asis_from-- ) {
         if ( this.pairs[asis_from].exp.containsFunctionCall() ) break;
     }
@@ -572,54 +579,45 @@ ObjectInitializer.prototype[Cs] = function ( follows, ctxt, sttop ) {
     for ( ;  i < this.pairs.length;  i++ ) {
         pairs[i] = this.pairs[i];
     }
-    follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new ObjectInitializer(pairs)) );
+    follows = prepend_exp(new ObjectInitializer(pairs), follows, ctxt, sttop, is_void);
     for ( var i=asis_from-1;  i >= 0;  i-- ) {
         follows = this.pairs[i].exp[Cs](follows, ctxt, sttop+i);
     }
     return follows;
 };
 
-UnaryExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+UnaryExpression.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     if ( this.exp.containsFunctionCall() ) {
-        follows.car.prependStatement( make_assign(ctxt.getStackVar(sttop), new this.constructor(ctxt.getStackVar(sttop))) );
+        follows = prepend_exp(new this.constructor(ctxt.getStackVar(sttop)), follows, ctxt, sttop, is_void);
         return this.exp[Cs](follows, ctxt, sttop);
     } else {
         return Expression.prototype[Cs].apply(this, arguments);
     }
 };
 
-BinaryExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+BinaryExpression.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     if ( this.right.containsFunctionCall() ) {
-        follows.car.prependStatement( make_assign(
-            ctxt.getStackVar(sttop),
-            new this.constructor(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop+1))
-        ) );
+        follows = prepend_exp(new this.constructor(ctxt.getStackVar(sttop), ctxt.getStackVar(sttop+1)), follows, ctxt, sttop, is_void);
         follows = this.right[Cs](follows, ctxt, sttop+1);
         return this.left[Cs](follows, ctxt, sttop);
     } else if ( this.left.containsFunctionCall() ) {
-        follows.car.prependStatement( make_assign(
-            ctxt.getStackVar(sttop),
-            new this.constructor(ctxt.getStackVar(sttop), this.right)
-        ) );
+        follows = prepend_exp(new this.constructor(ctxt.getStackVar(sttop), this.right), follows, ctxt, sttop, is_void);
         return this.left[Cs](follows, ctxt, sttop);
     } else {
         return Expression.prototype[Cs].apply(this, arguments);
     }
 };
 
-DotAccessor.prototype[Cs] = function ( follows, ctxt, sttop ) {
+DotAccessor.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     if ( this.base.containsFunctionCall() ) {
-        follows.car.prependStatement( make_assign(
-            ctxt.getStackVar(sttop),
-            new DotAccessor(ctxt.getStackVar(sttop), this.prop)
-        ) );
+        follows = prepend_exp(new DotAccessor(ctxt.getStackVar(sttop), this.prop), follows, ctxt, sttop, is_void);
         return this.base[Cs](follows, ctxt, sttop);
     } else {
         return Expression.prototype[Cs].apply(this, arguments);
     }
 };
 
-CallExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+CallExpression.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     var self = this;
     return CsReference(this.func, ctxt, sttop, function ( func, sttop2 ) {
         for ( var asis_from=self.args.length-1;  asis_from >= 0;  asis_from-- ) {
@@ -633,7 +631,7 @@ CallExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
         for ( ;  i < self.args.length;  i++ ) {
             args[i] = self.args[i];
         }
-        follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
+        if ( !is_void ) follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
         follows = cons( new IL.CallBlock(
                             ctxt.getScopes(),
                             nil(),
@@ -651,7 +649,7 @@ CallExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     });
 };
 
-NewExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+NewExpression.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     for ( var asis_from=this.args.length-1;  asis_from >= 0;  asis_from-- ) {
         if ( this.args[asis_from].containsFunctionCall() ) break;
     }
@@ -663,7 +661,7 @@ NewExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     for ( ;  i < this.args.length;  i++ ) {
         args[i] = this.args[i];
     }
-    follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
+    if ( !is_void ) follows.car.prependStatement( new IL.RecvStatement(ctxt.getStackVar(sttop)) );
     follows = cons( new IL.NewBlock(
                         ctxt.getScopes(),
                         nil(),
@@ -679,23 +677,16 @@ NewExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
     return follows;
 };
 
-AssignExpression.prototype[Cs] = function ( follows, ctxt, sttop ) {
+AssignExpression.prototype[Cs] = function ( follows, ctxt, sttop, is_void ) {
     var self = this;
     if ( this.right.containsFunctionCall() ) {
         return CsReference(this.left, ctxt, sttop, function ( left, sttop2 ) {
-            follows.car.prependStatement( make_assign(
-                ctxt.getStackVar(sttop),
-                new self.constructor(left, ctxt.getStackVar(sttop2))
-            ) );
+            follows = prepend_exp(new self.constructor(left, ctxt.getStackVar(sttop2)), follows, ctxt, sttop, is_void);
             return self.right[Cs](follows, ctxt, sttop2);
         });
     } else if ( this.left.containsFunctionCall() ) {
         return CsReference(this.left, ctxt, sttop, function ( left, sttop2 ) {
-            follows.car.prependStatement( make_assign(
-                ctxt.getStackVar(sttop),
-                new self.constructor(left, self.right)
-            ) );
-            return follows;
+            return prepend_exp(new self.constructor(left, self.right), follows, ctxt, sttop, is_void);
         });
     } else {
         return Expression.prototype[Cs].apply(this, arguments);
