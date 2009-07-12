@@ -45,6 +45,7 @@
 //@require Concurrent.Thread.Compiler.CssConvert
 //@require Concurrent.Thread.Compiler.CvConvert
 //@require Concurrent.Thread.Compiler.CsConvert
+//@require Concurrent.Thread.Compiler.CuConvert
 //@require Concurrent.Thread.Compiler.CfConvert
 //@require Concurrent.Thread.Compiler.CzConvert
 //@require Concurrent.Thread.Compiler.IntermediateLanguage
@@ -106,6 +107,7 @@ function prepareTree ( f ) {
     var g = CssConvert(f);
     g = CvConvert(g);
     g = CsConvert(g);
+    g = CuConvert(g);
     g = CfConvert(g);
     g = CzConvert(g);
     return new CallExpression(
